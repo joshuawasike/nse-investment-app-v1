@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Processing...</title>
+
+    <!-- auto-refresh every 2 seconds -->
+    <meta http-equiv="refresh" content="2">
+
+    <style>
+        body {
+            background: #0b0f19;
+            color: white;
+            font-family: Arial;
+            text-align: center;
+            padding-top: 100px;
+        }
+
+        .box {
+            background: #111827;
+            padding: 30px;
+            margin: auto;
+            width: 60%;
+            border-radius: 12px;
+        }
+
+        .spinner {
+            border: 4px solid #1f2937;
+            border-top: 4px solid #60a5fa;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            margin: auto;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        h2 {
+            color: #60a5fa;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="box">
+
+    <div class="spinner"></div>
+
+    <h2>📊 Running Institutional Simulation...</h2>
+
+    <p>Please wait while AI engine processes market scenarios.</p>
+
+    <p><b>Job ID:</b> {{ job_id }}</p>
+
+    <p style="color:#9ca3af;">
+        Page will auto-refresh until results are ready...
+    </p>
+
+</div>
+
+</body>
+</html>

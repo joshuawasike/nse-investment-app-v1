@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Institutional Alpha Signal Engine</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            background: #0b0f19;
+            color: #e5e7eb;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h2, h3 {
+            color: #60a5fa;
+        }
+
+        .card {
+            background: #111827;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .metric {
+            background: #1f2937;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .buy { color: #22c55e; font-weight: bold; }
+        .hold { color: #facc15; font-weight: bold; }
+        .reduce { color: #ef4444; font-weight: bold; }
+
+        .risk-high { color: #ef4444; }
+        .risk-low { color: #22c55e; }
+        .risk-med { color: #facc15; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border-bottom: 1px solid #374151;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th { color: #93c5fd; }
+
+        .box {
+            background: #111827;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            background: #1f2937;
+            margin-right: 6px;
+        }
+    </style>
+</head>
+
+<body>
+
+<h2>📊 Institutional Alpha Signal Engine (NSE)</h2>
+
+<form method="POST" class="card">
+    <label>Monthly Investment</label><br>
+    <input type="number" name="monthly" required><br><br>
+
+    <label>Years</label><br>
+    <input type="number" name="years" required><br><br>
+
+    <button type="submit">Run Engine</button>
+</form>
+
+{% if portfolio %}
+<div class="card">
+<h3>🤖 Strategic Allocation</h3>
+
+{% for p in portfolio %}
+<div class="tag">
+    {{ p.name }} → {{ p.allocation }}%
+</div>
+{% endfor %}
+
+</div>
+{% endif %}
+
+{% if scenarios %}
+
+<h2>⚡ Alpha Signal Trading Desk</h2>
+
+{% for scenario, results in scenarios.items() %}
+
+<div class="card">
+
+    <!-- REGIME -->
+    <h3>📊 {{ scenario | upper }} MARKET REGIME</h3>
+
+    <p>📈 Growth Leader: <b>{{ explanation[scenario].growth_best }}</b></p>
+    <p>💰 Dividend Leader: <b>{{ explanation[scenario].dividend_best }}</b></p>
+    <p>🏆 Overall Winner: <b>{{ explanation[scenario].overall_best }}</b></p>
+
+    <hr>
+
+    <!-- SIGNAL ENGINE -->
+    <h3>⚡ Alpha Signal Engine</h3>
+
+    <table>
+        <tr>
+            <th>Rank</th>
+            <th>Asset</th>
+            <th>ROI</th>
+            <th>Risk</th>
+            <th>Score</th>
+            <th>Signal</th>
+            <th>Confidence</th>
+        </tr>
+
+        {% for r in results %}
+        {% set confidence = (r.score * 100) | abs | round(1) %}
+
+        {% if r.score > 1.0 %}
+            {% set signal = "BUY" %}
+        {% elif r.score > 0.2 %}
+            {% set signal = "HOLD" %}
+        {% else %}
+            {% set signal = "REDUCE" %}
+        {% endif %}
+
+        <tr>
+            <td>#{{ r.rank }}</td>
+            <td><b>{{ r.name }}</b></td>
+            <td>{{ r.roi | round(2) }}%</td>
+
+            <td class="
+                {% if r.risk_level == '🔴 HIGH' %}risk-high
+                {% elif r.risk_level == '🟢 LOW' %}risk-low
+                {% else %}risk-med{% endif %}
+            ">
+                {{ r.risk_level }}
+            </td>
+
+            <td>{{ r.score | round(4) }}</td>
+
+            <td class="
+                {% if signal == 'BUY' %}buy
+                {% elif signal == 'HOLD' %}hold
+                {% else %}reduce{% endif %}
+            ">
+                {{ signal }}
+            </td>
+
+            <td>{{ confidence }}%</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <hr>
+
+    <!-- FULL BREAKDOWN -->
+    <h3>📊 Full Institutional Breakdown</h3>
+
+    <div class="grid">
+        {% for r in results %}
+        <div class="metric">
+            <b>#{{ r.rank }} {{ r.name }}</b><br><br>
+
+            💰 Invested: {{ r.invested | round(2) }}<br>
+            📈 Value: {{ r.portfolio_value | round(2) }}<br>
+            💵 Dividends: {{ r.dividends | round(2) }}<br>
+            🧮 Return: {{ r.total_return | round(2) }}<br>
+            📊 Profit: {{ r.profit | round(2) }}<br>
+            📉 ROI: {{ r.roi | round(2) }}%<br><br>
+
+            ⚠️ Risk:
+            <span class="
+                {% if r.risk_level == '🔴 HIGH' %}risk-high
+                {% elif r.risk_level == '🟢 LOW' %}risk-low
+                {% else %}risk-med{% endif %}
+            ">
+                {{ r.risk_level }}
+            </span>
+
+            <br><br>
+            📌 Score: {{ r.score | round(4) }}
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+{% endfor %}
+{% endif %}
+
+</body>
+</html>
