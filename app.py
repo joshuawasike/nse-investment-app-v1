@@ -6,24 +6,39 @@ import random
 app = Flask(__name__)
 
 # =========================
-# 📊 LOAD & CLEAN NSE DATA
+# 📊 LOAD & CLEAN NSE DATA (SAFE FOR RENDER)
 # =========================
 files = glob.glob("data/nse_csv/*.csv")
 
 df_list = []
+
 for file in files:
-    temp = pd.read_csv(file)
-    df_list.append(temp)
+    try:
+        temp = pd.read_csv(file)
+        df_list.append(temp)
+    except Exception as e:
+        print(f"⚠️ Skipped file {file}: {e}")
 
-df = pd.concat(df_list, ignore_index=True)
+# ✅ SAFE FALLBACK (prevents Render crash)
+if len(df_list) == 0:
+    print("⚠️ No CSV files found. Running in safe demo mode.")
+    df = pd.DataFrame(columns=["Code", "Date", "Previous"])
+else:
+    df = pd.concat(df_list, ignore_index=True)
 
-df.columns = df.columns.str.strip()
+    df.columns = df.columns.str.strip()
 
-df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
-df["Previous"] = pd.to_numeric(df["Previous"], errors="coerce")
+    # safe conversions
+    if "Date" in df.columns:
+        df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
 
-df = df.dropna(subset=["Date", "Previous"])
-df = df.sort_values("Date")
+    if "Previous" in df.columns:
+        df["Previous"] = pd.to_numeric(df["Previous"], errors="coerce")
+
+    # remove invalid rows only if columns exist
+    if "Date" in df.columns and "Previous" in df.columns:
+        df = df.dropna(subset=["Date", "Previous"])
+        df = df.sort_values("Date")
 
 print("✅ NSE data loaded:", len(df), "rows")
 
@@ -33,10 +48,13 @@ print("✅ NSE data loaded:", len(df), "rows")
 # =========================
 def get_stock_return(code):
 
+    if df.empty or "Code" not in df.columns:
+        return 0.08  # safe fallback
+
     stock = df[df["Code"] == code]
 
     if len(stock) < 50:
-        return 0.10  # fallback
+        return 0.08
 
     start_price = stock.iloc[0]["Previous"]
     end_price = stock.iloc[-1]["Previous"]
@@ -44,13 +62,13 @@ def get_stock_return(code):
     years = (stock.iloc[-1]["Date"] - stock.iloc[0]["Date"]).days / 365
 
     if years <= 0:
-        return 0.10
+        return 0.08
 
     return (end_price / start_price) ** (1 / years) - 1
 
 
 # =========================
-# 📊 COMPANY MODEL (WITH DIVIDENDS)
+# 📊 COMPANY MODEL
 # =========================
 BASE_COMPANIES = [
     {"name": "Equity Bank", "code": "EQTY", "weight": 0.15, "dividend": 0.05},
@@ -89,7 +107,7 @@ def get_companies(profile):
 
 
 # =========================
-# 💰 ENGINE (REALISTIC DIVIDENDS)
+# 💰 ENGINE (SAFE & STABLE)
 # =========================
 def simulate(monthly, years, companies, boost=1.0):
 
@@ -102,8 +120,11 @@ def simulate(monthly, years, companies, boost=1.0):
 
     total_dividends = 0
 
-    # normalize weights
+    # normalize weights safely
     total_weight = sum(c["weight"] for c in companies)
+    if total_weight == 0:
+        total_weight = 1
+
     for c in companies:
         c["weight"] /= total_weight
 
@@ -132,12 +153,11 @@ def simulate(monthly, years, companies, boost=1.0):
 
             monthly_return += monthly_r * c["weight"]
 
-        # ✅ PAY DIVIDENDS YEARLY
+        # yearly dividends
         if m % 12 == 0 and m != 0:
             for c in companies:
                 div_yield = c.get("dividend", 0)
-                annual_div = (portfolio * div_yield) * c["weight"]
-                total_dividends += annual_div
+                total_dividends += (portfolio * div_yield) * c["weight"]
 
         # randomness
         shock = random.uniform(-0.04, 0.04)
