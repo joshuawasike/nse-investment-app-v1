@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Institutional Alpha Terminal</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            font-family: Arial;
+            background: #0b0f19;
+            color: #e5e7eb;
+            padding: 20px;
+        }
+
+        h2, h3, h4 { color: #60a5fa; }
+
+        .card {
+            background: #111827;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .stat {
+            background: #1f2937;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            border-bottom: 1px solid #374151;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th { color: #93c5fd; }
+
+        .muted {
+            color: #9ca3af;
+            font-size: 12px;
+        }
+
+        input, select, button {
+            padding: 8px;
+            margin-top: 5px;
+            border-radius: 6px;
+            border: none;
+        }
+
+        button {
+            background: #2563eb;
+            color: white;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+<h2>📊 Institutional Alpha Terminal</h2>
+
+<form method="POST" class="card">
+    <label>Monthly Investment (KES)</label><br>
+    <input type="number" name="monthly" required><br><br>
+
+    <label>Years</label><br>
+    <input type="number" name="years" required><br><br>
+
+    <label>Investor Type</label><br>
+    <select name="profile">
+        <option value="balanced" selected>Balanced</option>
+        <option value="conservative">Conservative</option>
+        <option value="aggressive">Aggressive</option>
+    </select>
+
+    <br><br>
+    <button type="submit">Run Engine</button>
+</form>
+
+
+{% if data %}
+
+<h2>📈 Investment Plans</h2>
+
+{% for scenario, s in data.items() %}
+
+<div class="card">
+
+<h3>📊 {{ scenario.upper() }} SCENARIO</h3>
+
+<!-- ========================= -->
+<!-- SUMMARY CARDS -->
+<!-- ========================= -->
+{% set summary = s.get("summary", {}) %}
+
+<div class="grid">
+    <div class="stat">💰 Invested<br><strong>KES {{ "{:,}".format(summary.get("invested", 0)) }}</strong></div>
+    <div class="stat">💵 Dividends<br><strong>KES {{ "{:,}".format(summary.get("dividends", 0)) }}</strong></div>
+    <div class="stat">📊 Portfolio Value<br><strong>KES {{ "{:,}".format(summary.get("value", 0)) }}</strong></div>
+</div>
+
+
+<!-- ========================= -->
+<!-- CHART -->
+<!-- ========================= -->
+{% set curve = s.get("curve", []) %}
+
+{% if curve %}
+<canvas id="chart_{{ loop.index }}"></canvas>
+
+<script>
+const ctx{{ loop.index }} = document.getElementById('chart_{{ loop.index }}').getContext('2d');
+
+new Chart(ctx{{ loop.index }}, {
+    type: 'line',
+    data: {
+        labels: {{ range(1, curve|length + 1) | list }},
+        datasets: [{
+            label: 'Portfolio Growth',
+            data: {{ curve }},
+            borderWidth: 2,
+            tension: 0.3
+        }]
+    },
+    options: {
+        scales: {
+            x: { display: false }
+        }
+    }
+});
+</script>
+{% endif %}
+
+
+<!-- ========================= -->
+<!-- MONTHLY PLAN -->
+<!-- ========================= -->
+<h4>💰 Monthly Investment Plan</h4>
+
+<table>
+<tr>
+    <th>Asset</th>
+    <th>%</th>
+    <th>KES</th>
+</tr>
+
+{% for p in s.get("plan", []) %}
+<tr>
+    <td>{{ p.get("name", "N/A") }}</td>
+    <td>{{ p.get("percent", 0) }}%</td>
+    <td>KES {{ "{:,}".format(p.get("kes", 0)) }}</td>
+</tr>
+{% endfor %}
+</table>
+
+
+<!-- ========================= -->
+<!-- RETURNS -->
+<!-- ========================= -->
+<h4>📈 Expected Returns ({{ years }} Years)</h4>
+
+<table>
+<tr>
+    <th>Asset</th>
+    <th>Dividends</th>
+    <th>Final Value</th>
+</tr>
+
+{% for r in s.get("returns", []) %}
+<tr>
+    <td>{{ r.get("name", "N/A") }}</td>
+    <td>KES {{ "{:,}".format(r.get("dividends", 0)) }}</td>
+    <td>KES {{ "{:,}".format(r.get("value", 0)) }}</td>
+</tr>
+{% endfor %}
+</table>
+
+
+<p class="muted">
+Engine-safe rendering mode (prevents NaN / crash / missing key errors)
+</p>
+
+</div>
+
+{% endfor %}
+
+{% endif %}
+
+</body>
+</html>
