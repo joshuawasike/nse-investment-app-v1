@@ -29,6 +29,7 @@ button {
     color: white;
     border: none;
     border-radius: 6px;
+    cursor: pointer;
 }
 
 .card {
@@ -74,6 +75,14 @@ img {
     margin-top: 15px;
     color: #60a5fa;
 }
+
+.price-box {
+    background: #0f172a;
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: 10px;
+    border: 1px solid #334155;
+}
 </style>
 </head>
 
@@ -92,8 +101,17 @@ img {
         <option value="aggressive">Aggressive</option>
     </select>
 
+    <!-- ================= PAYMENT BLOCK ================= -->
     <div class="card">
-        <h3>💳 Payment Instructions</h3>
+        <h3>💳 Unlock Premium Access</h3>
+
+        <div class="price-box">
+            <p>🔓 <b>Free:</b> Normal Scenario Only</p>
+            <p>📆 <b>Pro Monthly:</b> KES 299 / month (all features)</p>
+            <p>♾️ <b>Lifetime Access:</b> KES 499 (one-time payment)</p>
+        </div>
+
+        <hr>
 
         <p><b>PayBill:</b> 542542</p>
         <p><b>Account Number:</b> 31909</p>
@@ -105,8 +123,8 @@ img {
 
         <input name="transaction_code" placeholder="Enter M-Pesa Transaction Code">
 
-        <p style="color: gold;">
-            ⚠ Premium unlock after verification
+        <p style="color: gold; margin-top: 10px;">
+            ⚠ Access is activated after verification (manual / auto later)
         </p>
     </div>
 
@@ -121,18 +139,18 @@ img {
 
     🔒 FREE VERSION ACTIVE
 
-    <p><b>Includes:</b></p>
-    ✔ Normal Scenario <br>
-    ✔ Portfolio Simulation <br>
+    <p><b>Free Includes:</b></p>
+    ✔ Normal Scenario Simulation <br>
 
-    <p><b>Unlock Premium:</b></p>
+    <p><b>Premium Unlocks:</b></p>
     ✔ Bull Market Scenario <br>
     ✔ Bear Market Scenario <br>
     ✔ Investment Plan Tables <br>
     ✔ Returns Breakdown <br>
+    ✔ Risk Metrics (Sharpe, Drawdown) <br>
 </div>
 {% else %}
-<h3 style="color:gold;">✅ PREMIUM ACTIVE — Full Analytics Unlocked</h3>
+<h3 style="color:gold;">✅ PREMIUM ACTIVE — FULL ANALYTICS UNLOCKED</h3>
 {% endif %}
 
 {% if data %}
@@ -177,7 +195,7 @@ img {
 </div>
 
 <!-- ================= BULL ================= -->
-{% if is_premium and data.bull %}
+{% if is_premium %}
 <div class="card">
 <h3>📊 BULL SCENARIO</h3>
 
@@ -188,10 +206,8 @@ img {
 <h4>📈 Growth</h4>
 <img src="data:image/png;base64,{{ chart_bull }}">
 </div>
-{% endif %}
 
 <!-- ================= BEAR ================= -->
-{% if is_premium and data.bear %}
 <div class="card">
 <h3>📊 BEAR SCENARIO</h3>
 
