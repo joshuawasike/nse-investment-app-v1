@@ -50,6 +50,9 @@ ASSETS = [
 
 N = len(ASSETS)
 
+# =========================================================
+# 🎯 TARGET BANDS
+# =========================================================
 REGIME_TARGETS = {
     "normal": (13e6, 16e6),
     "bull": (16e6, 22e6),
@@ -140,11 +143,13 @@ def compute_metrics(curve):
     return sharpe, max_dd
 
 # =========================================================
-# 📊 SIMULATION (CORE)
+# 📊 SIMULATION ENGINE
 # =========================================================
 def simulate(monthly, years, mode):
+
     R = get_returns()
     corr_R = correlated_returns(R)
+
     weights = optimize(R)
 
     months = years * 12
@@ -154,6 +159,7 @@ def simulate(monthly, years, mode):
     curve = []
 
     for t in range(months):
+
         idx = np.random.randint(0, corr_R.shape[1])
         r = corr_R[:, idx]
 
@@ -175,7 +181,9 @@ def simulate(monthly, years, mode):
     growth = raw / (base + 1e-9)
     growth = np.clip(growth, 0.7, 2.5)
 
-    final_value = np.clip(base * growth, low, high)
+    final_value = base * growth
+    final_value = np.clip(final_value, low, high)
+
     curve[-1] = final_value
 
     sharpe, max_dd = compute_metrics(curve)
@@ -186,6 +194,7 @@ def simulate(monthly, years, mode):
         "invested": base,
         "value": final_value,
         "dividends": final_value * dividend_yield,
+        "annual_income": final_value * dividend_yield,
         "monthly_income": (final_value * dividend_yield) / 12,
         "sharpe": round(sharpe, 2),
         "max_drawdown": round(max_dd * 100, 2)
@@ -219,40 +228,67 @@ def simulate(monthly, years, mode):
     }
 
 # =========================================================
-# 🌐 ROUTE (FREE vs PREMIUM FIXED)
+# 📈 CHART
+# =========================================================
+def chart(curve):
+
+    fig, ax = plt.subplots(figsize=(10,5))
+    fig.patch.set_facecolor("#0b0f19")
+    ax.set_facecolor("#0b0f19")
+
+    ax.plot(curve, color="#60a5fa", linewidth=2)
+    ax.fill_between(range(len(curve)), curve, color="#60a5fa", alpha=0.15)
+
+    ax.set_title("Jobura NSE Capital Terminal", color="white")
+    ax.tick_params(colors="white")
+
+    for s in ax.spines.values():
+        s.set_color("white")
+
+    buf = io.BytesIO()
+    fig.savefig(buf, format="png", bbox_inches="tight")
+    buf.seek(0)
+
+    img = base64.b64encode(buf.read()).decode()
+    plt.close(fig)
+
+    return img
+
+# =========================================================
+# 🌐 ROUTE (FREE vs PREMIUM LOGIC FIXED)
 # =========================================================
 @app.route("/", methods=["GET","POST"])
 def index():
 
     is_premium = False
+    data = None
 
     if request.method == "POST":
 
         monthly = float(request.form.get("monthly", 0))
         years = int(request.form.get("years", 1))
-        code = request.form.get("transaction_code", "").strip()
+        code = request.form.get("transaction_code", "")
 
-        # SIMPLE PREMIUM CHECK (temporary logic)
-        if len(code) >= 6:
+        # 🔒 SIMPLE RULE (you can later upgrade to API)
+        if code and len(code) > 5:
             is_premium = True
 
-        # ALWAYS RUN BEAR (FREE CORE)
-        bear = simulate(monthly, years, "bear")
+        normal = simulate(monthly, years, "normal")
 
-        # PREMIUM SCENARIOS
+        data = {
+            "normal": normal
+        }
+
         if is_premium:
-            normal = simulate(monthly, years, "normal")
-            bull = simulate(monthly, years, "bull")
-        else:
-            normal = {"plan": [], "returns": [], "summary": {}, "curve": []}
-            bull = {"plan": [], "returns": [], "summary": {}, "curve": []}
+            data["bull"] = simulate(monthly, years, "bull")
+            data["bear"] = simulate(monthly, years, "bear")
 
         return render_template(
             "index.html",
-            data={"bear": bear, "normal": normal, "bull": bull},
-            chart_bear="",
-            chart_normal="",
-            chart_bull="",
+            data=data,
+            chart_normal=chart(normal["curve"]),
+            chart_bull=chart(data["bull"]["curve"]) if is_premium else None,
+            chart_bear=chart(data["bear"]["curve"]) if is_premium else None,
             is_premium=is_premium
         )
 
