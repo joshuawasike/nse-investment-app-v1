@@ -50,9 +50,6 @@ ASSETS = [
 
 N = len(ASSETS)
 
-# =========================================================
-# 🎯 TARGET BANDS
-# =========================================================
 REGIME_TARGETS = {
     "normal": (13e6, 16e6),
     "bull": (16e6, 22e6),
@@ -86,7 +83,7 @@ def get_returns():
     return np.array(R)
 
 # =========================================================
-# 🔗 CORRELATION ENGINE (SAFE FIX)
+# 🔗 CORRELATION ENGINE
 # =========================================================
 def correlated_returns(R):
     R = np.nan_to_num(R)
@@ -143,19 +140,11 @@ def compute_metrics(curve):
     return sharpe, max_dd
 
 # =========================================================
-# 📊 SIMULATION ENGINE
+# 📊 SIMULATION (CORE)
 # =========================================================
 def simulate(monthly, years, mode):
-
-    monthly = float(monthly or 0)
-    years = int(years or 1)
-
-    if monthly <= 0:
-        monthly = 1000
-
     R = get_returns()
     corr_R = correlated_returns(R)
-
     weights = optimize(R)
 
     months = years * 12
@@ -186,9 +175,7 @@ def simulate(monthly, years, mode):
     growth = raw / (base + 1e-9)
     growth = np.clip(growth, 0.7, 2.5)
 
-    final_value = base * growth
-    final_value = np.clip(final_value, low, high)
-
+    final_value = np.clip(base * growth, low, high)
     curve[-1] = final_value
 
     sharpe, max_dd = compute_metrics(curve)
@@ -199,9 +186,7 @@ def simulate(monthly, years, mode):
         "invested": base,
         "value": final_value,
         "dividends": final_value * dividend_yield,
-        "annual_income": final_value * dividend_yield,
         "monthly_income": (final_value * dividend_yield) / 12,
-        "yield_percent": 5.2,
         "sharpe": round(sharpe, 2),
         "max_drawdown": round(max_dd * 100, 2)
     }
@@ -217,7 +202,7 @@ def simulate(monthly, years, mode):
 
     returns_table = []
     for i in range(N):
-        asset_value = capital * weights[i]
+        asset_value = final_value * weights[i]
         div = asset_value * ASSETS[i][2]
 
         returns_table.append({
@@ -234,62 +219,47 @@ def simulate(monthly, years, mode):
     }
 
 # =========================================================
-# 📈 CHART
-# =========================================================
-def chart(curve):
-
-    fig, ax = plt.subplots(figsize=(10,5))
-    fig.patch.set_facecolor("#0b0f19")
-    ax.set_facecolor("#0b0f19")
-
-    ax.plot(curve, color="#60a5fa", linewidth=2)
-    ax.fill_between(range(len(curve)), curve, color="#60a5fa", alpha=0.15)
-
-    ax.set_title("Jobura NSE Capital Terminal", color="white")
-    ax.tick_params(colors="white")
-
-    for s in ax.spines.values():
-        s.set_color("white")
-
-    buf = io.BytesIO()
-    fig.savefig(buf, format="png", bbox_inches="tight")
-    buf.seek(0)
-
-    img = base64.b64encode(buf.read()).decode()
-    plt.close(fig)
-
-    return img
-
-# =========================================================
-# 🌐 ROUTE
+# 🌐 ROUTE (FREE vs PREMIUM FIXED)
 # =========================================================
 @app.route("/", methods=["GET","POST"])
 def index():
 
-    is_premium = False  # 🔥 FIXED FREE VERSION
+    is_premium = False
 
     if request.method == "POST":
 
-        monthly = request.form.get("monthly", 0)
-        years = request.form.get("years", 1)
+        monthly = float(request.form.get("monthly", 0))
+        years = int(request.form.get("years", 1))
+        code = request.form.get("transaction_code", "").strip()
 
-        normal = simulate(monthly, years, "normal")
-        bull = simulate(monthly, years, "bull")
+        # SIMPLE PREMIUM CHECK (temporary logic)
+        if len(code) >= 6:
+            is_premium = True
+
+        # ALWAYS RUN BEAR (FREE CORE)
         bear = simulate(monthly, years, "bear")
+
+        # PREMIUM SCENARIOS
+        if is_premium:
+            normal = simulate(monthly, years, "normal")
+            bull = simulate(monthly, years, "bull")
+        else:
+            normal = {"plan": [], "returns": [], "summary": {}, "curve": []}
+            bull = {"plan": [], "returns": [], "summary": {}, "curve": []}
 
         return render_template(
             "index.html",
-            data={"normal":normal,"bull":bull,"bear":bear},
-            chart_normal=chart(normal["curve"]),
-            chart_bull=chart(bull["curve"]),
-            chart_bear=chart(bear["curve"]),
+            data={"bear": bear, "normal": normal, "bull": bull},
+            chart_bear="",
+            chart_normal="",
+            chart_bull="",
             is_premium=is_premium
         )
 
     return render_template("index.html", data=None, is_premium=False)
 
 # =========================================================
-# 🚀 RENDER FIX
+# 🚀 RUN
 # =========================================================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
