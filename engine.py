@@ -1,5 +1,6 @@
 import numpy as np
 
+
 # =========================
 # SAFE UTIL
 # =========================
@@ -33,7 +34,7 @@ def classify(name):
 
 
 # =========================
-# RETURNS MODEL (STABLE)
+# BASE RETURNS
 # =========================
 BASE = {
     "equity": 0.12,
@@ -70,19 +71,13 @@ def simulate_asset(name, price, monthly, years, scenario=1.0):
 
     for _ in range(months):
 
-        # DCA
         shares += monthly / price
 
-        # controlled stochastic growth (bounded)
         shock = np.random.normal(0, 0.002)
-        drift = (growth / 12) + shock
+        price *= (1 + (growth / 12) + shock)
 
-        price *= (1 + drift)
-
-        # hard safety floor
         price = max(price, 0.1)
 
-        # dividends (safe, not explosive)
         div = shares * price * dividend_yield / 12
         shares += div / price
 
@@ -94,7 +89,7 @@ def simulate_asset(name, price, monthly, years, scenario=1.0):
         curve.append(value)
 
     invested = monthly * months
-    final_value = curve[-1]
+    final_value = curve[-1] if curve else invested
 
     dividends = final_value * dividend_yield
 
@@ -127,6 +122,9 @@ def simulate_investment(monthly, years, companies):
         "defensive": [],
         "aggressive": []
     }
+
+    if len(companies) == 0:
+        return scenarios, {"status": "no data"}
 
     for c in companies:
 
