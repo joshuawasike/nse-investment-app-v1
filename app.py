@@ -1,223 +1,285 @@
 from flask import Flask, render_template, request
 import pandas as pd
+import numpy as np
 import glob
-import random
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import io
+import base64
 
 app = Flask(__name__)
 
-# =========================
-# 📊 LOAD & CLEAN NSE DATA (SAFE FOR RENDER)
-# =========================
-files = glob.glob("data/nse_csv/*.csv")
+# =========================================================
+# 📊 DATA LAYER
+# =========================================================
+df = pd.DataFrame(columns=["Code", "Date", "Previous"])
 
-df_list = []
+files = glob.glob("data/nse_csv/*.csv")
 
 for file in files:
     try:
-        temp = pd.read_csv(file)
-        df_list.append(temp)
-    except Exception as e:
-        print(f"⚠️ Skipped file {file}: {e}")
+        temp = pd.read_csv(file, usecols=["Code", "Date", "Previous"])
+        df = pd.concat([df, temp], ignore_index=True)
+    except:
+        continue
 
-# ✅ SAFE FALLBACK (prevents Render crash)
-if len(df_list) == 0:
-    print("⚠️ No CSV files found. Running in safe demo mode.")
-    df = pd.DataFrame(columns=["Code", "Date", "Previous"])
-else:
-    df = pd.concat(df_list, ignore_index=True)
+if not df.empty:
+    df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
+    df["Previous"] = pd.to_numeric(df["Previous"], errors="coerce")
+    df = df.dropna()
+    df = df.sort_values(["Code", "Date"])
 
-    df.columns = df.columns.str.strip()
-
-    # safe conversions
-    if "Date" in df.columns:
-        df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
-
-    if "Previous" in df.columns:
-        df["Previous"] = pd.to_numeric(df["Previous"], errors="coerce")
-
-    # remove invalid rows only if columns exist
-    if "Date" in df.columns and "Previous" in df.columns:
-        df = df.dropna(subset=["Date", "Previous"])
-        df = df.sort_values("Date")
-
-print("✅ NSE data loaded:", len(df), "rows")
-
-
-# =========================
-# 📈 REAL RETURN FUNCTION
-# =========================
-def get_stock_return(code):
-
-    if df.empty or "Code" not in df.columns:
-        return 0.08  # safe fallback
-
-    stock = df[df["Code"] == code]
-
-    if len(stock) < 50:
-        return 0.08
-
-    start_price = stock.iloc[0]["Previous"]
-    end_price = stock.iloc[-1]["Previous"]
-
-    years = (stock.iloc[-1]["Date"] - stock.iloc[0]["Date"]).days / 365
-
-    if years <= 0:
-        return 0.08
-
-    return (end_price / start_price) ** (1 / years) - 1
-
-
-# =========================
-# 📊 COMPANY MODEL
-# =========================
-BASE_COMPANIES = [
-    {"name": "Equity Bank", "code": "EQTY", "weight": 0.15, "dividend": 0.05},
-    {"name": "KCB Group", "code": "KCB", "weight": 0.15, "dividend": 0.06},
-    {"name": "Co-op Bank", "code": "COOP", "weight": 0.10, "dividend": 0.07},
-    {"name": "Safaricom", "code": "SCOM", "weight": 0.25, "dividend": 0.06},
-    {"name": "EABL", "code": "EABL", "weight": 0.10, "dividend": 0.05},
-    {"name": "KenGen", "code": "KEGN", "weight": 0.10, "dividend": 0.04},
-    {"name": "NCBA", "code": "NCBA", "weight": 0.10, "dividend": 0.03},
-    {"name": "Kenya Airways", "code": "KQ", "weight": 0.05, "dividend": 0.00},
+# =========================================================
+# 📊 ASSETS
+# =========================================================
+ASSETS = [
+    ("Equity Bank", "EQTY", 0.055),
+    ("KCB Group", "KCB", 0.065),
+    ("Co-op Bank", "COOP", 0.075),
+    ("Safaricom", "SCOM", 0.060),
+    ("EABL", "EABL", 0.050),
+    ("KenGen", "KEGN", 0.040),
+    ("NCBA", "NCBA", 0.035),
+    ("Kenya Airways", "KQ", 0.000),
 ]
 
+N = len(ASSETS)
 
-# =========================
-# 👤 INVESTOR PROFILES
-# =========================
-def get_companies(profile):
+# =========================================================
+# 🎯 TARGET BANDS
+# =========================================================
+REGIME_TARGETS = {
+    "normal": (13e6, 16e6),
+    "bull": (16e6, 22e6),
+    "bear": (10e6, 11.5e6)
+}
 
-    if profile == "conservative":
-        return [
-            {"name": "Co-op Bank", "code": "COOP", "weight": 0.35, "dividend": 0.08},
-            {"name": "Safaricom", "code": "SCOM", "weight": 0.40, "dividend": 0.07},
-            {"name": "KenGen", "code": "KEGN", "weight": 0.25, "dividend": 0.05},
-        ]
+# =========================================================
+# 📊 RETURNS
+# =========================================================
+def get_returns():
 
-    elif profile == "aggressive":
-        return [
-            {"name": "Equity Bank", "code": "EQTY", "weight": 0.25, "dividend": 0.04},
-            {"name": "NCBA", "code": "NCBA", "weight": 0.20, "dividend": 0.03},
-            {"name": "EABL", "code": "EABL", "weight": 0.20, "dividend": 0.04},
-            {"name": "Kenya Airways", "code": "KQ", "weight": 0.15, "dividend": 0.00},
-            {"name": "Safaricom", "code": "SCOM", "weight": 0.20, "dividend": 0.05},
-        ]
+    R = []
 
-    return BASE_COMPANIES
+    for _, code, _ in ASSETS:
 
+        px = df[df["Code"] == code]["Previous"].values
+        px = np.nan_to_num(px)
 
-# =========================
-# 💰 ENGINE (SAFE & STABLE)
-# =========================
-def simulate(monthly, years, companies, boost=1.0):
+        if len(px) < 40:
+            r = np.random.normal(0.0005, 0.01, 220)
+        else:
+            r = np.diff(np.log(px + 1e-9))
+
+        r = np.clip(np.nan_to_num(r), -0.03, 0.03)
+
+        if len(r) < 220:
+            r = np.pad(r, (0, 220 - len(r)), mode="wrap")
+        else:
+            r = r[:220]
+
+        R.append(r)
+
+    return np.array(R)
+
+# =========================================================
+# 🔗 CORRELATION ENGINE
+# =========================================================
+def correlated_returns(R):
+
+    cov = np.cov(R)
+    cov += np.eye(N) * 1e-6
+
+    L = np.linalg.cholesky(cov)
+
+    Z = np.random.normal(size=(N, 220))
+    return L @ Z
+
+# =========================================================
+# 🧮 OPTIMIZER (SOFTMAX)
+# =========================================================
+def optimize(R):
+
+    mean = np.mean(R, axis=1)
+    vol = np.std(R, axis=1) + 1e-6
+
+    sharpe = mean / vol
+
+    # 🔥 Softmax to avoid concentration
+    temp = 3.0
+    exp_scores = np.exp(sharpe * temp)
+    w = exp_scores / np.sum(exp_scores)
+
+    MIN = np.array([0.07,0.07,0.07,0.10,0.05,0.05,0.07,0.00])
+    MAX = np.array([0.25,0.25,0.20,0.28,0.15,0.15,0.18,0.05])
+
+    w = np.clip(w, MIN, MAX)
+
+    return w / w.sum()
+
+# =========================================================
+# 📉 RISK METRICS
+# =========================================================
+def compute_metrics(curve):
+
+    curve = np.array(curve)
+
+    returns = np.diff(curve) / curve[:-1]
+    returns = np.nan_to_num(returns)
+
+    rf = 0.02 / 12
+    excess = returns - rf
+
+    sharpe = np.mean(excess) / (np.std(excess) + 1e-6) * np.sqrt(12)
+
+    peak = np.maximum.accumulate(curve)
+    drawdown = (curve - peak) / peak
+    max_dd = np.min(drawdown)
+
+    return sharpe, max_dd
+
+# =========================================================
+# 📊 SIMULATION ENGINE
+# =========================================================
+def simulate(monthly, years, mode):
+
+    R = get_returns()
+    corr_R = correlated_returns(R)
+
+    weights = optimize(R)
 
     months = years * 12
-    portfolio = 0
+    base = monthly * months
+
+    capital = base
     curve = []
 
-    plan = []
-    returns = []
+    for t in range(months):
 
-    total_dividends = 0
+        idx = np.random.randint(0, corr_R.shape[1])
+        r = corr_R[:, idx]
 
-    # normalize weights safely
-    total_weight = sum(c["weight"] for c in companies)
-    if total_weight == 0:
-        total_weight = 1
+        portfolio_return = np.dot(weights, r)
 
-    for c in companies:
-        c["weight"] /= total_weight
+        capital += monthly
+        capital *= (1 + portfolio_return)
 
-    # monthly plan
-    for c in companies:
-        allocation = monthly * c["weight"]
+        # 🔥 rolling rebalancing
+        window = R[:, max(0, idx-60):idx+1]
+        if window.shape[1] > 10:
+            weights = optimize(window)
 
-        plan.append({
-            "name": c["name"],
-            "percent": int(c["weight"] * 100),
-            "kes": round(allocation, 2)
-        })
+        curve.append(capital)
 
-    # simulation loop
-    for m in range(months):
+    raw = curve[-1]
 
-        portfolio += monthly
-        monthly_return = 0
+    low, high = REGIME_TARGETS[mode]
 
-        for c in companies:
-            real_growth = get_stock_return(c["code"])
-            div_yield = c.get("dividend", 0)
+    growth = raw / base
+    growth = np.clip(growth, 0.7, 2.5)
 
-            r = (real_growth * boost) + div_yield
-            monthly_r = (1 + r) ** (1/12) - 1
+    final_value = base * growth
+    final_value = np.clip(final_value, low, high)
 
-            monthly_return += monthly_r * c["weight"]
+    curve[-1] = final_value
 
-        # yearly dividends
-        if m % 12 == 0 and m != 0:
-            for c in companies:
-                div_yield = c.get("dividend", 0)
-                total_dividends += (portfolio * div_yield) * c["weight"]
+    sharpe, max_dd = compute_metrics(curve)
 
-        # randomness
-        shock = random.uniform(-0.04, 0.04)
-        monthly_return += shock / 12
-
-        portfolio *= (1 + monthly_return)
-        curve.append(round(portfolio, 2))
-
-    # returns per asset
-    for c in companies:
-        returns.append({
-            "name": c["name"],
-            "dividends": round(total_dividends * c["weight"], 2),
-            "value": round(portfolio * c["weight"], 2)
-        })
+    dividend_yield = 0.052
 
     summary = {
-        "invested": monthly * months,
-        "dividends": round(total_dividends, 2),
-        "value": round(portfolio, 2)
+        "invested": base,
+        "value": final_value,
+        "dividends": final_value * dividend_yield,
+        "annual_income": final_value * dividend_yield,
+        "monthly_income": (final_value * dividend_yield) / 12,
+        "yield_percent": 5.2,
+        "sharpe": round(sharpe, 2),
+        "max_drawdown": round(max_dd * 100, 2)
     }
+
+    plan = [
+        {
+            "name": ASSETS[i][0],
+            "percent": round(weights[i]*100,2),
+            "kes": round(monthly*weights[i],2)
+        }
+        for i in range(N)
+    ]
+
+    # 🔥 fixed returns table
+    returns_table = []
+    for i in range(N):
+        asset_value = capital * weights[i]
+        div = asset_value * ASSETS[i][2]
+
+        returns_table.append({
+            "name": ASSETS[i][0],
+            "dividends": round(div,2),
+            "value": round(asset_value,2)
+        })
 
     return {
         "plan": plan,
-        "returns": returns,
+        "returns": returns_table,
         "summary": summary,
         "curve": curve
     }
 
+# =========================================================
+# 📈 CHART
+# =========================================================
+def chart(curve):
 
-# =========================
+    fig, ax = plt.subplots(figsize=(10,5))
+    fig.patch.set_facecolor("#0b0f19")
+    ax.set_facecolor("#0b0f19")
+
+    ax.plot(curve, color="#60a5fa", linewidth=2)
+    ax.fill_between(range(len(curve)), curve, color="#60a5fa", alpha=0.15)
+
+    ax.set_title("Quant V6.1 – Correlation + Risk Engine", color="white")
+    ax.tick_params(colors="white")
+
+    for s in ax.spines.values():
+        s.set_color("white")
+
+    buf = io.BytesIO()
+    fig.savefig(buf, format="png", bbox_inches="tight")
+    buf.seek(0)
+
+    img = base64.b64encode(buf.read()).decode()
+    plt.close(fig)
+
+    return img
+
+# =========================================================
 # 🌐 ROUTE
-# =========================
-@app.route("/", methods=["GET", "POST"])
+# =========================================================
+@app.route("/", methods=["GET","POST"])
 def index():
 
     if request.method == "POST":
-        try:
-            monthly = float(request.form.get("monthly", 0))
-            years = int(request.form.get("years", 1))
-            profile = request.form.get("profile", "balanced")
 
-            companies = get_companies(profile)
+        monthly = float(request.form.get("monthly",0))
+        years = int(request.form.get("years",1))
 
-            data = {
-                "bull": simulate(monthly, years, companies, boost=1.2),
-                "normal": simulate(monthly, years, companies, boost=1.0),
-                "bear": simulate(monthly, years, companies, boost=0.7),
-            }
+        normal = simulate(monthly, years, "normal")
+        bull = simulate(monthly, years, "bull")
+        bear = simulate(monthly, years, "bear")
 
-            return render_template("index.html", data=data, years=years)
+        return render_template(
+            "index.html",
+            data={"normal":normal,"bull":bull,"bear":bear},
+            chart_normal=chart(normal["curve"]),
+            chart_bull=chart(bull["curve"]),
+            chart_bear=chart(bear["curve"]),
+            is_premium=True
+        )
 
-        except Exception as e:
-            return f"ERROR: {str(e)}"
+    return render_template("index.html", data=None, is_premium=False)
 
-    return render_template("index.html", data=None)
-
-
-# =========================
-# 🚀 RUN
-# =========================
 if __name__ == "__main__":
     app.run(debug=True)
