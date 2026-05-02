@@ -11,11 +11,9 @@ body {
     padding: 20px;
 }
 
-/* HEADERS */
 h2 { color: #60a5fa; }
 h3 { color: #93c5fd; }
 
-/* FORM */
 .form-box input,
 .form-box select {
     display: block;
@@ -25,7 +23,6 @@ h3 { color: #93c5fd; }
     border-radius: 6px;
 }
 
-/* BUTTON */
 button {
     padding: 10px 15px;
     background: #2563eb;
@@ -34,7 +31,6 @@ button {
     border-radius: 6px;
 }
 
-/* CARD */
 .card {
     background: #111827;
     padding: 20px;
@@ -42,7 +38,6 @@ button {
     border-radius: 12px;
 }
 
-/* PREMIUM */
 .locked {
     background: #1f2937;
     padding: 15px;
@@ -50,7 +45,6 @@ button {
     color: #facc15;
 }
 
-/* TABLE */
 table {
     width: 100%;
     border-collapse: collapse;
@@ -65,7 +59,6 @@ th, td {
     white-space: nowrap;
 }
 
-/* CHART */
 img {
     width: 100%;
     max-width: 100%;
@@ -77,7 +70,6 @@ img {
     padding: 10px;
 }
 
-/* SECTION */
 .section-title {
     margin-top: 15px;
     color: #60a5fa;
@@ -100,7 +92,6 @@ img {
         <option value="aggressive">Aggressive</option>
     </select>
 
-    <!-- ================= PAYMENT BLOCK ================= -->
     <div class="card">
         <h3>💳 Payment Instructions</h3>
 
@@ -109,17 +100,13 @@ img {
         <p><b>Account Name:</b> Jobura Solutions</p>
 
         <p><b>Step 1:</b> Pay via M-Pesa</p>
-        <p><b>Step 2:</b> Copy Transaction Code (e.g. QHG7K9XXXX)</p>
+        <p><b>Step 2:</b> Copy Transaction Code</p>
         <p><b>Step 3:</b> Paste below</p>
 
-        <input 
-            name="transaction_code" 
-            placeholder="Enter M-Pesa Transaction Code"
-            required
-        >
+        <input name="transaction_code" placeholder="Enter M-Pesa Transaction Code">
 
-        <p style="color: gold; margin-top: 10px;">
-            ⚠ Premium is activated after verification
+        <p style="color: gold;">
+            ⚠ Premium unlock system coming soon (manual verification)
         </p>
     </div>
 
@@ -131,16 +118,19 @@ img {
 {% if not is_premium %}
 <div class="locked">
     <h3>📈 Investment Mode</h3>
-    🔒 FREE VERSION — Limited Analytics
+    🔒 FREE VERSION ACTIVE — Basic Analytics Enabled
 
-    <p><b>Unlock Premium:</b></p>
-    ✔ Bull Market Simulation <br>
-    ✔ Bear Risk Stress Test <br>
-    ✔ Correlation Engine <br>
-    ✔ Sharpe + Drawdown Analytics <br>
+    <p><b>Includes:</b></p>
+    ✔ Normal Scenario <br>
+    ✔ Portfolio Simulation <br>
+
+    <p><b>Premium (Coming Soon):</b></p>
+    ✔ Bull Market Stress Test <br>
+    ✔ Bear Market Risk Engine <br>
+    ✔ Sharpe + Drawdown Metrics <br>
 </div>
 {% else %}
-<h3 style="color:gold;">✅ PREMIUM ACTIVE — Full Analytics Enabled</h3>
+<h3 style="color:gold;">✅ PREMIUM ACTIVE</h3>
 {% endif %}
 
 {% if data %}
@@ -151,13 +141,15 @@ img {
 
 <p>💰 Invested: KES {{ data.normal.summary.invested }}</p>
 <p>💵 Dividends: KES {{ data.normal.summary.dividends }}</p>
-<p>📊 Portfolio Value: KES {{ data.normal.summary.value }}</p>
+
+<p>📊 Portfolio Value: KES {{
+    data.normal.summary.value if data.normal.summary.value is defined
+    else data.normal.summary.invested
+}}</p>
 
 <p>💸 Monthly Income: KES {{ data.normal.summary.monthly_income }}</p>
-<p>📈 Sharpe Ratio: {{ data.normal.summary.sharpe }}</p>
-<p>📉 Max Drawdown: {{ data.normal.summary.max_drawdown }}%</p>
 
-<div class="section-title">💰 Monthly Investment Plan</div>
+<div class="section-title">💰 Plan</div>
 <table>
 <tr><th>Asset</th><th>%</th><th>KES</th></tr>
 {% for c in data.normal.plan %}
@@ -169,19 +161,7 @@ img {
 {% endfor %}
 </table>
 
-<div class="section-title">📈 Expected Returns</div>
-<table>
-<tr><th>Asset</th><th>Dividends</th><th>Value</th></tr>
-{% for r in data.normal.returns %}
-<tr>
-<td>{{ r.name }}</td>
-<td>{{ r.dividends }}</td>
-<td>{{ r.value }}</td>
-</tr>
-{% endfor %}
-</table>
-
-<h4>📈 Portfolio Growth</h4>
+<h4>📈 Growth</h4>
 <img src="data:image/png;base64,{{ chart_normal }}">
 </div>
 
@@ -191,37 +171,13 @@ img {
 
 <p>💰 Invested: KES {{ data.bull.summary.invested }}</p>
 <p>💵 Dividends: KES {{ data.bull.summary.dividends }}</p>
-<p>📊 Portfolio Value: KES {{ data.bull.summary.value }}</p>
 
-<p>💸 Monthly Income: KES {{ data.bull.summary.monthly_income }}</p>
-<p>📈 Sharpe Ratio: {{ data.bull.summary.sharpe }}</p>
-<p>📉 Max Drawdown: {{ data.bull.summary.max_drawdown }}%</p>
+<p>📊 Portfolio Value: KES {{
+    data.bull.summary.value if data.bull.summary.value is defined
+    else data.bull.summary.invested
+}}</p>
 
-<div class="section-title">💰 Monthly Investment Plan</div>
-<table>
-<tr><th>Asset</th><th>%</th><th>KES</th></tr>
-{% for c in data.bull.plan %}
-<tr>
-<td>{{ c.name }}</td>
-<td>{{ c.percent }}%</td>
-<td>{{ c.kes }}</td>
-</tr>
-{% endfor %}
-</table>
-
-<div class="section-title">📈 Expected Returns</div>
-<table>
-<tr><th>Asset</th><th>Dividends</th><th>Value</th></tr>
-{% for r in data.bull.returns %}
-<tr>
-<td>{{ r.name }}</td>
-<td>{{ r.dividends }}</td>
-<td>{{ r.value }}</td>
-</tr>
-{% endfor %}
-</table>
-
-<h4>📈 Portfolio Growth</h4>
+<h4>📈 Growth</h4>
 <img src="data:image/png;base64,{{ chart_bull }}">
 </div>
 
@@ -231,37 +187,13 @@ img {
 
 <p>💰 Invested: KES {{ data.bear.summary.invested }}</p>
 <p>💵 Dividends: KES {{ data.bear.summary.dividends }}</p>
-<p>📊 Portfolio Value: KES {{ data.bear.summary.value }}</p>
 
-<p>💸 Monthly Income: KES {{ data.bear.summary.monthly_income }}</p>
-<p>📈 Sharpe Ratio: {{ data.bear.summary.sharpe }}</p>
-<p>📉 Max Drawdown: {{ data.bear.summary.max_drawdown }}%</p>
+<p>📊 Portfolio Value: KES {{
+    data.bear.summary.value if data.bear.summary.value is defined
+    else data.bear.summary.invested
+}}</p>
 
-<div class="section-title">💰 Monthly Investment Plan</div>
-<table>
-<tr><th>Asset</th><th>%</th><th>KES</th></tr>
-{% for c in data.bear.plan %}
-<tr>
-<td>{{ c.name }}</td>
-<td>{{ c.percent }}%</td>
-<td>{{ c.kes }}</td>
-</tr>
-{% endfor %}
-</table>
-
-<div class="section-title">📈 Expected Returns</div>
-<table>
-<tr><th>Asset</th><th>Dividends</th><th>Value</th></tr>
-{% for r in data.bear.returns %}
-<tr>
-<td>{{ r.name }}</td>
-<td>{{ r.dividends }}</td>
-<td>{{ r.value }}</td>
-</tr>
-{% endfor %}
-</table>
-
-<h4>📈 Portfolio Growth</h4>
+<h4>📈 Growth</h4>
 <img src="data:image/png;base64,{{ chart_bear }}">
 </div>
 
