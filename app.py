@@ -89,14 +89,21 @@ def get_returns():
     return np.array(R)
 
 # =========================================================
-# 🔗 CORRELATION ENGINE
+# 🔗 CORRELATION ENGINE (SAFE FIX 🔥)
 # =========================================================
 def correlated_returns(R):
 
+    R = np.nan_to_num(R)
+
     cov = np.cov(R)
+    cov = np.nan_to_num(cov)
+
     cov += np.eye(N) * 1e-6
 
-    L = np.linalg.cholesky(cov)
+    try:
+        L = np.linalg.cholesky(cov)
+    except:
+        L = np.eye(N)
 
     Z = np.random.normal(size=(N, 220))
     return L @ Z
@@ -241,7 +248,7 @@ def chart(curve):
     ax.plot(curve, color="#60a5fa", linewidth=2)
     ax.fill_between(range(len(curve)), curve, color="#60a5fa", alpha=0.15)
 
-    ax.set_title("Quant V6.1 – Correlation + Risk Engine", color="white")
+    ax.set_title("Jobura NSE Capital Terminal", color="white")
     ax.tick_params(colors="white")
 
     for s in ax.spines.values():
@@ -284,7 +291,7 @@ def index():
 
 
 # =========================================================
-# 🚀 RENDER FIX (IMPORTANT)
+# 🚀 RENDER FIX
 # =========================================================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
