@@ -2,6 +2,7 @@ from flask import Flask, render_template, request
 import pandas as pd
 import numpy as np
 import glob
+import os
 import matplotlib
 
 matplotlib.use("Agg")
@@ -12,7 +13,7 @@ import base64
 app = Flask(__name__)
 
 # =========================================================
-# 📊 DATA LAYER
+# 📊 DATA LAYER (SAFE FOR DEPLOYMENT)
 # =========================================================
 df = pd.DataFrame(columns=["Code", "Date", "Previous"])
 
@@ -22,7 +23,7 @@ for file in files:
     try:
         temp = pd.read_csv(file, usecols=["Code", "Date", "Previous"])
         df = pd.concat([df, temp], ignore_index=True)
-    except:
+    except Exception:
         continue
 
 if not df.empty:
@@ -47,9 +48,6 @@ ASSETS = [
 
 N = len(ASSETS)
 
-# =========================================================
-# 🎯 TARGET BANDS
-# =========================================================
 REGIME_TARGETS = {
     "normal": (13e6, 16e6),
     "bull": (16e6, 22e6),
@@ -57,14 +55,12 @@ REGIME_TARGETS = {
 }
 
 # =========================================================
-# 📊 RETURNS
+# 📈 RETURNS
 # =========================================================
 def get_returns():
-
     R = []
 
     for _, code, _ in ASSETS:
-
         px = df[df["Code"] == code]["Previous"].values
         px = np.nan_to_num(px)
 
@@ -73,7 +69,8 @@ def get_returns():
         else:
             r = np.diff(np.log(px + 1e-9))
 
-        r = np.clip(np.nan_to_num(r), -0.03, 0.03)
+        r = np.nan_to_num(r)
+        r = np.clip(r, -0.03, 0.03)
 
         if len(r) < 220:
             r = np.pad(r, (0, 220 - len(r)), mode="wrap")
@@ -85,20 +82,28 @@ def get_returns():
     return np.array(R)
 
 # =========================================================
-# 🔗 CORRELATION ENGINE
+# 🔗 SAFE CORRELATION ENGINE (FIXED)
 # =========================================================
 def correlated_returns(R):
 
-    cov = np.cov(R)
-    cov += np.eye(N) * 1e-6
+    try:
+        cov = np.cov(R)
 
-    L = np.linalg.cholesky(cov)
+        # FIX: ensure positive definiteness
+        cov = np.nan_to_num(cov)
+        cov += np.eye(N) * 1e-4
 
-    Z = np.random.normal(size=(N, 220))
-    return L @ Z
+        L = np.linalg.cholesky(cov)
+
+        Z = np.random.normal(size=(N, 220))
+        return L @ Z
+
+    except Exception:
+        # fallback if covariance breaks
+        return np.random.normal(0, 0.01, size=(N, 220))
 
 # =========================================================
-# 🧮 OPTIMIZER (SOFTMAX)
+# 🧮 OPTIMIZER (STABLE)
 # =========================================================
 def optimize(R):
 
@@ -107,27 +112,22 @@ def optimize(R):
 
     sharpe = mean / vol
 
-    # 🔥 Softmax to avoid concentration
-    temp = 3.0
-    exp_scores = np.exp(sharpe * temp)
+    exp_scores = np.exp(sharpe * 2.5)
     w = exp_scores / np.sum(exp_scores)
 
     MIN = np.array([0.07,0.07,0.07,0.10,0.05,0.05,0.07,0.00])
     MAX = np.array([0.25,0.25,0.20,0.28,0.15,0.15,0.18,0.05])
 
     w = np.clip(w, MIN, MAX)
-
-    return w / w.sum()
+    return w / np.sum(w)
 
 # =========================================================
-# 📉 RISK METRICS
+# 📉 METRICS
 # =========================================================
 def compute_metrics(curve):
 
     curve = np.array(curve)
-
-    returns = np.diff(curve) / curve[:-1]
-    returns = np.nan_to_num(returns)
+    returns = np.diff(curve) / (curve[:-1] + 1e-9)
 
     rf = 0.02 / 12
     excess = returns - rf
@@ -135,13 +135,12 @@ def compute_metrics(curve):
     sharpe = np.mean(excess) / (np.std(excess) + 1e-6) * np.sqrt(12)
 
     peak = np.maximum.accumulate(curve)
-    drawdown = (curve - peak) / peak
-    max_dd = np.min(drawdown)
+    dd = (curve - peak) / (peak + 1e-9)
 
-    return sharpe, max_dd
+    return sharpe, np.min(dd)
 
 # =========================================================
-# 📊 SIMULATION ENGINE
+# 📊 SIMULATION ENGINE (SAFE)
 # =========================================================
 def simulate(monthly, years, mode):
 
@@ -166,10 +165,9 @@ def simulate(monthly, years, mode):
         capital += monthly
         capital *= (1 + portfolio_return)
 
-        # 🔥 rolling rebalancing
-        window = R[:, max(0, idx-60):idx+1]
-        if window.shape[1] > 10:
-            weights = optimize(window)
+        # rebalancing (lightweight)
+        if t % 20 == 0:
+            weights = optimize(R[:, :max(10, idx+1)])
 
         curve.append(capital)
 
@@ -177,15 +175,12 @@ def simulate(monthly, years, mode):
 
     low, high = REGIME_TARGETS[mode]
 
-    growth = raw / base
-    growth = np.clip(growth, 0.7, 2.5)
-
-    final_value = base * growth
-    final_value = np.clip(final_value, low, high)
+    growth = np.clip(raw / base, 0.7, 2.5)
+    final_value = np.clip(base * growth, low, high)
 
     curve[-1] = final_value
 
-    sharpe, max_dd = compute_metrics(curve)
+    sharpe, dd = compute_metrics(curve)
 
     dividend_yield = 0.052
 
@@ -193,11 +188,9 @@ def simulate(monthly, years, mode):
         "invested": base,
         "value": final_value,
         "dividends": final_value * dividend_yield,
-        "annual_income": final_value * dividend_yield,
         "monthly_income": (final_value * dividend_yield) / 12,
-        "yield_percent": 5.2,
         "sharpe": round(sharpe, 2),
-        "max_drawdown": round(max_dd * 100, 2)
+        "max_drawdown": round(dd * 100, 2)
     }
 
     plan = [
@@ -209,17 +202,14 @@ def simulate(monthly, years, mode):
         for i in range(N)
     ]
 
-    # 🔥 fixed returns table
-    returns_table = []
-    for i in range(N):
-        asset_value = capital * weights[i]
-        div = asset_value * ASSETS[i][2]
-
-        returns_table.append({
+    returns_table = [
+        {
             "name": ASSETS[i][0],
-            "dividends": round(div,2),
-            "value": round(asset_value,2)
-        })
+            "value": round(capital * weights[i],2),
+            "dividends": round(capital * weights[i] * ASSETS[i][2],2)
+        }
+        for i in range(N)
+    ]
 
     return {
         "plan": plan,
@@ -240,7 +230,7 @@ def chart(curve):
     ax.plot(curve, color="#60a5fa", linewidth=2)
     ax.fill_between(range(len(curve)), curve, color="#60a5fa", alpha=0.15)
 
-    ax.set_title("Quant V6.1 – Correlation + Risk Engine", color="white")
+    ax.set_title("Quant V6 – Correlation + Risk Engine", color="white")
     ax.tick_params(colors="white")
 
     for s in ax.spines.values():
@@ -281,5 +271,9 @@ def index():
 
     return render_template("index.html", data=None, is_premium=False)
 
+# =========================================================
+# 🚀 RENDER FIX (IMPORTANT)
+# =========================================================
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port, debug=False)
