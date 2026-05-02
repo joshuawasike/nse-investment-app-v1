@@ -106,7 +106,7 @@ img {
         <input name="transaction_code" placeholder="Enter M-Pesa Transaction Code">
 
         <p style="color: gold;">
-            ⚠ Premium unlock system coming soon (manual verification)
+            ⚠ Premium unlock after verification
         </p>
     </div>
 
@@ -118,19 +118,21 @@ img {
 {% if not is_premium %}
 <div class="locked">
     <h3>📈 Investment Mode</h3>
-    🔒 FREE VERSION ACTIVE — Basic Analytics Enabled
+
+    🔒 FREE VERSION ACTIVE
 
     <p><b>Includes:</b></p>
     ✔ Normal Scenario <br>
     ✔ Portfolio Simulation <br>
 
-    <p><b>Premium (Coming Soon):</b></p>
-    ✔ Bull Market Stress Test <br>
-    ✔ Bear Market Risk Engine <br>
-    ✔ Sharpe + Drawdown Metrics <br>
+    <p><b>Unlock Premium:</b></p>
+    ✔ Bull Market Scenario <br>
+    ✔ Bear Market Scenario <br>
+    ✔ Investment Plan Tables <br>
+    ✔ Returns Breakdown <br>
 </div>
 {% else %}
-<h3 style="color:gold;">✅ PREMIUM ACTIVE</h3>
+<h3 style="color:gold;">✅ PREMIUM ACTIVE — Full Analytics Unlocked</h3>
 {% endif %}
 
 {% if data %}
@@ -141,15 +143,10 @@ img {
 
 <p>💰 Invested: KES {{ data.normal.summary.invested }}</p>
 <p>💵 Dividends: KES {{ data.normal.summary.dividends }}</p>
-
-<p>📊 Portfolio Value: KES {{
-    data.normal.summary.value if data.normal.summary.value is defined
-    else data.normal.summary.invested
-}}</p>
-
+<p>📊 Portfolio Value: KES {{ data.normal.summary.value }}</p>
 <p>💸 Monthly Income: KES {{ data.normal.summary.monthly_income }}</p>
 
-<div class="section-title">💰 Plan</div>
+<div class="section-title">💰 Investment Plan</div>
 <table>
 <tr><th>Asset</th><th>%</th><th>KES</th></tr>
 {% for c in data.normal.plan %}
@@ -161,41 +158,51 @@ img {
 {% endfor %}
 </table>
 
+{% if is_premium %}
+<div class="section-title">📈 Returns Breakdown</div>
+<table>
+<tr><th>Asset</th><th>Dividends</th><th>Value</th></tr>
+{% for r in data.normal.returns %}
+<tr>
+<td>{{ r.name }}</td>
+<td>{{ r.dividends }}</td>
+<td>{{ r.value }}</td>
+</tr>
+{% endfor %}
+</table>
+{% endif %}
+
 <h4>📈 Growth</h4>
 <img src="data:image/png;base64,{{ chart_normal }}">
 </div>
 
 <!-- ================= BULL ================= -->
+{% if is_premium and data.bull %}
 <div class="card">
 <h3>📊 BULL SCENARIO</h3>
 
 <p>💰 Invested: KES {{ data.bull.summary.invested }}</p>
 <p>💵 Dividends: KES {{ data.bull.summary.dividends }}</p>
-
-<p>📊 Portfolio Value: KES {{
-    data.bull.summary.value if data.bull.summary.value is defined
-    else data.bull.summary.invested
-}}</p>
+<p>📊 Portfolio Value: KES {{ data.bull.summary.value }}</p>
 
 <h4>📈 Growth</h4>
 <img src="data:image/png;base64,{{ chart_bull }}">
 </div>
+{% endif %}
 
 <!-- ================= BEAR ================= -->
+{% if is_premium and data.bear %}
 <div class="card">
 <h3>📊 BEAR SCENARIO</h3>
 
 <p>💰 Invested: KES {{ data.bear.summary.invested }}</p>
 <p>💵 Dividends: KES {{ data.bear.summary.dividends }}</p>
-
-<p>📊 Portfolio Value: KES {{
-    data.bear.summary.value if data.bear.summary.value is defined
-    else data.bear.summary.invested
-}}</p>
+<p>📊 Portfolio Value: KES {{ data.bear.summary.value }}</p>
 
 <h4>📈 Growth</h4>
 <img src="data:image/png;base64,{{ chart_bear }}">
 </div>
+{% endif %}
 
 {% endif %}
 
