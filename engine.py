@@ -1,6 +1,5 @@
 import numpy as np
 
-
 # =========================
 # SAFE UTIL
 # =========================
@@ -59,7 +58,8 @@ DIV = {
 def simulate_asset(name, price, monthly, years, scenario=1.0):
 
     price = safe(price, 10)
-    months = max(int(years * 12), 1)
+    monthly = safe(monthly, 0)
+    years = max(int(safe(years, 1)), 1)
 
     cls = classify(name)
 
@@ -69,17 +69,25 @@ def simulate_asset(name, price, monthly, years, scenario=1.0):
     shares = 0.0
     curve = []
 
+    months = years * 12
+
     for _ in range(months):
 
-        shares += monthly / price
+        if price <= 0:
+            price = 10
 
+        # DCA (safe division)
+        shares += monthly / (price + 1e-9)
+
+        # controlled stochastic growth
         shock = np.random.normal(0, 0.002)
         price *= (1 + (growth / 12) + shock)
 
         price = max(price, 0.1)
 
+        # dividends reinvested
         div = shares * price * dividend_yield / 12
-        shares += div / price
+        shares += div / (price + 1e-9)
 
         value = shares * price
 
@@ -89,13 +97,18 @@ def simulate_asset(name, price, monthly, years, scenario=1.0):
         curve.append(value)
 
     invested = monthly * months
-    final_value = curve[-1] if curve else invested
+    final_value = curve[-1] if len(curve) > 0 else invested
 
     dividends = final_value * dividend_yield
 
     roi = 0.0
     if invested > 0:
         roi = ((final_value - invested) / invested) * 100
+
+    # safety clamp
+    final_value = safe(final_value, invested)
+    dividends = safe(dividends, 0)
+    roi = safe(roi, 0)
 
     return {
         "invested": invested,
@@ -113,7 +126,7 @@ def simulate_asset(name, price, monthly, years, scenario=1.0):
 def simulate_investment(monthly, years, companies):
 
     monthly = safe(monthly, 0)
-    years = max(int(years), 1)
+    years = max(int(safe(years, 1)), 1)
 
     companies = companies or []
 
@@ -123,10 +136,15 @@ def simulate_investment(monthly, years, companies):
         "aggressive": []
     }
 
+    # guard: empty input
     if len(companies) == 0:
         return scenarios, {"status": "no data"}
 
     for c in companies:
+
+        # safety: must be dict
+        if not isinstance(c, dict):
+            continue
 
         name = c.get("name", "asset")
         price = safe(c.get("price", 10))
