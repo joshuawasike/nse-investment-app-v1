@@ -17,7 +17,6 @@ app = Flask(__name__)
 # =========================================================
 df = pd.DataFrame(columns=["Code", "Date", "Previous"])
 
-# 🔥 SAFE FILE LOADING (Render-safe)
 files = []
 if os.path.exists("data/nse_csv"):
     files = glob.glob("data/nse_csv/*.csv")
@@ -64,11 +63,9 @@ REGIME_TARGETS = {
 # 📊 RETURNS
 # =========================================================
 def get_returns():
-
     R = []
 
     for _, code, _ in ASSETS:
-
         px = df[df["Code"] == code]["Previous"].values
         px = np.nan_to_num(px)
 
@@ -89,10 +86,9 @@ def get_returns():
     return np.array(R)
 
 # =========================================================
-# 🔗 CORRELATION ENGINE (SAFE FIX 🔥)
+# 🔗 CORRELATION ENGINE (SAFE FIX)
 # =========================================================
 def correlated_returns(R):
-
     R = np.nan_to_num(R)
 
     cov = np.cov(R)
@@ -109,34 +105,30 @@ def correlated_returns(R):
     return L @ Z
 
 # =========================================================
-# 🧮 OPTIMIZER (SOFTMAX)
+# 🧮 OPTIMIZER
 # =========================================================
 def optimize(R):
-
     mean = np.mean(R, axis=1)
     vol = np.std(R, axis=1) + 1e-6
 
     sharpe = mean / vol
 
-    temp = 3.0
-    exp_scores = np.exp(sharpe * temp)
+    exp_scores = np.exp(sharpe * 3.0)
     w = exp_scores / np.sum(exp_scores)
 
     MIN = np.array([0.07,0.07,0.07,0.10,0.05,0.05,0.07,0.00])
     MAX = np.array([0.25,0.25,0.20,0.28,0.15,0.15,0.18,0.05])
 
     w = np.clip(w, MIN, MAX)
-
     return w / w.sum()
 
 # =========================================================
 # 📉 RISK METRICS
 # =========================================================
 def compute_metrics(curve):
-
     curve = np.array(curve)
 
-    returns = np.diff(curve) / curve[:-1]
+    returns = np.diff(curve) / (curve[:-1] + 1e-9)
     returns = np.nan_to_num(returns)
 
     rf = 0.02 / 12
@@ -145,7 +137,7 @@ def compute_metrics(curve):
     sharpe = np.mean(excess) / (np.std(excess) + 1e-6) * np.sqrt(12)
 
     peak = np.maximum.accumulate(curve)
-    drawdown = (curve - peak) / peak
+    drawdown = (curve - peak) / (peak + 1e-9)
     max_dd = np.min(drawdown)
 
     return sharpe, max_dd
@@ -154,6 +146,12 @@ def compute_metrics(curve):
 # 📊 SIMULATION ENGINE
 # =========================================================
 def simulate(monthly, years, mode):
+
+    monthly = float(monthly or 0)
+    years = int(years or 1)
+
+    if monthly <= 0:
+        monthly = 1000
 
     R = get_returns()
     corr_R = correlated_returns(R)
@@ -167,7 +165,6 @@ def simulate(monthly, years, mode):
     curve = []
 
     for t in range(months):
-
         idx = np.random.randint(0, corr_R.shape[1])
         r = corr_R[:, idx]
 
@@ -186,7 +183,7 @@ def simulate(monthly, years, mode):
 
     low, high = REGIME_TARGETS[mode]
 
-    growth = raw / base
+    growth = raw / (base + 1e-9)
     growth = np.clip(growth, 0.7, 2.5)
 
     final_value = base * growth
@@ -269,10 +266,12 @@ def chart(curve):
 @app.route("/", methods=["GET","POST"])
 def index():
 
+    is_premium = False  # 🔥 FIXED FREE VERSION
+
     if request.method == "POST":
 
-        monthly = float(request.form.get("monthly",0))
-        years = int(request.form.get("years",1))
+        monthly = request.form.get("monthly", 0)
+        years = request.form.get("years", 1)
 
         normal = simulate(monthly, years, "normal")
         bull = simulate(monthly, years, "bull")
@@ -284,11 +283,10 @@ def index():
             chart_normal=chart(normal["curve"]),
             chart_bull=chart(bull["curve"]),
             chart_bear=chart(bear["curve"]),
-            is_premium=True
+            is_premium=is_premium
         )
 
     return render_template("index.html", data=None, is_premium=False)
-
 
 # =========================================================
 # 🚀 RENDER FIX
