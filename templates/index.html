@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Institutional Alpha Terminal</title>
+<title>Jobura NSE Capital Terminal</title>
 
 <style>
 body {
@@ -87,9 +87,10 @@ img {
 
 <body>
 
-<h2>📊 Institutional Alpha Terminal</h2>
+<h2>📊 Jobura NSE Capital Terminal</h2>
 
 <form method="POST" class="form-box">
+
     <input name="monthly" placeholder="Monthly Investment (KES)" required>
     <input name="years" placeholder="Years" required>
 
@@ -99,7 +100,29 @@ img {
         <option value="aggressive">Aggressive</option>
     </select>
 
-    <input name="access_code" placeholder="Access Code (Premium)">
+    <!-- ================= PAYMENT BLOCK ================= -->
+    <div class="card">
+        <h3>💳 Payment Instructions</h3>
+
+        <p><b>PayBill:</b> 542542</p>
+        <p><b>Account Number:</b> 31909</p>
+        <p><b>Account Name:</b> Jobura Solutions</p>
+
+        <p><b>Step 1:</b> Pay via M-Pesa</p>
+        <p><b>Step 2:</b> Copy Transaction Code (e.g. QHG7K9XXXX)</p>
+        <p><b>Step 3:</b> Paste below</p>
+
+        <input 
+            name="transaction_code" 
+            placeholder="Enter M-Pesa Transaction Code"
+            required
+        >
+
+        <p style="color: gold; margin-top: 10px;">
+            ⚠ Premium is activated after verification
+        </p>
+    </div>
+
     <button type="submit">Run Engine</button>
 </form>
 
@@ -126,12 +149,11 @@ img {
 <div class="card">
 <h3>📊 NORMAL SCENARIO</h3>
 
-<p>💰 Invested: KES {{ "{:,.2f}".format(data.normal.summary.invested) }}</p>
-<p>💵 Dividends: KES {{ "{:,.2f}".format(data.normal.summary.dividends) }}</p>
-<p>📊 Portfolio Value: KES {{ "{:,.2f}".format(data.normal.summary.value) }}</p>
+<p>💰 Invested: KES {{ data.normal.summary.invested }}</p>
+<p>💵 Dividends: KES {{ data.normal.summary.dividends }}</p>
+<p>📊 Portfolio Value: KES {{ data.normal.summary.value }}</p>
 
-<p>💸 Monthly Income: KES {{ "{:,.2f}".format(data.normal.summary.monthly_income) }}</p>
-
+<p>💸 Monthly Income: KES {{ data.normal.summary.monthly_income }}</p>
 <p>📈 Sharpe Ratio: {{ data.normal.summary.sharpe }}</p>
 <p>📉 Max Drawdown: {{ data.normal.summary.max_drawdown }}%</p>
 
@@ -142,7 +164,7 @@ img {
 <tr>
 <td>{{ c.name }}</td>
 <td>{{ c.percent }}%</td>
-<td>{{ "{:,.2f}".format(c.kes) }}</td>
+<td>{{ c.kes }}</td>
 </tr>
 {% endfor %}
 </table>
@@ -153,8 +175,8 @@ img {
 {% for r in data.normal.returns %}
 <tr>
 <td>{{ r.name }}</td>
-<td>{{ "{:,.2f}".format(r.dividends) }}</td>
-<td>{{ "{:,.2f}".format(r.value) }}</td>
+<td>{{ r.dividends }}</td>
+<td>{{ r.value }}</td>
 </tr>
 {% endfor %}
 </table>
@@ -167,12 +189,11 @@ img {
 <div class="card">
 <h3>📊 BULL SCENARIO</h3>
 
-<p>💰 Invested: KES {{ "{:,.2f}".format(data.bull.summary.invested) }}</p>
-<p>💵 Dividends: KES {{ "{:,.2f}".format(data.bull.summary.dividends) }}</p>
-<p>📊 Portfolio Value: KES {{ "{:,.2f}".format(data.bull.summary.value) }}</p>
+<p>💰 Invested: KES {{ data.bull.summary.invested }}</p>
+<p>💵 Dividends: KES {{ data.bull.summary.dividends }}</p>
+<p>📊 Portfolio Value: KES {{ data.bull.summary.value }}</p>
 
-<p>💸 Monthly Income: KES {{ "{:,.2f}".format(data.bull.summary.monthly_income) }}</p>
-
+<p>💸 Monthly Income: KES {{ data.bull.summary.monthly_income }}</p>
 <p>📈 Sharpe Ratio: {{ data.bull.summary.sharpe }}</p>
 <p>📉 Max Drawdown: {{ data.bull.summary.max_drawdown }}%</p>
 
@@ -183,7 +204,7 @@ img {
 <tr>
 <td>{{ c.name }}</td>
 <td>{{ c.percent }}%</td>
-<td>{{ "{:,.2f}".format(c.kes) }}</td>
+<td>{{ c.kes }}</td>
 </tr>
 {% endfor %}
 </table>
@@ -194,8 +215,8 @@ img {
 {% for r in data.bull.returns %}
 <tr>
 <td>{{ r.name }}</td>
-<td>{{ "{:,.2f}".format(r.dividends) }}</td>
-<td>{{ "{:,.2f}".format(r.value) }}</td>
+<td>{{ r.dividends }}</td>
+<td>{{ r.value }}</td>
 </tr>
 {% endfor %}
 </table>
@@ -208,12 +229,11 @@ img {
 <div class="card">
 <h3>📊 BEAR SCENARIO</h3>
 
-<p>💰 Invested: KES {{ "{:,.2f}".format(data.bear.summary.invested) }}</p>
-<p>💵 Dividends: KES {{ "{:,.2f}".format(data.bear.summary.dividends) }}</p>
-<p>📊 Portfolio Value: KES {{ "{:,.2f}".format(data.bear.summary.value) }}</p>
+<p>💰 Invested: KES {{ data.bear.summary.invested }}</p>
+<p>💵 Dividends: KES {{ data.bear.summary.dividends }}</p>
+<p>📊 Portfolio Value: KES {{ data.bear.summary.value }}</p>
 
-<p>💸 Monthly Income: KES {{ "{:,.2f}".format(data.bear.summary.monthly_income) }}</p>
-
+<p>💸 Monthly Income: KES {{ data.bear.summary.monthly_income }}</p>
 <p>📈 Sharpe Ratio: {{ data.bear.summary.sharpe }}</p>
 <p>📉 Max Drawdown: {{ data.bear.summary.max_drawdown }}%</p>
 
@@ -224,7 +244,7 @@ img {
 <tr>
 <td>{{ c.name }}</td>
 <td>{{ c.percent }}%</td>
-<td>{{ "{:,.2f}".format(c.kes) }}</td>
+<td>{{ c.kes }}</td>
 </tr>
 {% endfor %}
 </table>
@@ -235,8 +255,8 @@ img {
 {% for r in data.bear.returns %}
 <tr>
 <td>{{ r.name }}</td>
-<td>{{ "{:,.2f}".format(r.dividends) }}</td>
-<td>{{ "{:,.2f}".format(r.value) }}</td>
+<td>{{ r.dividends }}</td>
+<td>{{ r.value }}</td>
 </tr>
 {% endfor %}
 </table>
