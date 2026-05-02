@@ -1,201 +1,250 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Institutional Alpha Terminal</title>
+<title>Institutional Alpha Terminal</title>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body {
+    font-family: Arial;
+    background: #0b0f19;
+    color: #e5e7eb;
+    padding: 20px;
+}
 
-    <style>
-        body {
-            font-family: Arial;
-            background: #0b0f19;
-            color: #e5e7eb;
-            padding: 20px;
-        }
+/* HEADERS */
+h2 { color: #60a5fa; }
+h3 { color: #93c5fd; }
 
-        h2, h3, h4 { color: #60a5fa; }
+/* FORM */
+.form-box input,
+.form-box select {
+    display: block;
+    width: 260px;
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 6px;
+}
 
-        .card {
-            background: #111827;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
+/* BUTTON */
+button {
+    padding: 10px 15px;
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 6px;
+}
 
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
-        }
+/* CARD */
+.card {
+    background: #111827;
+    padding: 20px;
+    margin-top: 20px;
+    border-radius: 12px;
+}
 
-        .stat {
-            background: #1f2937;
-            padding: 10px;
-            border-radius: 8px;
-        }
+/* PREMIUM */
+.locked {
+    background: #1f2937;
+    padding: 15px;
+    border-left: 5px solid gold;
+    color: #facc15;
+}
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
+/* TABLE FIX (ALIGNMENT FIX 🔥) */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-family: monospace;
+}
 
-        th, td {
-            border-bottom: 1px solid #374151;
-            padding: 8px;
-            text-align: left;
-        }
+th, td {
+    padding: 8px;
+    border-bottom: 1px solid #374151;
+    text-align: left;
+    white-space: nowrap;
+}
 
-        th { color: #93c5fd; }
+/* GRAPH FIX (DARK TERMINAL STYLE) */
+img {
+    width: 100%;
+    margin-top: 10px;
+    border-radius: 10px;
+    background: #0b0f19;
+    padding: 10px;
+}
 
-        .muted {
-            color: #9ca3af;
-            font-size: 12px;
-        }
+/* SECTION SPACING */
+.section-title {
+    margin-top: 15px;
+    color: #60a5fa;
+}
 
-        input, select, button {
-            padding: 8px;
-            margin-top: 5px;
-            border-radius: 6px;
-            border: none;
-        }
-
-        button {
-            background: #2563eb;
-            color: white;
-            cursor: pointer;
-        }
-    </style>
+</style>
 </head>
 
 <body>
 
 <h2>📊 Institutional Alpha Terminal</h2>
 
-<form method="POST" class="card">
-    <label>Monthly Investment (KES)</label><br>
-    <input type="number" name="monthly" required><br><br>
+<form method="POST" class="form-box">
+    <input name="monthly" placeholder="Monthly Investment (KES)" required>
+    <input name="years" placeholder="Years" required>
 
-    <label>Years</label><br>
-    <input type="number" name="years" required><br><br>
-
-    <label>Investor Type</label><br>
     <select name="profile">
-        <option value="balanced" selected>Balanced</option>
+        <option value="balanced">Balanced</option>
         <option value="conservative">Conservative</option>
         <option value="aggressive">Aggressive</option>
     </select>
 
-    <br><br>
+    <input name="access_code" placeholder="Access Code (Premium)">
     <button type="submit">Run Engine</button>
 </form>
+
+<hr>
+
+{% if not is_premium %}
+<div class="locked">
+    <h3>📈 Investment Plans</h3>
+    🔒 FREE VERSION — Only Normal Scenario Available
+
+    <p><b>Unlock:</b></p>
+    ✔ Bull Market Projection <br>
+    ✔ Bear Market Risk Analysis <br>
+    ✔ Advanced Scenario Modeling <br>
+</div>
+{% else %}
+<h3 style="color:gold;">✅ PREMIUM ACTIVE — Full Analytics Enabled</h3>
+{% endif %}
 
 
 {% if data %}
 
-<h2>📈 Investment Plans</h2>
-
-{% for scenario, s in data.items() %}
-
+<!-- ================= NORMAL ================= -->
 <div class="card">
+<h3>📊 NORMAL SCENARIO</h3>
 
-<h3>📊 {{ scenario.upper() }} SCENARIO</h3>
+<p>💰 Invested: KES {{ data.normal.summary.invested }}</p>
+<p>💵 Dividends: KES {{ data.normal.summary.dividends }}</p>
+<p>📊 Portfolio Value: KES {{ data.normal.summary.value }}</p>
 
-<!-- ========================= -->
-<!-- SUMMARY CARDS -->
-<!-- ========================= -->
-{% set summary = s.get("summary", {}) %}
+<p>💸 Monthly Income: KES {{ data.normal.summary.monthly_income }}</p>
+<p>📅 Annual Income: KES {{ data.normal.summary.annual_income }}</p>
+<p>📈 Yield: {{ data.normal.summary.yield_percent }}%</p>
 
-<div class="grid">
-    <div class="stat">💰 Invested<br><strong>KES {{ "{:,}".format(summary.get("invested", 0)) }}</strong></div>
-    <div class="stat">💵 Dividends<br><strong>KES {{ "{:,}".format(summary.get("dividends", 0)) }}</strong></div>
-    <div class="stat">📊 Portfolio Value<br><strong>KES {{ "{:,}".format(summary.get("value", 0)) }}</strong></div>
+<div class="section-title">💰 Monthly Investment Plan</div>
+<table>
+<tr><th>Asset</th><th>%</th><th>KES</th></tr>
+{% for c in data.normal.plan %}
+<tr>
+<td>{{ c.name }}</td>
+<td>{{ c.percent }}%</td>
+<td>{{ c.kes }}</td>
+</tr>
+{% endfor %}
+</table>
+
+<div class="section-title">📈 Expected Returns (5 Years)</div>
+<table>
+<tr><th>Asset</th><th>Dividends</th><th>Final Value</th></tr>
+{% for r in data.normal.returns %}
+<tr>
+<td>{{ r.name }}</td>
+<td>{{ r.dividends }}</td>
+<td>{{ r.value }}</td>
+</tr>
+{% endfor %}
+</table>
+
+<h4>📈 Portfolio Growth</h4>
+<img src="data:image/png;base64,{{ chart_normal }}">
 </div>
 
 
-<!-- ========================= -->
-<!-- CHART -->
-<!-- ========================= -->
-{% set curve = s.get("curve", []) %}
+<!-- ================= BULL ================= -->
+{% if data.bull %}
+<div class="card">
+<h3>📊 BULL SCENARIO</h3>
 
-{% if curve %}
-<canvas id="chart_{{ loop.index }}"></canvas>
+<p>💰 Invested: KES {{ data.bull.summary.invested }}</p>
+<p>💵 Dividends: KES {{ data.bull.summary.dividends }}</p>
+<p>📊 Portfolio Value: KES {{ data.bull.summary.value }}</p>
 
-<script>
-const ctx{{ loop.index }} = document.getElementById('chart_{{ loop.index }}').getContext('2d');
+<p>💸 Monthly Income: KES {{ data.bull.summary.monthly_income }}</p>
+<p>📅 Annual Income: KES {{ data.bull.summary.annual_income }}</p>
+<p>📈 Yield: {{ data.bull.summary.yield_percent }}%</p>
 
-new Chart(ctx{{ loop.index }}, {
-    type: 'line',
-    data: {
-        labels: {{ range(1, curve|length + 1) | list }},
-        datasets: [{
-            label: 'Portfolio Growth',
-            data: {{ curve }},
-            borderWidth: 2,
-            tension: 0.3
-        }]
-    },
-    options: {
-        scales: {
-            x: { display: false }
-        }
-    }
-});
-</script>
+<div class="section-title">💰 Monthly Investment Plan</div>
+<table>
+<tr><th>Asset</th><th>%</th><th>KES</th></tr>
+{% for c in data.bull.plan %}
+<tr>
+<td>{{ c.name }}</td>
+<td>{{ c.percent }}%</td>
+<td>{{ c.kes }}</td>
+</tr>
+{% endfor %}
+</table>
+
+<div class="section-title">📈 Expected Returns (5 Years)</div>
+<table>
+<tr><th>Asset</th><th>Dividends</th><th>Final Value</th></tr>
+{% for r in data.bull.returns %}
+<tr>
+<td>{{ r.name }}</td>
+<td>{{ r.dividends }}</td>
+<td>{{ r.value }}</td>
+</tr>
+{% endfor %}
+</table>
+
+<h4>📈 Portfolio Growth</h4>
+<img src="data:image/png;base64,{{ chart_bull }}">
+</div>
 {% endif %}
 
 
-<!-- ========================= -->
-<!-- MONTHLY PLAN -->
-<!-- ========================= -->
-<h4>💰 Monthly Investment Plan</h4>
+<!-- ================= BEAR ================= -->
+{% if data.bear %}
+<div class="card">
+<h3>📊 BEAR SCENARIO</h3>
 
+<p>💰 Invested: KES {{ data.bear.summary.invested }}</p>
+<p>💵 Dividends: KES {{ data.bear.summary.dividends }}</p>
+<p>📊 Portfolio Value: KES {{ data.bear.summary.value }}</p>
+
+<p>💸 Monthly Income: KES {{ data.bear.summary.monthly_income }}</p>
+<p>📅 Annual Income: KES {{ data.bear.summary.annual_income }}</p>
+<p>📈 Yield: {{ data.bear.summary.yield_percent }}%</p>
+
+<div class="section-title">💰 Monthly Investment Plan</div>
 <table>
+<tr><th>Asset</th><th>%</th><th>KES</th></tr>
+{% for c in data.bear.plan %}
 <tr>
-    <th>Asset</th>
-    <th>%</th>
-    <th>KES</th>
-</tr>
-
-{% for p in s.get("plan", []) %}
-<tr>
-    <td>{{ p.get("name", "N/A") }}</td>
-    <td>{{ p.get("percent", 0) }}%</td>
-    <td>KES {{ "{:,}".format(p.get("kes", 0)) }}</td>
+<td>{{ c.name }}</td>
+<td>{{ c.percent }}%</td>
+<td>{{ c.kes }}</td>
 </tr>
 {% endfor %}
 </table>
 
-
-<!-- ========================= -->
-<!-- RETURNS -->
-<!-- ========================= -->
-<h4>📈 Expected Returns ({{ years }} Years)</h4>
-
+<div class="section-title">📈 Expected Returns (5 Years)</div>
 <table>
+<tr><th>Asset</th><th>Dividends</th><th>Final Value</th></tr>
+{% for r in data.bear.returns %}
 <tr>
-    <th>Asset</th>
-    <th>Dividends</th>
-    <th>Final Value</th>
-</tr>
-
-{% for r in s.get("returns", []) %}
-<tr>
-    <td>{{ r.get("name", "N/A") }}</td>
-    <td>KES {{ "{:,}".format(r.get("dividends", 0)) }}</td>
-    <td>KES {{ "{:,}".format(r.get("value", 0)) }}</td>
+<td>{{ r.name }}</td>
+<td>{{ r.dividends }}</td>
+<td>{{ r.value }}</td>
 </tr>
 {% endfor %}
 </table>
 
-
-<p class="muted">
-Engine-safe rendering mode (prevents NaN / crash / missing key errors)
-</p>
-
+<h4>📈 Portfolio Growth</h4>
+<img src="data:image/png;base64,{{ chart_bear }}">
 </div>
-
-{% endfor %}
+{% endif %}
 
 {% endif %}
 
