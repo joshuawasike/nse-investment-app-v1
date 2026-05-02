@@ -51,6 +51,15 @@ ASSETS = [
 N = len(ASSETS)
 
 # =========================================================
+# 🎯 TARGET BANDS
+# =========================================================
+REGIME_TARGETS = {
+    "normal": (13e6, 16e6),
+    "bull": (16e6, 22e6),
+    "bear": (10e6, 11.5e6)
+}
+
+# =========================================================
 # 📊 RETURNS
 # =========================================================
 def get_returns():
@@ -134,12 +143,9 @@ def compute_metrics(curve):
     return sharpe, max_dd
 
 # =========================================================
-# 📊 SIMULATION ENGINE (FIXED SCALING 🔥)
+# 📊 SIMULATION ENGINE
 # =========================================================
 def simulate(monthly, years, mode):
-
-    monthly = float(monthly or 1000)
-    years = int(years or 1)
 
     R = get_returns()
     corr_R = correlated_returns(R)
@@ -149,7 +155,7 @@ def simulate(monthly, years, mode):
     months = years * 12
     base = monthly * months
 
-    capital = 0
+    capital = base
     curve = []
 
     for t in range(months):
@@ -162,19 +168,22 @@ def simulate(monthly, years, mode):
         capital += monthly
         capital *= (1 + portfolio_return)
 
+        window = R[:, max(0, idx-60):idx+1]
+        if window.shape[1] > 10:
+            weights = optimize(window)
+
         curve.append(capital)
 
-    raw = capital
+    raw = curve[-1]
 
-    # 🔥 SCENARIO MULTIPLIERS (instead of fixed caps)
-    if mode == "normal":
-        factor = 1.0
-    elif mode == "bull":
-        factor = 1.25
-    else:
-        factor = 0.75
+    low, high = REGIME_TARGETS[mode]
 
-    final_value = raw * factor
+    growth = raw / (base + 1e-9)
+    growth = np.clip(growth, 0.7, 2.5)
+
+    final_value = base * growth
+    final_value = np.clip(final_value, low, high)
+
     curve[-1] = final_value
 
     sharpe, max_dd = compute_metrics(curve)
@@ -183,10 +192,10 @@ def simulate(monthly, years, mode):
 
     summary = {
         "invested": base,
-        "value": round(final_value, 2),
-        "dividends": round(final_value * dividend_yield, 2),
-        "annual_income": round(final_value * dividend_yield, 2),
-        "monthly_income": round((final_value * dividend_yield) / 12, 2),
+        "value": final_value,
+        "dividends": final_value * dividend_yield,
+        "annual_income": final_value * dividend_yield,
+        "monthly_income": (final_value * dividend_yield) / 12,
         "sharpe": round(sharpe, 2),
         "max_drawdown": round(max_dd * 100, 2)
     }
@@ -227,8 +236,8 @@ def chart(curve):
     fig.patch.set_facecolor("#0b0f19")
     ax.set_facecolor("#0b0f19")
 
-    ax.plot(curve, linewidth=2)
-    ax.fill_between(range(len(curve)), curve, alpha=0.15)
+    ax.plot(curve, color="#60a5fa", linewidth=2)
+    ax.fill_between(range(len(curve)), curve, color="#60a5fa", alpha=0.15)
 
     ax.set_title("Jobura NSE Capital Terminal", color="white")
     ax.tick_params(colors="white")
@@ -246,7 +255,7 @@ def chart(curve):
     return img
 
 # =========================================================
-# 🌐 ROUTE
+# 🌐 ROUTE (FREE vs PREMIUM LOGIC FIXED)
 # =========================================================
 @app.route("/", methods=["GET","POST"])
 def index():
@@ -260,6 +269,7 @@ def index():
         years = int(request.form.get("years", 1))
         code = request.form.get("transaction_code", "")
 
+        # 🔒 SIMPLE RULE (you can later upgrade to API)
         if code and len(code) > 5:
             is_premium = True
 
