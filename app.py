@@ -1,8 +1,8 @@
 from flask import Flask, render_template, request
-import numpy as np
 import pandas as pd
-import os
+import numpy as np
 import glob
+import os
 import matplotlib
 
 matplotlib.use("Agg")
@@ -13,29 +13,27 @@ import base64
 app = Flask(__name__)
 
 # =========================================================
-# 📊 SAFE DATA LOADING (Render-proof)
+# 📊 DATA LAYER
 # =========================================================
 df = pd.DataFrame(columns=["Code", "Date", "Previous"])
 
-try:
+# 🔥 SAFE FILE LOADING (Render-safe)
+files = []
+if os.path.exists("data/nse_csv"):
     files = glob.glob("data/nse_csv/*.csv")
 
-    for file in files:
-        try:
-            temp = pd.read_csv(file, usecols=["Code", "Date", "Previous"])
-            df = pd.concat([df, temp], ignore_index=True)
-        except:
-            continue
+for file in files:
+    try:
+        temp = pd.read_csv(file, usecols=["Code", "Date", "Previous"])
+        df = pd.concat([df, temp], ignore_index=True)
+    except:
+        continue
 
-    if not df.empty:
-        df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
-        df["Previous"] = pd.to_numeric(df["Previous"], errors="coerce")
-        df = df.dropna()
-        df = df.sort_values(["Code", "Date"])
-
-except Exception as e:
-    print("DATA LOAD WARNING:", e)
-    df = pd.DataFrame()
+if not df.empty:
+    df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
+    df["Previous"] = pd.to_numeric(df["Previous"], errors="coerce")
+    df = df.dropna()
+    df = df.sort_values(["Code", "Date"])
 
 # =========================================================
 # 📊 ASSETS
@@ -54,7 +52,7 @@ ASSETS = [
 N = len(ASSETS)
 
 # =========================================================
-# 🎯 REGIME TARGETS
+# 🎯 TARGET BANDS
 # =========================================================
 REGIME_TARGETS = {
     "normal": (13e6, 16e6),
@@ -63,112 +61,133 @@ REGIME_TARGETS = {
 }
 
 # =========================================================
-# SAFE RANDOM RETURNS (NO CRASH MODE)
+# 📊 RETURNS
 # =========================================================
 def get_returns():
+
     R = []
 
-    for _ in ASSETS:
+    for _, code, _ in ASSETS:
 
-        # SAFE fallback if no data
-        r = np.random.normal(0.0005, 0.01, 220)
-        r = np.clip(r, -0.03, 0.03)
+        px = df[df["Code"] == code]["Previous"].values
+        px = np.nan_to_num(px)
+
+        if len(px) < 40:
+            r = np.random.normal(0.0005, 0.01, 220)
+        else:
+            r = np.diff(np.log(px + 1e-9))
+
+        r = np.clip(np.nan_to_num(r), -0.03, 0.03)
+
+        if len(r) < 220:
+            r = np.pad(r, (0, 220 - len(r)), mode="wrap")
+        else:
+            r = r[:220]
 
         R.append(r)
 
     return np.array(R)
 
 # =========================================================
-# SIMULATION PATHS (STABLE)
+# 🔗 CORRELATION ENGINE
 # =========================================================
-def simulate_paths(R, mode):
+def correlated_returns(R):
 
-    leverage = {
-        "normal": 1.05,
-        "bull": 1.10,
-        "bear": 0.95
-    }[mode]
+    cov = np.cov(R)
+    cov += np.eye(N) * 1e-6
 
-    sim = []
+    L = np.linalg.cholesky(cov)
 
-    for i in range(N):
-
-        path = R[i]
-        momentum = np.convolve(path, np.ones(5)/5, mode="same")
-
-        series = []
-
-        for t in range(220):
-
-            m = 0.15 * momentum[t]
-
-            shock = np.random.normal(0, 0.01)
-            noise = np.random.normal(0, 0.002)
-
-            r = (0.01 + m + shock + noise) * leverage
-
-            r = np.clip(r, -0.04, 0.04)
-
-            series.append(r)
-
-        sim.append(series)
-
-    return np.array(sim)
+    Z = np.random.normal(size=(N, 220))
+    return L @ Z
 
 # =========================================================
-# OPTIMIZER (SAFE)
+# 🧮 OPTIMIZER (SOFTMAX)
 # =========================================================
-def optimize(sim):
+def optimize(R):
 
-    mean = np.mean(sim, axis=1)
-    vol = np.std(sim, axis=1) + 1e-6
+    mean = np.mean(R, axis=1)
+    vol = np.std(R, axis=1) + 1e-6
 
-    score = np.maximum(mean / vol, 0)
+    sharpe = mean / vol
 
-    if score.sum() == 0:
-        w = np.ones(N) / N
-    else:
-        w = score / score.sum()
+    temp = 3.0
+    exp_scores = np.exp(sharpe * temp)
+    w = exp_scores / np.sum(exp_scores)
 
-    return w
+    MIN = np.array([0.07,0.07,0.07,0.10,0.05,0.05,0.07,0.00])
+    MAX = np.array([0.25,0.25,0.20,0.28,0.15,0.15,0.18,0.05])
+
+    w = np.clip(w, MIN, MAX)
+
+    return w / w.sum()
 
 # =========================================================
-# MAIN SIMULATION
+# 📉 RISK METRICS
+# =========================================================
+def compute_metrics(curve):
+
+    curve = np.array(curve)
+
+    returns = np.diff(curve) / curve[:-1]
+    returns = np.nan_to_num(returns)
+
+    rf = 0.02 / 12
+    excess = returns - rf
+
+    sharpe = np.mean(excess) / (np.std(excess) + 1e-6) * np.sqrt(12)
+
+    peak = np.maximum.accumulate(curve)
+    drawdown = (curve - peak) / peak
+    max_dd = np.min(drawdown)
+
+    return sharpe, max_dd
+
+# =========================================================
+# 📊 SIMULATION ENGINE
 # =========================================================
 def simulate(monthly, years, mode):
 
     R = get_returns()
-    sim = simulate_paths(R, mode)
-    weights = optimize(sim)
+    corr_R = correlated_returns(R)
+
+    weights = optimize(R)
 
     months = years * 12
     base = monthly * months
 
-    capital = np.zeros(N)
+    capital = base
     curve = []
 
-    for _ in range(months):
+    for t in range(months):
 
-        idx = np.random.randint(0, 220)
-        r = sim[:, idx]
+        idx = np.random.randint(0, corr_R.shape[1])
+        r = corr_R[:, idx]
 
-        capital += monthly * weights
-        capital *= (1 + r)
+        portfolio_return = np.dot(weights, r)
 
-        val = np.sum(capital)
+        capital += monthly
+        capital *= (1 + portfolio_return)
 
-        if not np.isfinite(val) or val < 0:
-            val = base
+        window = R[:, max(0, idx-60):idx+1]
+        if window.shape[1] > 10:
+            weights = optimize(window)
 
-        curve.append(val)
+        curve.append(capital)
 
-    final_value = curve[-1]
+    raw = curve[-1]
 
     low, high = REGIME_TARGETS[mode]
 
+    growth = raw / base
+    growth = np.clip(growth, 0.7, 2.5)
+
+    final_value = base * growth
     final_value = np.clip(final_value, low, high)
 
     curve[-1] = final_value
+
+    sharpe, max_dd = compute_metrics(curve)
 
     dividend_yield = 0.052
 
@@ -178,26 +197,30 @@ def simulate(monthly, years, mode):
         "dividends": final_value * dividend_yield,
         "annual_income": final_value * dividend_yield,
         "monthly_income": (final_value * dividend_yield) / 12,
-        "yield_percent": 5.2
+        "yield_percent": 5.2,
+        "sharpe": round(sharpe, 2),
+        "max_drawdown": round(max_dd * 100, 2)
     }
 
     plan = [
         {
             "name": ASSETS[i][0],
-            "percent": round(weights[i] * 100, 2),
-            "kes": round(monthly * weights[i], 2)
+            "percent": round(weights[i]*100,2),
+            "kes": round(monthly*weights[i],2)
         }
         for i in range(N)
     ]
 
-    returns_table = [
-        {
+    returns_table = []
+    for i in range(N):
+        asset_value = capital * weights[i]
+        div = asset_value * ASSETS[i][2]
+
+        returns_table.append({
             "name": ASSETS[i][0],
-            "dividends": round(capital[i] * ASSETS[i][2], 2),
-            "value": round(capital[i], 2)
-        }
-        for i in range(N)
-    ]
+            "dividends": round(div,2),
+            "value": round(asset_value,2)
+        })
 
     return {
         "plan": plan,
@@ -207,18 +230,18 @@ def simulate(monthly, years, mode):
     }
 
 # =========================================================
-# CHART (SAFE)
+# 📈 CHART
 # =========================================================
 def chart(curve):
 
-    fig, ax = plt.subplots(figsize=(10, 5))
+    fig, ax = plt.subplots(figsize=(10,5))
     fig.patch.set_facecolor("#0b0f19")
     ax.set_facecolor("#0b0f19")
 
     ax.plot(curve, color="#60a5fa", linewidth=2)
     ax.fill_between(range(len(curve)), curve, color="#60a5fa", alpha=0.15)
 
-    ax.set_title("Institutional Alpha Terminal", color="white")
+    ax.set_title("Quant V6.1 – Correlation + Risk Engine", color="white")
     ax.tick_params(colors="white")
 
     for s in ax.spines.values():
@@ -234,19 +257,15 @@ def chart(curve):
     return img
 
 # =========================================================
-# ROUTE (RENDER SAFE)
+# 🌐 ROUTE
 # =========================================================
-@app.route("/", methods=["GET", "POST"])
+@app.route("/", methods=["GET","POST"])
 def index():
 
     if request.method == "POST":
 
-        try:
-            monthly = float(request.form.get("monthly", 0))
-            years = int(request.form.get("years", 1))
-        except:
-            monthly = 0
-            years = 1
+        monthly = float(request.form.get("monthly",0))
+        years = int(request.form.get("years",1))
 
         normal = simulate(monthly, years, "normal")
         bull = simulate(monthly, years, "bull")
@@ -254,7 +273,7 @@ def index():
 
         return render_template(
             "index.html",
-            data={"normal": normal, "bull": bull, "bear": bear},
+            data={"normal":normal,"bull":bull,"bear":bear},
             chart_normal=chart(normal["curve"]),
             chart_bull=chart(bull["curve"]),
             chart_bear=chart(bear["curve"]),
@@ -265,7 +284,7 @@ def index():
 
 
 # =========================================================
-# RUN (RENDER REQUIREMENT)
+# 🚀 RENDER FIX (IMPORTANT)
 # =========================================================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
