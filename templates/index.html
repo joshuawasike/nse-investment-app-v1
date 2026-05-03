@@ -91,7 +91,7 @@ img {
 <h2>📊 Institutional Alpha Terminal (V8)</h2>
 
 <!-- =====================================================
-INTRO / PRODUCT DEFINITION (WHAT SYSTEM IS)
+INTRO / PRODUCT DEFINITION
 ===================================================== -->
 <div class="info-box">
     <b>Jobura NSE Capital Terminal</b> is:
@@ -120,10 +120,11 @@ INPUT FORM
         <option value="aggressive">Aggressive</option>
     </select>
 
-    <input name="access_code" placeholder="Enter PayBill Transaction Code">
+    <!-- ✅ FIXED: Correct field name to match backend -->
+    <input name="transaction_code" placeholder="Enter PayBill Transaction Code">
 
     <!-- =====================================================
-    PAYMENT (CLEAN PAYBILL STRUCTURE ONLY)
+    PAYMENT SECTION
     ===================================================== -->
     <div class="card">
         <h3>💳 Payment Access (PayBill Only)</h3>
