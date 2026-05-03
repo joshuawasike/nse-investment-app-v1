@@ -22,8 +22,11 @@ DB_FILE = "users.json"
 def load_users():
     if not os.path.exists(DB_FILE):
         return []
-    with open(DB_FILE, "r") as f:
-        return json.load(f)
+    try:
+        with open(DB_FILE, "r") as f:
+            return json.load(f)
+    except:
+        return []
 
 def save_users(users):
     with open(DB_FILE, "w") as f:
@@ -84,7 +87,7 @@ ASSETS = [
 N = len(ASSETS)
 
 # =========================================================
-# (KEEP YOUR SIMULATION LOGIC UNCHANGED)
+# (UNCHANGED SIMULATION LOGIC)
 # =========================================================
 
 def get_returns():
@@ -237,24 +240,24 @@ def index():
 
         monthly = float(request.form.get("monthly", 0))
         years = int(request.form.get("years", 1))
-        code = request.form.get("transaction_code", "")
+        code = request.form.get("transaction_code", "").strip().upper()
 
-        # Check if approved
+        # ✅ Check approval
         for u in users:
             if u["code"] == code and u["status"] == "approved":
                 is_premium = True
+                break
 
-        # If new code → store as pending
+        # ✅ Save new code (only once)
         if code and not any(u["code"] == code for u in users):
             users.append({
                 "code": code,
                 "status": "pending",
-                "date": str(datetime.now())
+                "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             })
             save_users(users)
 
         normal = simulate(monthly, years, "normal")
-
         data = {"normal": normal}
 
         if is_premium:
@@ -271,7 +274,12 @@ def index():
             payment=PAYMENT_INFO
         )
 
-    return render_template("index.html", data=None, is_premium=False, payment=PAYMENT_INFO)
+    return render_template(
+        "index.html",
+        data=None,
+        is_premium=False,
+        payment=PAYMENT_INFO
+    )
 
 # =========================================================
 # 🛠 ADMIN PANEL
