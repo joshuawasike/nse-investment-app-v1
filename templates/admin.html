@@ -1,0 +1,22 @@
+<h2>Admin Panel</h2>
+
+<table border="1">
+<tr>
+<th>Transaction Code</th>
+<th>Status</th>
+<th>Action</th>
+</tr>
+
+{% for u in users %}
+<tr>
+<td>{{ u.code }}</td>
+<td>{{ u.status }}</td>
+<td>
+    {% if u.status == "pending" %}
+    <a href="/approve/{{ u.code }}">Approve</a>
+    {% endif %}
+</td>
+</tr>
+{% endfor %}
+
+</table>
