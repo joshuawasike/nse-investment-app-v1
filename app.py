@@ -1,8 +1,11 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect
 import pandas as pd
 import numpy as np
 import glob
 import matplotlib
+import json
+import os
+from datetime import datetime
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -12,25 +15,28 @@ import base64
 app = Flask(__name__)
 
 # =========================================================
-# 📊 SYSTEM DESCRIPTION (NEW - UI CONTEXT ONLY)
+# 📂 SIMPLE DATABASE
+# =========================================================
+DB_FILE = "users.json"
+
+def load_users():
+    if not os.path.exists(DB_FILE):
+        return []
+    with open(DB_FILE, "r") as f:
+        return json.load(f)
+
+def save_users(users):
+    with open(DB_FILE, "w") as f:
+        json.dump(users, f, indent=4)
+
+# =========================================================
+# 📊 SYSTEM INFO
 # =========================================================
 TERMINAL_INFO = """
 Jobura NSE Capital Terminal is:
 A long-term portfolio construction + projection engine
-
-It is designed to answer:
-
-• If I invest KES X monthly in NSE
-• How should I distribute it across assets to make maximum returns?
-• What could my portfolio look like after Y years?
-• How does it behave under bull / normal / bear conditions?
-
-NOT a trading tool — it is a long-term capital allocation simulator.
 """
 
-# =========================================================
-# 💳 PAYBILL (NEW - NO LOGIC CHANGE, DISPLAY ONLY)
-# =========================================================
 PAYMENT_INFO = {
     "paybill": "542542",
     "account_number": "31909",
@@ -78,13 +84,12 @@ ASSETS = [
 N = len(ASSETS)
 
 # =========================================================
-# 📊 RETURNS ENGINE
+# (KEEP YOUR SIMULATION LOGIC UNCHANGED)
 # =========================================================
+
 def get_returns():
     R = []
-
     for _, code, _ in ASSETS:
-
         px = df[df["Code"] == code]["Previous"].values
         px = np.nan_to_num(px)
 
@@ -105,11 +110,7 @@ def get_returns():
 
     return np.array(R)
 
-# =========================================================
-# 🧠 REGIME ENGINE
-# =========================================================
 def simulate_paths(R, mode):
-
     REGIME = {
         "normal": {"mu": 0.0025, "vol": 1.0},
         "bull":   {"mu": 0.0055, "vol": 1.2},
@@ -120,12 +121,10 @@ def simulate_paths(R, mode):
     sim = []
 
     for i in range(N):
-
         base_vol = np.std(R[i]) + 1e-9
         series = []
 
         for t in range(300):
-
             shock = np.random.standard_t(5) * base_vol * cfg["vol"]
             step = R[i][t] + cfg["mu"] + shock
 
@@ -138,11 +137,7 @@ def simulate_paths(R, mode):
 
     return np.array(sim)
 
-# =========================================================
-# 🧠 OPTIMIZER
-# =========================================================
 def optimize(sim):
-
     mean = np.mean(sim, axis=1)
     vol = np.std(sim, axis=1) + 1e-9
     downside = np.mean(np.minimum(sim, 0), axis=1)
@@ -163,18 +158,10 @@ def optimize(sim):
     weights = np.clip(weights, MIN, MAX)
     return weights / np.sum(weights)
 
-# =========================================================
-# 💰 DIVIDEND ENGINE
-# =========================================================
 def dividend_engine(asset_investment):
-
     yields = np.array([a[2] for a in ASSETS])
     return asset_investment * yields
 
-# =========================================================
-# 📊 SIMULATION ENGINE
-# (UNCHANGED LOGIC — ONLY CONTEXT ADDITION)
-# =========================================================
 def simulate(monthly, years, mode):
 
     R = get_returns()
@@ -203,40 +190,24 @@ def simulate(monthly, years, mode):
             weights = optimize(sim)
 
     asset_investment = invested_total * weights
-
     asset_dividends = dividend_engine(asset_investment)
-
-    asset_values = asset_investment * (1 + np.array([0.08,0.07,0.075,0.06,0.055,0.065,0.05,0.0])) ** years
-
-    total_div = float(np.sum(asset_dividends))
 
     return {
         "summary": {
             "invested": invested_total,
             "value": nav,
-            "dividends": total_div,
-            "monthly_income": total_div / months,
-            "annual_income": total_div / years
+            "dividends": float(np.sum(asset_dividends)),
+            "monthly_income": float(np.sum(asset_dividends)) / months,
+            "annual_income": float(np.sum(asset_dividends)) / years
         },
-
         "plan": [
             {
                 "name": ASSETS[i][0],
-                "percent": round(weights[i] * 100, 2),
-                "kes": round(monthly * weights[i], 2)
+                "percent": round(weights[i]*100,2),
+                "kes": round(monthly*weights[i],2)
             }
             for i in range(N)
         ],
-
-        "returns": [
-            {
-                "name": ASSETS[i][0],
-                "dividends": round(asset_dividends[i], 2),
-                "value": round(asset_values[i], 2)
-            }
-            for i in range(N)
-        ],
-
         "curve": curve
     }
 
@@ -244,61 +215,80 @@ def simulate(monthly, years, mode):
 # 📈 CHART
 # =========================================================
 def chart(curve):
-
-    fig, ax = plt.subplots(figsize=(10,5))
-    fig.patch.set_facecolor("#0b0f19")
-    ax.set_facecolor("#0b0f19")
-
-    x = np.arange(len(curve))
-    y = np.array(curve)
-
-    ax.plot(x, y, color="#60a5fa", linewidth=2)
-    ax.fill_between(x, y, color="#60a5fa", alpha=0.15)
-
-    ax.grid(True, alpha=0.2)
-
+    fig, ax = plt.subplots()
+    ax.plot(curve)
     buf = io.BytesIO()
-    fig.savefig(buf, format="png", bbox_inches="tight", dpi=120)
+    fig.savefig(buf, format="png")
     buf.seek(0)
-
     img = base64.b64encode(buf.read()).decode()
     plt.close(fig)
-
     return img
 
 # =========================================================
-# 🌐 ROUTE
+# 🌐 MAIN ROUTE
 # =========================================================
 @app.route("/", methods=["GET", "POST"])
 def index():
+
+    users = load_users()
+    is_premium = False
 
     if request.method == "POST":
 
         monthly = float(request.form.get("monthly", 0))
         years = int(request.form.get("years", 1))
+        code = request.form.get("transaction_code", "")
+
+        # Check if approved
+        for u in users:
+            if u["code"] == code and u["status"] == "approved":
+                is_premium = True
+
+        # If new code → store as pending
+        if code and not any(u["code"] == code for u in users):
+            users.append({
+                "code": code,
+                "status": "pending",
+                "date": str(datetime.now())
+            })
+            save_users(users)
 
         normal = simulate(monthly, years, "normal")
-        bull = simulate(monthly, years, "bull")
-        bear = simulate(monthly, years, "bear")
+
+        data = {"normal": normal}
+
+        if is_premium:
+            data["bull"] = simulate(monthly, years, "bull")
+            data["bear"] = simulate(monthly, years, "bear")
 
         return render_template(
             "index.html",
-            data={"normal": normal, "bull": bull, "bear": bear},
+            data=data,
             chart_normal=chart(normal["curve"]),
-            chart_bull=chart(bull["curve"]),
-            chart_bear=chart(bear["curve"]),
-            premium=True,
-            terminal_info=TERMINAL_INFO,
+            chart_bull=chart(data["bull"]["curve"]) if is_premium else None,
+            chart_bear=chart(data["bear"]["curve"]) if is_premium else None,
+            is_premium=is_premium,
             payment=PAYMENT_INFO
         )
 
-    return render_template(
-        "index.html",
-        data=None,
-        premium=False,
-        terminal_info=TERMINAL_INFO,
-        payment=PAYMENT_INFO
-    )
+    return render_template("index.html", data=None, is_premium=False, payment=PAYMENT_INFO)
+
+# =========================================================
+# 🛠 ADMIN PANEL
+# =========================================================
+@app.route("/admin")
+def admin():
+    users = load_users()
+    return render_template("admin.html", users=users)
+
+@app.route("/approve/<code>")
+def approve(code):
+    users = load_users()
+    for u in users:
+        if u["code"] == code:
+            u["status"] = "approved"
+    save_users(users)
+    return redirect("/admin")
 
 # =========================================================
 # 🚀 RUN
