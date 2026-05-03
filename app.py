@@ -1,11 +1,11 @@
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, session, url_for
 import pandas as pd
 import numpy as np
 import glob
 import matplotlib
 import json
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -13,6 +13,12 @@ import io
 import base64
 
 app = Flask(__name__)
+app.secret_key = "jobura_secure_key_change_me"  # 🔐 REQUIRED FOR LOGIN
+
+# =========================================================
+# 🔐 ADMIN PASSWORD
+# =========================================================
+ADMIN_PASSWORD = "Jobura@542542"
 
 # =========================================================
 # 📂 SIMPLE DATABASE
@@ -87,9 +93,8 @@ ASSETS = [
 N = len(ASSETS)
 
 # =========================================================
-# (UNCHANGED SIMULATION LOGIC)
+# (SIMULATION LOGIC - UNCHANGED)
 # =========================================================
-
 def get_returns():
     R = []
     for _, code, _ in ASSETS:
@@ -179,7 +184,6 @@ def simulate(monthly, years, mode):
     curve = []
 
     for t in range(months):
-
         idx = t % sim.shape[1]
         port_ret = np.dot(weights, sim[:, idx])
 
@@ -228,6 +232,32 @@ def chart(curve):
     return img
 
 # =========================================================
+# 🔐 LOGIN ROUTES
+# =========================================================
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        password = request.form.get("password")
+
+        if password == ADMIN_PASSWORD:
+            session["admin"] = True
+            return redirect("/admin")
+
+        return "❌ Wrong password"
+
+    return """
+    <form method="POST">
+        <input name="password" placeholder="Admin Password" type="password">
+        <button type="submit">Login</button>
+    </form>
+    """
+
+@app.route("/logout")
+def logout():
+    session.pop("admin", None)
+    return redirect("/login")
+
+# =========================================================
 # 🌐 MAIN ROUTE
 # =========================================================
 @app.route("/", methods=["GET", "POST"])
@@ -241,28 +271,14 @@ def index():
         monthly = float(request.form.get("monthly", 0))
         years = int(request.form.get("years", 1))
         code = request.form.get("transaction_code", "").strip().upper()
-        phone = request.form.get("phone", "").strip()
 
-        # ✅ Check approval + expiry
         for u in users:
             if u["code"] == code and u["status"] == "approved":
+                is_premium = True
 
-                expiry = u.get("expiry")
-
-                if expiry:
-                    expiry_date = datetime.strptime(expiry, "%Y-%m-%d %H:%M:%S")
-
-                    if datetime.now() < expiry_date:
-                        is_premium = True
-                    else:
-                        u["status"] = "expired"
-                        save_users(users)
-
-        # ✅ Save new code
         if code and not any(u["code"] == code for u in users):
             users.append({
                 "code": code,
-                "phone": phone,
                 "status": "pending",
                 "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             })
@@ -293,31 +309,27 @@ def index():
     )
 
 # =========================================================
-# 🛠 ADMIN PANEL
+# 🛠 ADMIN PANEL (PROTECTED)
 # =========================================================
 @app.route("/admin")
 def admin():
+
+    if not session.get("admin"):
+        return redirect("/login")
+
     users = load_users()
-    return render_template("admin.html", users=users, now=str(datetime.now()))
+    return render_template("admin.html", users=users)
 
 @app.route("/approve/<code>")
 def approve(code):
 
-    plan = request.args.get("plan", "monthly")
+    if not session.get("admin"):
+        return redirect("/login")
 
     users = load_users()
-
     for u in users:
         if u["code"] == code:
             u["status"] = "approved"
-            u["plan"] = plan
-
-            if plan == "monthly":
-                expiry = datetime.now() + timedelta(days=30)
-            else:
-                expiry = datetime.now() + timedelta(days=365)
-
-            u["expiry"] = expiry.strftime("%Y-%m-%d %H:%M:%S")
 
     save_users(users)
     return redirect("/admin")
