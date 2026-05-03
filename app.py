@@ -5,7 +5,7 @@ import glob
 import matplotlib
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -241,17 +241,28 @@ def index():
         monthly = float(request.form.get("monthly", 0))
         years = int(request.form.get("years", 1))
         code = request.form.get("transaction_code", "").strip().upper()
+        phone = request.form.get("phone", "").strip()
 
-        # ✅ Check approval
+        # ✅ Check approval + expiry
         for u in users:
             if u["code"] == code and u["status"] == "approved":
-                is_premium = True
-                break
 
-        # ✅ Save new code (only once)
+                expiry = u.get("expiry")
+
+                if expiry:
+                    expiry_date = datetime.strptime(expiry, "%Y-%m-%d %H:%M:%S")
+
+                    if datetime.now() < expiry_date:
+                        is_premium = True
+                    else:
+                        u["status"] = "expired"
+                        save_users(users)
+
+        # ✅ Save new code
         if code and not any(u["code"] == code for u in users):
             users.append({
                 "code": code,
+                "phone": phone,
                 "status": "pending",
                 "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             })
@@ -287,14 +298,27 @@ def index():
 @app.route("/admin")
 def admin():
     users = load_users()
-    return render_template("admin.html", users=users)
+    return render_template("admin.html", users=users, now=str(datetime.now()))
 
 @app.route("/approve/<code>")
 def approve(code):
+
+    plan = request.args.get("plan", "monthly")
+
     users = load_users()
+
     for u in users:
         if u["code"] == code:
             u["status"] = "approved"
+            u["plan"] = plan
+
+            if plan == "monthly":
+                expiry = datetime.now() + timedelta(days=30)
+            else:
+                expiry = datetime.now() + timedelta(days=365)
+
+            u["expiry"] = expiry.strftime("%Y-%m-%d %H:%M:%S")
+
     save_users(users)
     return redirect("/admin")
 
