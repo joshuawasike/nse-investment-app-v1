@@ -1,22 +1,83 @@
-<h2>Admin Panel</h2>
+<!DOCTYPE html>
+<html>
+<head>
+<title>Jobura Admin Panel</title>
 
-<table border="1">
+<style>
+body {
+    font-family: Arial;
+    background: #0b0f19;
+    color: #e5e7eb;
+    padding: 20px;
+}
+
+h2 { color: gold; }
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th, td {
+    padding: 10px;
+    border-bottom: 1px solid #374151;
+}
+
+.pending { color: orange; }
+.approved { color: lightgreen; }
+
+a {
+    padding: 6px 10px;
+    background: #2563eb;
+    color: white;
+    border-radius: 6px;
+    text-decoration: none;
+}
+
+.expired {
+    color: red;
+}
+</style>
+</head>
+
+<body>
+
+<h2>🔐 Jobura Admin Panel</h2>
+
+<table>
 <tr>
-<th>Transaction Code</th>
-<th>Status</th>
-<th>Action</th>
+    <th>Transaction Code</th>
+    <th>Status</th>
+    <th>Plan</th>
+    <th>Expires</th>
+    <th>Action</th>
 </tr>
 
 {% for u in users %}
 <tr>
-<td>{{ u.code }}</td>
-<td>{{ u.status }}</td>
-<td>
-    {% if u.status == "pending" %}
-    <a href="/approve/{{ u.code }}">Approve</a>
-    {% endif %}
-</td>
+    <td>{{ u.code }}</td>
+
+    <td class="{{ u.status }}">
+        {{ u.status }}
+    </td>
+
+    <td>{{ u.plan if u.plan else "N/A" }}</td>
+
+    <td class="{% if u.expiry and u.expiry < now %}expired{% endif %}">
+        {{ u.expiry if u.expiry else "—" }}
+    </td>
+
+    <td>
+        {% if u.status == "pending" %}
+            <a href="/approve/{{ u.code }}?plan=monthly">Approve Monthly</a>
+            <a href="/approve/{{ u.code }}?plan=annual">Approve Annual</a>
+        {% endif %}
+    </td>
 </tr>
 {% endfor %}
 
 </table>
+
+</body>
+</html>
