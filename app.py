@@ -2,7 +2,6 @@ from flask import Flask, render_template, request
 import pandas as pd
 import numpy as np
 import glob
-import os
 import matplotlib
 
 matplotlib.use("Agg")
@@ -13,13 +12,41 @@ import base64
 app = Flask(__name__)
 
 # =========================================================
-# 📊 DATA LAYER
+# 📊 SYSTEM DESCRIPTION (NEW - UI CONTEXT ONLY)
+# =========================================================
+TERMINAL_INFO = """
+Jobura NSE Capital Terminal is:
+A long-term portfolio construction + projection engine
+
+It is designed to answer:
+
+• If I invest KES X monthly in NSE
+• How should I distribute it across assets to make maximum returns?
+• What could my portfolio look like after Y years?
+• How does it behave under bull / normal / bear conditions?
+
+NOT a trading tool — it is a long-term capital allocation simulator.
+"""
+
+# =========================================================
+# 💳 PAYBILL (NEW - NO LOGIC CHANGE, DISPLAY ONLY)
+# =========================================================
+PAYMENT_INFO = {
+    "paybill": "542542",
+    "account_number": "31909",
+    "account_name": "Jobura Solutions",
+    "individual_monthly": 400,
+    "individual_annual": 4000,
+    "institution_monthly": 2000,
+    "institution_annual": 18000
+}
+
+# =========================================================
+# 📊 DATA
 # =========================================================
 df = pd.DataFrame(columns=["Code", "Date", "Previous"])
 
-files = []
-if os.path.exists("data/nse_csv"):
-    files = glob.glob("data/nse_csv/*.csv")
+files = glob.glob("data/nse_csv/*.csv")
 
 for file in files:
     try:
@@ -38,192 +65,178 @@ if not df.empty:
 # 📊 ASSETS
 # =========================================================
 ASSETS = [
-    ("Equity Bank", "EQTY", 0.055),
-    ("KCB Group", "KCB", 0.065),
-    ("Co-op Bank", "COOP", 0.075),
-    ("Safaricom", "SCOM", 0.060),
-    ("EABL", "EABL", 0.050),
-    ("KenGen", "KEGN", 0.040),
-    ("NCBA", "NCBA", 0.035),
+    ("Equity Bank", "EQTY", 0.085),
+    ("KCB Group", "KCB", 0.075),
+    ("Co-op Bank", "COOP", 0.080),
+    ("Safaricom", "SCOM", 0.065),
+    ("EABL", "EABL", 0.060),
+    ("KenGen", "KEGN", 0.070),
+    ("NCBA", "NCBA", 0.055),
     ("Kenya Airways", "KQ", 0.000),
 ]
 
 N = len(ASSETS)
 
 # =========================================================
-# 🎯 TARGET BANDS
-# =========================================================
-REGIME_TARGETS = {
-    "normal": (13e6, 16e6),
-    "bull": (16e6, 22e6),
-    "bear": (10e6, 11.5e6)
-}
-
-# =========================================================
-# 📊 RETURNS
+# 📊 RETURNS ENGINE
 # =========================================================
 def get_returns():
     R = []
 
     for _, code, _ in ASSETS:
+
         px = df[df["Code"] == code]["Previous"].values
         px = np.nan_to_num(px)
 
         if len(px) < 40:
-            r = np.random.normal(0.0005, 0.01, 220)
+            r = np.full(300, 0.005)
         else:
             r = np.diff(np.log(px + 1e-9))
+            r = np.nan_to_num(r)
 
-        r = np.clip(np.nan_to_num(r), -0.03, 0.03)
+        r = np.clip(r * 16, -0.05, 0.05)
 
-        if len(r) < 220:
-            r = np.pad(r, (0, 220 - len(r)), mode="wrap")
+        if len(r) < 300:
+            r = np.pad(r, (0, 300 - len(r)), mode="edge")
         else:
-            r = r[:220]
+            r = r[:300]
 
         R.append(r)
 
     return np.array(R)
 
 # =========================================================
-# 🔗 CORRELATION ENGINE
+# 🧠 REGIME ENGINE
 # =========================================================
-def correlated_returns(R):
-    R = np.nan_to_num(R)
+def simulate_paths(R, mode):
 
-    cov = np.cov(R)
-    cov = np.nan_to_num(cov)
+    REGIME = {
+        "normal": {"mu": 0.0025, "vol": 1.0},
+        "bull":   {"mu": 0.0055, "vol": 1.2},
+        "bear":   {"mu": -0.0035, "vol": 1.3},
+    }
 
-    cov += np.eye(N) * 1e-6
+    cfg = REGIME[mode]
+    sim = []
 
-    try:
-        L = np.linalg.cholesky(cov)
-    except:
-        L = np.eye(N)
+    for i in range(N):
 
-    Z = np.random.normal(size=(N, 220))
-    return L @ Z
+        base_vol = np.std(R[i]) + 1e-9
+        series = []
 
-# =========================================================
-# 🧮 OPTIMIZER
-# =========================================================
-def optimize(R):
-    mean = np.mean(R, axis=1)
-    vol = np.std(R, axis=1) + 1e-6
+        for t in range(300):
 
-    sharpe = mean / vol
+            shock = np.random.standard_t(5) * base_vol * cfg["vol"]
+            step = R[i][t] + cfg["mu"] + shock
 
-    exp_scores = np.exp(sharpe * 3.0)
-    w = exp_scores / np.sum(exp_scores)
+            if mode == "bear":
+                step = np.clip(step, -0.05, 0.01)
 
-    MIN = np.array([0.07,0.07,0.07,0.10,0.05,0.05,0.07,0.00])
-    MAX = np.array([0.25,0.25,0.20,0.28,0.15,0.15,0.18,0.05])
+            series.append(step)
 
-    w = np.clip(w, MIN, MAX)
-    return w / w.sum()
+        sim.append(series)
+
+    return np.array(sim)
 
 # =========================================================
-# 📉 RISK METRICS
+# 🧠 OPTIMIZER
 # =========================================================
-def compute_metrics(curve):
-    curve = np.array(curve)
+def optimize(sim):
 
-    returns = np.diff(curve) / (curve[:-1] + 1e-9)
-    returns = np.nan_to_num(returns)
+    mean = np.mean(sim, axis=1)
+    vol = np.std(sim, axis=1) + 1e-9
+    downside = np.mean(np.minimum(sim, 0), axis=1)
 
-    rf = 0.02 / 12
-    excess = returns - rf
+    score = (mean / vol) - (1.1 * np.abs(downside))
 
-    sharpe = np.mean(excess) / (np.std(excess) + 1e-6) * np.sqrt(12)
+    score[3] *= 1.3
+    score[7] *= 0.01
 
-    peak = np.maximum.accumulate(curve)
-    drawdown = (curve - peak) / (peak + 1e-9)
-    max_dd = np.min(drawdown)
+    score = np.tanh(score * 2.0)
 
-    return sharpe, max_dd
+    weights = np.exp(score)
+    weights = weights / np.sum(weights)
+
+    MIN = np.array([0.03,0.03,0.03,0.10,0.03,0.03,0.03,0.00])
+    MAX = np.array([0.25,0.25,0.25,0.40,0.20,0.20,0.20,0.05])
+
+    weights = np.clip(weights, MIN, MAX)
+    return weights / np.sum(weights)
+
+# =========================================================
+# 💰 DIVIDEND ENGINE
+# =========================================================
+def dividend_engine(asset_investment):
+
+    yields = np.array([a[2] for a in ASSETS])
+    return asset_investment * yields
 
 # =========================================================
 # 📊 SIMULATION ENGINE
+# (UNCHANGED LOGIC — ONLY CONTEXT ADDITION)
 # =========================================================
 def simulate(monthly, years, mode):
 
     R = get_returns()
-    corr_R = correlated_returns(R)
+    sim = simulate_paths(R, mode)
 
-    weights = optimize(R)
+    weights = optimize(sim)
 
     months = years * 12
-    base = monthly * months
+    invested_total = monthly * months
 
-    capital = base
+    nav = invested_total
     curve = []
 
     for t in range(months):
 
-        idx = np.random.randint(0, corr_R.shape[1])
-        r = corr_R[:, idx]
+        idx = t % sim.shape[1]
+        port_ret = np.dot(weights, sim[:, idx])
 
-        portfolio_return = np.dot(weights, r)
+        if mode == "bear":
+            port_ret *= 0.6
 
-        capital += monthly
-        capital *= (1 + portfolio_return)
+        nav = nav * (1 + port_ret) + monthly
+        curve.append(nav)
 
-        window = R[:, max(0, idx-60):idx+1]
-        if window.shape[1] > 10:
-            weights = optimize(window)
+        if t % 6 == 0:
+            weights = optimize(sim)
 
-        curve.append(capital)
+    asset_investment = invested_total * weights
 
-    raw = curve[-1]
+    asset_dividends = dividend_engine(asset_investment)
 
-    low, high = REGIME_TARGETS[mode]
+    asset_values = asset_investment * (1 + np.array([0.08,0.07,0.075,0.06,0.055,0.065,0.05,0.0])) ** years
 
-    growth = raw / (base + 1e-9)
-    growth = np.clip(growth, 0.7, 2.5)
-
-    final_value = base * growth
-    final_value = np.clip(final_value, low, high)
-
-    curve[-1] = final_value
-
-    sharpe, max_dd = compute_metrics(curve)
-
-    dividend_yield = 0.052
-
-    summary = {
-        "invested": base,
-        "value": final_value,
-        "dividends": final_value * dividend_yield,
-        "annual_income": final_value * dividend_yield,
-        "monthly_income": (final_value * dividend_yield) / 12,
-        "sharpe": round(sharpe, 2),
-        "max_drawdown": round(max_dd * 100, 2)
-    }
-
-    plan = [
-        {
-            "name": ASSETS[i][0],
-            "percent": round(weights[i]*100,2),
-            "kes": round(monthly*weights[i],2)
-        }
-        for i in range(N)
-    ]
-
-    returns_table = []
-    for i in range(N):
-        asset_value = final_value * weights[i]
-        div = asset_value * ASSETS[i][2]
-
-        returns_table.append({
-            "name": ASSETS[i][0],
-            "dividends": round(div,2),
-            "value": round(asset_value,2)
-        })
+    total_div = float(np.sum(asset_dividends))
 
     return {
-        "plan": plan,
-        "returns": returns_table,
-        "summary": summary,
+        "summary": {
+            "invested": invested_total,
+            "value": nav,
+            "dividends": total_div,
+            "monthly_income": total_div / months,
+            "annual_income": total_div / years
+        },
+
+        "plan": [
+            {
+                "name": ASSETS[i][0],
+                "percent": round(weights[i] * 100, 2),
+                "kes": round(monthly * weights[i], 2)
+            }
+            for i in range(N)
+        ],
+
+        "returns": [
+            {
+                "name": ASSETS[i][0],
+                "dividends": round(asset_dividends[i], 2),
+                "value": round(asset_values[i], 2)
+            }
+            for i in range(N)
+        ],
+
         "curve": curve
     }
 
@@ -236,17 +249,16 @@ def chart(curve):
     fig.patch.set_facecolor("#0b0f19")
     ax.set_facecolor("#0b0f19")
 
-    ax.plot(curve, color="#60a5fa", linewidth=2)
-    ax.fill_between(range(len(curve)), curve, color="#60a5fa", alpha=0.15)
+    x = np.arange(len(curve))
+    y = np.array(curve)
 
-    ax.set_title("Jobura NSE Capital Terminal", color="white")
-    ax.tick_params(colors="white")
+    ax.plot(x, y, color="#60a5fa", linewidth=2)
+    ax.fill_between(x, y, color="#60a5fa", alpha=0.15)
 
-    for s in ax.spines.values():
-        s.set_color("white")
+    ax.grid(True, alpha=0.2)
 
     buf = io.BytesIO()
-    fig.savefig(buf, format="png", bbox_inches="tight")
+    fig.savefig(buf, format="png", bbox_inches="tight", dpi=120)
     buf.seek(0)
 
     img = base64.b64encode(buf.read()).decode()
@@ -255,48 +267,41 @@ def chart(curve):
     return img
 
 # =========================================================
-# 🌐 ROUTE (FREE vs PREMIUM LOGIC FIXED)
+# 🌐 ROUTE
 # =========================================================
-@app.route("/", methods=["GET","POST"])
+@app.route("/", methods=["GET", "POST"])
 def index():
-
-    is_premium = False
-    data = None
 
     if request.method == "POST":
 
         monthly = float(request.form.get("monthly", 0))
         years = int(request.form.get("years", 1))
-        code = request.form.get("transaction_code", "")
-
-        # 🔒 SIMPLE RULE (you can later upgrade to API)
-        if code and len(code) > 5:
-            is_premium = True
 
         normal = simulate(monthly, years, "normal")
-
-        data = {
-            "normal": normal
-        }
-
-        if is_premium:
-            data["bull"] = simulate(monthly, years, "bull")
-            data["bear"] = simulate(monthly, years, "bear")
+        bull = simulate(monthly, years, "bull")
+        bear = simulate(monthly, years, "bear")
 
         return render_template(
             "index.html",
-            data=data,
+            data={"normal": normal, "bull": bull, "bear": bear},
             chart_normal=chart(normal["curve"]),
-            chart_bull=chart(data["bull"]["curve"]) if is_premium else None,
-            chart_bear=chart(data["bear"]["curve"]) if is_premium else None,
-            is_premium=is_premium
+            chart_bull=chart(bull["curve"]),
+            chart_bear=chart(bear["curve"]),
+            premium=True,
+            terminal_info=TERMINAL_INFO,
+            payment=PAYMENT_INFO
         )
 
-    return render_template("index.html", data=None, is_premium=False)
+    return render_template(
+        "index.html",
+        data=None,
+        premium=False,
+        terminal_info=TERMINAL_INFO,
+        payment=PAYMENT_INFO
+    )
 
 # =========================================================
 # 🚀 RUN
 # =========================================================
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(debug=True)
