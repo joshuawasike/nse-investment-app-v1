@@ -25,18 +25,25 @@ ADMIN_PASSWORD = "Jobura@542542"
 # =========================================================
 DB_FILE = "users.json"
 
+
 def load_users():
     if not os.path.exists(DB_FILE):
         return []
     try:
         with open(DB_FILE, "r") as f:
-            return json.load(f)
+            data = json.load(f)
+            return data if isinstance(data, list) else []
     except:
         return []
 
+
 def save_users(users):
-    with open(DB_FILE, "w") as f:
-        json.dump(users, f, indent=4)
+    try:
+        with open(DB_FILE, "w") as f:
+            json.dump(users, f, indent=4)
+    except:
+        pass
+
 
 # =========================================================
 # 📊 SYSTEM INFO
@@ -109,11 +116,12 @@ def get_returns():
 
     return np.array(R)
 
+
 def simulate_paths(R, mode):
     REGIME = {
         "normal": {"mu": 0.0025, "vol": 1.0},
-        "bull":   {"mu": 0.0055, "vol": 1.2},
-        "bear":   {"mu": -0.0035, "vol": 1.3},
+        "bull": {"mu": 0.0055, "vol": 1.2},
+        "bear": {"mu": -0.0035, "vol": 1.3},
     }
 
     cfg = REGIME[mode]
@@ -136,6 +144,7 @@ def simulate_paths(R, mode):
 
     return np.array(sim)
 
+
 def optimize(sim):
     mean = np.mean(sim, axis=1)
     vol = np.std(sim, axis=1) + 1e-9
@@ -156,12 +165,13 @@ def optimize(sim):
     weights = np.clip(weights, MIN, MAX)
     return weights / np.sum(weights)
 
+
 def dividend_engine(asset_investment):
     yields = np.array([a[2] for a in ASSETS])
     return asset_investment * yields
 
-def simulate(monthly, years, mode):
 
+def simulate(monthly, years, mode):
     R = get_returns()
     sim = simulate_paths(R, mode)
 
@@ -208,8 +218,9 @@ def simulate(monthly, years, mode):
         "curve": curve
     }
 
+
 # =========================================================
-# 📈 CHART (FIXED DARK STYLE)
+# 📈 CHART
 # =========================================================
 def chart(curve):
     fig, ax = plt.subplots(figsize=(10,5))
@@ -221,7 +232,6 @@ def chart(curve):
 
     ax.plot(x, y, color="#60a5fa", linewidth=2)
     ax.fill_between(x, y, color="#60a5fa", alpha=0.15)
-
     ax.grid(True, alpha=0.2)
 
     buf = io.BytesIO()
@@ -233,6 +243,7 @@ def chart(curve):
 
     return img
 
+
 # =========================================================
 # 🔐 LOGIN
 # =========================================================
@@ -243,6 +254,7 @@ def login():
             session["admin"] = True
             return redirect("/admin")
         return "❌ Wrong password"
+
     return """
     <form method="POST">
         <input name="password" type="password" placeholder="Admin Password">
@@ -250,35 +262,36 @@ def login():
     </form>
     """
 
+
 @app.route("/logout")
 def logout():
     session.pop("admin", None)
     return redirect("/login")
 
+
 # =========================================================
-# 🌐 MAIN ROUTE
+# 🌐 MAIN
 # =========================================================
 @app.route("/", methods=["GET", "POST"])
 def index():
-
     users = load_users()
     is_premium = False
 
     if request.method == "POST":
-
         monthly = float(request.form.get("monthly", 0))
         years = int(request.form.get("years", 1))
         code = request.form.get("transaction_code", "").strip().upper()
         phone = request.form.get("phone", "").strip()
 
-        # ✅ Check approval + expiry
         for u in users:
             if u["code"] == code and u["status"] == "approved":
                 if "expiry" in u:
-                    if datetime.now() < datetime.strptime(u["expiry"], "%Y-%m-%d"):
-                        is_premium = True
+                    try:
+                        if datetime.now() < datetime.strptime(u["expiry"], "%Y-%m-%d"):
+                            is_premium = True
+                    except:
+                        pass
 
-        # ✅ Save new user
         if code and not any(u["code"] == code for u in users):
             users.append({
                 "code": code,
@@ -307,14 +320,16 @@ def index():
 
     return render_template("index.html", data=None, is_premium=False, payment=PAYMENT_INFO)
 
+
 # =========================================================
-# 🛠 ADMIN PANEL
+# 🛠 ADMIN
 # =========================================================
 @app.route("/admin")
 def admin():
     if not session.get("admin"):
         return redirect("/login")
     return render_template("admin.html", users=load_users())
+
 
 @app.route("/approve/<code>/<plan>")
 def approve(code, plan):
@@ -336,6 +351,23 @@ def approve(code, plan):
 
     save_users(users)
     return redirect("/admin")
+
+
+@app.route("/reject/<code>")
+def reject(code):
+    if not session.get("admin"):
+        return redirect("/login")
+
+    users = load_users()
+
+    for u in users:
+        if u["code"] == code:
+            u["status"] = "rejected"
+            u["expiry"] = "—"
+
+    save_users(users)
+    return redirect("/admin")
+
 
 # =========================================================
 # 🚀 RUN
