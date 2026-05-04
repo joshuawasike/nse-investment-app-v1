@@ -64,7 +64,7 @@ PAYMENT_INFO = {
 }
 
 # =========================================================
-# 📊 DATA
+# 📊 DATA ENGINE
 # =========================================================
 df = pd.DataFrame(columns=["Code", "Date", "Previous"])
 files = glob.glob("data/nse_csv/*.csv")
@@ -127,7 +127,6 @@ def get_returns():
 
 
 def simulate_paths(R, mode):
-
     REGIME = {
         "normal": {"mu": 0.0025, "vol": 1.0},
         "bull": {"mu": 0.0055, "vol": 1.2},
@@ -156,7 +155,6 @@ def simulate_paths(R, mode):
 
 
 def optimize(sim):
-
     mean = np.mean(sim, axis=1)
     vol = np.std(sim, axis=1) + 1e-9
     downside = np.mean(np.minimum(sim, 0), axis=1)
@@ -266,7 +264,6 @@ def chart(curve):
 # =========================================================
 @app.route("/admin")
 def admin():
-
     if not session.get("admin"):
         return redirect("/login")
 
@@ -285,7 +282,6 @@ def admin():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-
     if request.method == "POST":
         if request.form.get("password") == ADMIN_PASSWORD:
             session["admin"] = True
@@ -308,7 +304,6 @@ def logout():
 
 @app.route("/approve/<code>/<plan>")
 def approve(code, plan="monthly"):
-
     if not session.get("admin"):
         return redirect("/login")
 
@@ -327,7 +322,6 @@ def approve(code, plan="monthly"):
 
 @app.route("/reject/<code>")
 def reject(code):
-
     if not session.get("admin"):
         return redirect("/login")
 
@@ -342,7 +336,7 @@ def reject(code):
 
 
 # =========================================================
-# MAIN FIXED (THIS WAS YOUR BUG)
+# MAIN FIXED LOGIC
 # =========================================================
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -356,27 +350,46 @@ def index():
         monthly = float(request.form.get("monthly", 0))
         years = int(request.form.get("years", 1))
         code = request.form.get("transaction_code", "").strip().upper()
+        phone = request.form.get("phone", "").strip()
 
         for u in users:
             if u.get("code") == code and u.get("status") == "approved" and is_active(u):
                 is_premium = True
 
         normal = simulate(monthly, years, "normal")
-        bull = simulate(monthly, years, "bull")
-        bear = simulate(monthly, years, "bear")
 
-        data = {
-            "normal": normal,
-            "bull": bull,
-            "bear": bear
-        }
+        # 🔥 FIX: FREE = ONLY NORMAL
+        if not is_premium:
+            data = {
+                "normal": normal,
+                "bull": None,
+                "bear": None
+            }
+        else:
+            data = {
+                "normal": normal,
+                "bull": simulate(monthly, years, "bull"),
+                "bear": simulate(monthly, years, "bear")
+            }
+
+        # 🔥 STORE USER FOR ADMIN APPROVAL
+        if code:
+            if not any(u.get("code") == code for u in users):
+                users.append({
+                    "code": code,
+                    "phone": phone,
+                    "status": "pending",
+                    "plan": "",
+                    "expiry": ""
+                })
+                save_users(users)
 
         return render_template(
             "index.html",
             data=data,
             chart_normal=chart(normal["curve"]),
-            chart_bull=chart(bull["curve"]),
-            chart_bear=chart(bear["curve"]),
+            chart_bull=chart(data["bull"]["curve"]) if is_premium else None,
+            chart_bear=chart(data["bear"]["curve"]) if is_premium else None,
             is_premium=is_premium,
             payment=PAYMENT_INFO
         )
