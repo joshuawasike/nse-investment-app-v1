@@ -11,7 +11,7 @@ body {
     margin: 0;
 }
 
-/* ✅ FIX: CENTERING + PRODUCTION LAYOUT */
+/* CONTAINER */
 .container {
     max-width: 1100px;
     margin: auto;
@@ -35,7 +35,12 @@ body {
 h2 { color: #60a5fa; }
 h3 { color: #93c5fd; }
 
-/* INFO BOXES */
+.section-title {
+    margin-top: 15px;
+    color: #60a5fa;
+}
+
+/* INFO BOX */
 .info-box {
     background: #0f172a;
     padding: 15px;
@@ -44,6 +49,7 @@ h3 { color: #93c5fd; }
     border: 1px solid #1e293b;
 }
 
+/* GUIDE */
 .guide-box {
     background: #052e16;
     padding: 15px;
@@ -77,7 +83,7 @@ button {
     font-weight: bold;
 }
 
-/* CARDS */
+/* CARD */
 .card {
     background: #111827;
     padding: 20px;
@@ -124,11 +130,6 @@ img {
     background: #0b0f19;
     padding: 10px;
 }
-
-.section-title {
-    margin-top: 15px;
-    color: #60a5fa;
-}
 </style>
 </head>
 
@@ -136,7 +137,7 @@ img {
 
 <div class="container">
 
-<!-- 🔐 TOP BAR -->
+<!-- TOP BAR -->
 <div class="topbar">
     <a href="/login" style="color:#60a5fa;">Admin Login</a>
 
@@ -148,7 +149,6 @@ img {
 
 <h2>📊 Jobura NSE Capital Terminal</h2>
 
-<!-- INFO -->
 <div class="info-box">
 <b>Jobura NSE Capital Terminal</b><br><br>
 ✔ Portfolio construction engine<br>
@@ -156,7 +156,6 @@ img {
 ✔ NSE investment optimizer
 </div>
 
-<!-- GUIDE -->
 <div class="guide-box">
 <b>🚀 How to Use Free Mode</b><br><br>
 ✔ Enter Monthly Investment<br>
@@ -220,7 +219,9 @@ Name: <b>{{ payment.account_name }}</b>
 
 <h4 class="section-title">💰 Investment Plan</h4>
 <table>
-<tr><th>Asset</th><th>%</th><th>KES</th></tr>
+<tr>
+<th>Asset</th><th>%</th><th>KES</th>
+</tr>
 {% for c in data.normal.plan %}
 <tr>
 <td>{{ c.name }}</td>
@@ -232,7 +233,9 @@ Name: <b>{{ payment.account_name }}</b>
 
 <h4 class="section-title">📊 Returns</h4>
 <table>
-<tr><th>Asset</th><th>Dividends</th><th>Value</th></tr>
+<tr>
+<th>Asset</th><th>Dividends</th><th>Value</th>
+</tr>
 {% for r in data.normal.returns %}
 <tr>
 <td>{{ r.name }}</td>
@@ -245,20 +248,80 @@ Name: <b>{{ payment.account_name }}</b>
 <img src="data:image/png;base64,{{ chart_normal }}">
 </div>
 
+<!-- ================= BULL ================= -->
 {% if is_premium %}
-
 <div class="card">
 <h3>📈 BULL SCENARIO</h3>
+
 <p>💰 Value: {{ data.bull.summary.value }}</p>
+
+<h4 class="section-title">💰 Investment Plan</h4>
+<table>
+<tr>
+<th>Asset</th><th>%</th><th>KES</th>
+</tr>
+{% for c in data.bull.plan %}
+<tr>
+<td>{{ c.name }}</td>
+<td>{{ c.percent }}%</td>
+<td>{{ c.kes }}</td>
+</tr>
+{% endfor %}
+</table>
+
+<h4 class="section-title">📊 Returns</h4>
+<table>
+<tr>
+<th>Asset</th><th>Dividends</th><th>Value</th>
+</tr>
+{% for r in data.bull.returns %}
+<tr>
+<td>{{ r.name }}</td>
+<td>{{ r.dividends }}</td>
+<td>{{ r.value }}</td>
+</tr>
+{% endfor %}
+</table>
+
 <img src="data:image/png;base64,{{ chart_bull }}">
 </div>
 
+<!-- ================= BEAR ================= -->
 <div class="card">
 <h3>📉 BEAR SCENARIO</h3>
+
 <p>💰 Value: {{ data.bear.summary.value }}</p>
+
+<h4 class="section-title">💰 Investment Plan</h4>
+<table>
+<tr>
+<th>Asset</th><th>%</th><th>KES</th>
+</tr>
+{% for c in data.bear.plan %}
+<tr>
+<td>{{ c.name }}</td>
+<td>{{ c.percent }}%</td>
+<td>{{ c.kes }}</td>
+</tr>
+{% endfor %}
+</table>
+
+<h4 class="section-title">📊 Returns</h4>
+<table>
+<tr>
+<th>Asset</th><th>Dividends</th><th>Value</th>
+</tr>
+{% for r in data.bear.returns %}
+<tr>
+<td>{{ r.name }}</td>
+<td>{{ r.dividends }}</td>
+<td>{{ r.value }}</td>
+</tr>
+{% endfor %}
+</table>
+
 <img src="data:image/png;base64,{{ chart_bear }}">
 </div>
-
 {% endif %}
 
 {% endif %}
