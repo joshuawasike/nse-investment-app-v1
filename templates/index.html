@@ -38,7 +38,7 @@ h3 { color: #93c5fd; }
     color: #60a5fa;
 }
 
-/* FIXED TABLE STYLE */
+/* TABLE FIX */
 table {
     width: 100%;
     border-collapse: collapse;
@@ -59,10 +59,9 @@ th {
 td {
     padding: 10px;
     border-bottom: 1px solid #1f2937;
-    text-align: left;
 }
 
-/* SCENARIO CARD */
+/* CARD */
 .card {
     background: #111827;
     padding: 20px;
@@ -70,7 +69,6 @@ td {
     border-radius: 12px;
 }
 
-/* INFO BOX */
 .info-box {
     background: #0f172a;
     padding: 15px;
@@ -244,7 +242,9 @@ img {
 <div class="card">
 <h3>📈 BULL SCENARIO</h3>
 
-<p>💰 Value: {{ data.bull.summary.value }}</p>
+<p>💰 Invested: {{ data.bull.summary.invested }}</p>
+<p>💵 Dividends: {{ data.bull.summary.dividends }}</p>
+<p>📊 Value: {{ data.bull.summary.value }}</p>
 
 <h4 class="section-title">💰 Investment Plan</h4>
 <table>
@@ -277,7 +277,9 @@ img {
 <div class="card">
 <h3>📉 BEAR SCENARIO</h3>
 
-<p>💰 Value: {{ data.bear.summary.value }}</p>
+<p>💰 Invested: {{ data.bear.summary.invested }}</p>
+<p>💵 Dividends: {{ data.bear.summary.dividends }}</p>
+<p>📊 Value: {{ data.bear.summary.value }}</p>
 
 <h4 class="section-title">💰 Investment Plan</h4>
 <table>
