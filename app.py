@@ -21,22 +21,19 @@ app.secret_key = "jobura_secure_key_change_me"
 ADMIN_PASSWORD = "Jobura@542542"
 
 # =========================================================
-# 📂 USERS DATABASE (SAFE VERSION)
+# 📂 USERS DATABASE (SAFE)
 # =========================================================
 DB_FILE = "users.json"
 
 
 def load_users():
-    """Safe JSON loader (prevents production crashes)"""
     if not os.path.exists(DB_FILE):
         return []
 
     try:
         with open(DB_FILE, "r") as f:
             data = json.load(f)
-            if isinstance(data, list):
-                return data
-            return []
+            return data if isinstance(data, list) else []
     except:
         return []
 
@@ -59,7 +56,7 @@ PAYMENT_INFO = {
 }
 
 # =========================================================
-# 📊 DATA LOADING (SAFE)
+# 📊 DATA
 # =========================================================
 df = pd.DataFrame(columns=["Code", "Date", "Previous"])
 files = glob.glob("data/nse_csv/*.csv")
@@ -77,7 +74,6 @@ if not df.empty:
     df = df.dropna()
     df = df.sort_values(["Code", "Date"])
 
-
 # =========================================================
 # 📊 ASSETS
 # =========================================================
@@ -94,9 +90,8 @@ ASSETS = [
 
 N = len(ASSETS)
 
-
 # =========================================================
-# RETURNS ENGINE
+# ENGINE (UNCHANGED)
 # =========================================================
 def get_returns():
     R = []
@@ -123,9 +118,6 @@ def get_returns():
     return np.array(R)
 
 
-# =========================================================
-# SIMULATION ENGINE
-# =========================================================
 def simulate_paths(R, mode):
 
     REGIME = {
@@ -155,9 +147,6 @@ def simulate_paths(R, mode):
     return np.array(sim)
 
 
-# =========================================================
-# OPTIMIZER
-# =========================================================
 def optimize(sim):
 
     mean = np.mean(sim, axis=1)
@@ -179,17 +168,11 @@ def optimize(sim):
     return weights / np.sum(weights)
 
 
-# =========================================================
-# DIVIDENDS
-# =========================================================
 def dividend_engine(asset_investment):
     yields = np.array([a[2] for a in ASSETS])
     return asset_investment * yields
 
 
-# =========================================================
-# SIMULATION WRAPPER
-# =========================================================
 def simulate(monthly, years, mode):
 
     R = get_returns()
@@ -250,9 +233,6 @@ def simulate(monthly, years, mode):
     }
 
 
-# =========================================================
-# CHART
-# =========================================================
 def chart(curve):
     fig, ax = plt.subplots(figsize=(10,5))
     fig.patch.set_facecolor("#0b0f19")
@@ -274,7 +254,7 @@ def chart(curve):
 
 
 # =========================================================
-# 🔐 ADMIN PANEL (FIXED - NO MORE 500 ERRORS)
+# 🔐 ADMIN SAFE PANEL (FIXED)
 # =========================================================
 @app.route("/admin")
 def admin():
@@ -282,12 +262,18 @@ def admin():
     if not session.get("admin"):
         return redirect("/login")
 
-    try:
-        users = load_users()
-        return render_template("admin.html", users=users)
+    users = load_users()
 
-    except Exception as e:
-        return f"ADMIN ERROR SAFE MODE: {str(e)}"
+    # 🔥 CRITICAL FIX: prevent missing-field crashes
+    for u in users:
+        u.setdefault("code", "")
+        u.setdefault("phone", "")
+        u.setdefault("status", "pending")
+        u.setdefault("expiry", "")
+        u.setdefault("plan", "")
+        u.setdefault("type", "individual")
+
+    return render_template("admin.html", users=users)
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -350,7 +336,7 @@ def reject(code):
 
 
 # =========================================================
-# MAIN ROUTE
+# MAIN
 # =========================================================
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -366,7 +352,7 @@ def index():
 
         for u in users:
             if u.get("code") == code and u.get("status") == "approved":
-                if "expiry" in u:
+                if u.get("expiry"):
                     if datetime.now() < datetime.strptime(u["expiry"], "%Y-%m-%d"):
                         is_premium = True
 
