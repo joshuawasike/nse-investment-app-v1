@@ -1,112 +1,17 @@
-<!DOCTYPE html>
-<html>
-<head>
-<title>Jobura NSE Capital Terminal</title>
-
-<style>
-body {
-    font-family: Arial;
-    background: #0b0f19;
-    color: #e5e7eb;
-    padding: 20px;
-}
-
-h2 { color: #60a5fa; }
-h3 { color: #93c5fd; }
-
-.form-box input,
-.form-box select {
-    display: block;
-    width: 280px;
-    margin-bottom: 10px;
-    padding: 10px;
-    border-radius: 6px;
-    background: #111827;
-    color: white;
-    border: 1px solid #374151;
-}
-
-button {
-    padding: 12px;
-    width: 280px;
-    background: linear-gradient(90deg,#2563eb,#1d4ed8);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: bold;
-}
-
-.card {
-    background: #111827;
-    padding: 20px;
-    margin-top: 20px;
-    border-radius: 12px;
-}
-
-.locked {
-    background: #1f2937;
-    padding: 15px;
-    border-left: 5px solid gold;
-    color: #facc15;
-}
-
-.info-box {
-    background: #0f172a;
-    padding: 15px;
-    border-radius: 10px;
-    margin-bottom: 15px;
-    border: 1px solid #1e293b;
-}
-
-.guide-box {
-    background: #052e16;
-    padding: 15px;
-    border-radius: 10px;
-    margin-bottom: 20px;
-    border: 1px solid #065f46;
-    color: #bbf7d0;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-    font-family: monospace;
-}
-
-th, td {
-    padding: 8px;
-    border-bottom: 1px solid #374151;
-}
-
-img {
-    width: 100%;
-    margin-top: 10px;
-    border-radius: 10px;
-    background: #0b0f19;
-    padding: 10px;
-}
-
-.section-title {
-    margin-top: 15px;
-    color: #60a5fa;
-}
-</style>
-</head>
-
 <body>
 
 <h2>📊 Jobura NSE Capital Terminal</h2>
 
+<!-- ================= HEADER ================= -->
 <div class="info-box">
-<b>Jobura NSE Capital Terminal</b> is:
-<br><br>
+<b>Jobura NSE Capital Terminal</b><br><br>
+
 ✔ Portfolio construction engine<br>
 ✔ Scenario-based forecasting system<br>
 ✔ NSE investment optimizer
 </div>
 
+<!-- ================= GUIDE ================= -->
 <div class="guide-box">
 <b>🚀 How to Use Free Mode</b><br><br>
 
@@ -114,11 +19,11 @@ img {
 ✔ Enter Years<br>
 ✔ Click Run Engine<br><br>
 
-You get:
 ➡ Normal Scenario (FREE)<br>
 🔒 Bull & Bear (Premium)
 </div>
 
+<!-- ================= FORM ================= -->
 <form method="POST" class="form-box">
 
 <input name="monthly" placeholder="Monthly Investment (KES)" required>
@@ -139,6 +44,7 @@ You get:
 
 <hr>
 
+<!-- ================= STATUS ================= -->
 {% if not is_premium %}
 <div class="locked">
 🔒 FREE VERSION — Only Normal Scenario Visible
@@ -149,7 +55,7 @@ You get:
 
 {% if data %}
 
-<!-- ================= NORMAL ================= -->
+<!-- ================= NORMAL CARD ================= -->
 <div class="card">
 <h3>📊 NORMAL SCENARIO</h3>
 
@@ -157,7 +63,7 @@ You get:
 <p>💵 Dividends: {{ data.normal.summary.dividends }}</p>
 <p>📊 Value: {{ data.normal.summary.value }}</p>
 
-<div class="section-title">💰 Investment Plan</div>
+<h4 class="section-title">💰 Investment Plan</h4>
 <table>
 <tr><th>Asset</th><th>%</th><th>KES</th></tr>
 {% for c in data.normal.plan %}
@@ -169,7 +75,7 @@ You get:
 {% endfor %}
 </table>
 
-<div class="section-title">📊 Returns Table</div>
+<h4 class="section-title">📊 Returns Table</h4>
 <table>
 <tr><th>Asset</th><th>Dividends</th><th>Value</th></tr>
 {% for r in data.normal.returns %}
@@ -184,15 +90,15 @@ You get:
 <img src="data:image/png;base64,{{ chart_normal }}">
 </div>
 
-<!-- ================= BULL ================= -->
+<!-- ================= BULL CARD ================= -->
 {% if data.bull %}
 <div class="card">
-<h3>📊 BULL SCENARIO</h3>
+<h3>📈 BULL SCENARIO</h3>
 
-<p>📊 Value: {{ data.bull.summary.value }}</p>
+<p>💰 Value: {{ data.bull.summary.value }}</p>
 <p>💵 Dividends: {{ data.bull.summary.dividends }}</p>
 
-<div class="section-title">💰 Investment Plan</div>
+<h4 class="section-title">💰 Investment Plan</h4>
 <table>
 <tr><th>Asset</th><th>%</th><th>KES</th></tr>
 {% for c in data.bull.plan %}
@@ -204,7 +110,7 @@ You get:
 {% endfor %}
 </table>
 
-<div class="section-title">📊 Returns Table</div>
+<h4 class="section-title">📊 Returns Table</h4>
 <table>
 <tr><th>Asset</th><th>Dividends</th><th>Value</th></tr>
 {% for r in data.bull.returns %}
@@ -220,15 +126,15 @@ You get:
 </div>
 {% endif %}
 
-<!-- ================= BEAR ================= -->
+<!-- ================= BEAR CARD ================= -->
 {% if data.bear %}
 <div class="card">
-<h3>📊 BEAR SCENARIO</h3>
+<h3>📉 BEAR SCENARIO</h3>
 
-<p>📊 Value: {{ data.bear.summary.value }}</p>
+<p>💰 Value: {{ data.bear.summary.value }}</p>
 <p>💵 Dividends: {{ data.bear.summary.dividends }}</p>
 
-<div class="section-title">💰 Investment Plan</div>
+<h4 class="section-title">💰 Investment Plan</h4>
 <table>
 <tr><th>Asset</th><th>%</th><th>KES</th></tr>
 {% for c in data.bear.plan %}
@@ -240,7 +146,7 @@ You get:
 {% endfor %}
 </table>
 
-<div class="section-title">📊 Returns Table</div>
+<h4 class="section-title">📊 Returns Table</h4>
 <table>
 <tr><th>Asset</th><th>Dividends</th><th>Value</th></tr>
 {% for r in data.bear.returns %}
@@ -259,4 +165,3 @@ You get:
 {% endif %}
 
 </body>
-</html>
