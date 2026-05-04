@@ -6,22 +6,22 @@ import matplotlib
 import json
 import os
 from datetime import datetime, timedelta
+import io
+import base64
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import io
-import base64
 
 app = Flask(__name__)
 app.secret_key = "jobura_secure_key_change_me"
 
 # =========================================================
-# 🔐 ADMIN PASSWORD
+# 🔐 ADMIN
 # =========================================================
 ADMIN_PASSWORD = "Jobura@542542"
 
 # =========================================================
-# 📂 DATABASE
+# 📂 USERS DB
 # =========================================================
 DB_FILE = "users.json"
 
@@ -39,24 +39,27 @@ def save_users(users):
         json.dump(users, f, indent=4)
 
 # =========================================================
-# 📊 DATA
+# 📊 LOAD DATA (FIXED - NO SILENT FAILURES)
 # =========================================================
 df = pd.DataFrame(columns=["Code", "Date", "Previous"])
 
 files = glob.glob("data/nse_csv/*.csv")
+print("📂 FILES FOUND:", len(files))
 
 for file in files:
     try:
         temp = pd.read_csv(file, usecols=["Code", "Date", "Previous"])
         df = pd.concat([df, temp], ignore_index=True)
-    except:
-        continue
+    except Exception as e:
+        print("❌ CSV ERROR:", file, e)
 
 if not df.empty:
     df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
     df["Previous"] = pd.to_numeric(df["Previous"], errors="coerce")
     df = df.dropna()
     df = df.sort_values(["Code", "Date"])
+
+print("📊 DATA SIZE:", len(df))
 
 # =========================================================
 # 📊 ASSETS
@@ -75,10 +78,11 @@ ASSETS = [
 N = len(ASSETS)
 
 # =========================================================
-# 📈 SIMULATION
+# 📈 RETURNS ENGINE
 # =========================================================
 def get_returns():
     R = []
+
     for _, code, _ in ASSETS:
         px = df[df["Code"] == code]["Previous"].values
         px = np.nan_to_num(px)
@@ -100,7 +104,11 @@ def get_returns():
 
     return np.array(R)
 
+# =========================================================
+# 🧠 SIMULATION ENGINE
+# =========================================================
 def simulate_paths(R, mode):
+
     REGIME = {
         "normal": {"mu": 0.0025, "vol": 1.0},
         "bull":   {"mu": 0.0055, "vol": 1.2},
@@ -127,7 +135,11 @@ def simulate_paths(R, mode):
 
     return np.array(sim)
 
+# =========================================================
+# 🧠 OPTIMIZER
+# =========================================================
 def optimize(sim):
+
     mean = np.mean(sim, axis=1)
     vol = np.std(sim, axis=1) + 1e-9
     downside = np.mean(np.minimum(sim, 0), axis=1)
@@ -141,12 +153,18 @@ def optimize(sim):
     weights = np.exp(score)
     weights = weights / np.sum(weights)
 
-    return weights / np.sum(weights)
+    return weights
 
+# =========================================================
+# 💰 DIVIDENDS
+# =========================================================
 def dividend_engine(asset_investment):
     yields = np.array([a[2] for a in ASSETS])
     return asset_investment * yields
 
+# =========================================================
+# 📊 MAIN SIMULATION
+# =========================================================
 def simulate(monthly, years, mode):
 
     R = get_returns()
@@ -169,17 +187,17 @@ def simulate(monthly, years, mode):
         nav = nav * (1 + port_ret) + monthly
         curve.append(nav)
 
-    # ✅ RETURNS FIX (THIS WAS YOUR MAIN BUG)
     asset_investment = invested_total * weights
     asset_dividends = dividend_engine(asset_investment)
 
-    returns = []
-    for i in range(N):
-        returns.append({
+    returns = [
+        {
             "name": ASSETS[i][0],
             "dividends": round(asset_dividends[i], 2),
             "value": round(asset_investment[i] * (1 + 0.1 * years), 2)
-        })
+        }
+        for i in range(N)
+    ]
 
     return {
         "summary": {
@@ -192,12 +210,12 @@ def simulate(monthly, years, mode):
         "plan": [
             {
                 "name": ASSETS[i][0],
-                "percent": round(weights[i]*100,2),
-                "kes": round(monthly*weights[i],2)
+                "percent": round(weights[i] * 100, 2),
+                "kes": round(monthly * weights[i], 2)
             }
             for i in range(N)
         ],
-        "returns": returns,   # ✅ FIXED
+        "returns": returns,
         "curve": curve
     }
 
@@ -205,6 +223,7 @@ def simulate(monthly, years, mode):
 # 📈 CHART
 # =========================================================
 def chart(curve):
+
     fig, ax = plt.subplots(figsize=(10,5))
     fig.patch.set_facecolor("#0b0f19")
     ax.set_facecolor("#0b0f19")
@@ -227,29 +246,7 @@ def chart(curve):
     return img
 
 # =========================================================
-# 🔐 LOGIN
-# =========================================================
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
-        if request.form.get("password") == ADMIN_PASSWORD:
-            session["admin"] = True
-            return redirect("/admin")
-        return "❌ Wrong password"
-    return """
-    <form method="POST">
-        <input name="password" type="password" placeholder="Admin Password">
-        <button>Login</button>
-    </form>
-    """
-
-@app.route("/logout")
-def logout():
-    session.pop("admin", None)
-    return redirect("/login")
-
-# =========================================================
-# 🌐 MAIN
+# 🌐 ROUTE
 # =========================================================
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -261,84 +258,27 @@ def index():
 
         monthly = float(request.form.get("monthly", 0))
         years = int(request.form.get("years", 1))
-        code = request.form.get("transaction_code", "").strip().upper()
-        phone = request.form.get("phone", "").strip()
-
-        for u in users:
-            if u["code"] == code and u["status"] == "approved":
-                if "expiry" not in u or datetime.now() < datetime.strptime(u["expiry"], "%Y-%m-%d"):
-                    is_premium = True
-
-        if code and not any(u["code"] == code for u in users):
-            users.append({
-                "code": code,
-                "phone": phone,
-                "status": "pending",
-                "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            })
-            save_users(users)
 
         normal = simulate(monthly, years, "normal")
-        data = {"normal": normal}
+        bull = simulate(monthly, years, "bull")
+        bear = simulate(monthly, years, "bear")
 
-        if is_premium:
-            data["bull"] = simulate(monthly, years, "bull")
-            data["bear"] = simulate(monthly, years, "bear")
+        data = {
+            "normal": normal,
+            "bull": bull,
+            "bear": bear
+        }
 
         return render_template(
             "index.html",
             data=data,
             chart_normal=chart(normal["curve"]),
-            chart_bull=chart(data["bull"]["curve"]) if is_premium else None,
-            chart_bear=chart(data["bear"]["curve"]) if is_premium else None,
-            is_premium=is_premium
+            chart_bull=chart(bull["curve"]),
+            chart_bear=chart(bear["curve"]),
+            is_premium=True
         )
 
     return render_template("index.html", data=None, is_premium=False)
-
-# =========================================================
-# 🛠 ADMIN PANEL
-# =========================================================
-@app.route("/admin")
-def admin():
-    if not session.get("admin"):
-        return redirect("/login")
-    return render_template("admin.html", users=load_users())
-
-@app.route("/approve/<code>/<plan>")
-def approve(code, plan):
-    if not session.get("admin"):
-        return redirect("/login")
-
-    users = load_users()
-
-    for u in users:
-        if u["code"] == code:
-            u["status"] = "approved"
-
-            if plan == "monthly":
-                expiry = datetime.now() + timedelta(days=30)
-            else:
-                expiry = datetime.now() + timedelta(days=365)
-
-            u["expiry"] = expiry.strftime("%Y-%m-%d")
-
-    save_users(users)
-    return redirect("/admin")
-
-@app.route("/reject/<code>")
-def reject(code):
-    if not session.get("admin"):
-        return redirect("/login")
-
-    users = load_users()
-
-    for u in users:
-        if u["code"] == code:
-            u["status"] = "rejected"
-
-    save_users(users)
-    return redirect("/admin")
 
 # =========================================================
 # 🚀 RUN
