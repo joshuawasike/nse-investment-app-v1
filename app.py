@@ -21,7 +21,7 @@ app.secret_key = "jobura_secure_key_change_me"
 ADMIN_PASSWORD = "Jobura@542542"
 
 # =========================================================
-# 📂 USERS DATABASE (SAFE)
+# 📂 USERS DATABASE
 # =========================================================
 DB_FILE = "users.json"
 
@@ -46,7 +46,6 @@ def save_users(users):
 
 
 def is_active(user):
-    """Check expiry safely"""
     try:
         if not user.get("expiry"):
             return False
@@ -83,6 +82,7 @@ if not df.empty:
     df = df.dropna()
     df = df.sort_values(["Code", "Date"])
 
+
 # =========================================================
 # 📊 ASSETS
 # =========================================================
@@ -98,6 +98,7 @@ ASSETS = [
 ]
 
 N = len(ASSETS)
+
 
 # =========================================================
 # ENGINE
@@ -127,7 +128,6 @@ def get_returns():
 
 
 def simulate_paths(R, mode):
-
     REGIME = {
         "normal": {"mu": 0.0025, "vol": 1.0},
         "bull": {"mu": 0.0055, "vol": 1.2},
@@ -156,7 +156,6 @@ def simulate_paths(R, mode):
 
 
 def optimize(sim):
-
     mean = np.mean(sim, axis=1)
     vol = np.std(sim, axis=1) + 1e-9
     downside = np.mean(np.minimum(sim, 0), axis=1)
@@ -262,17 +261,14 @@ def chart(curve):
 
 
 # =========================================================
-# 🔐 ADMIN PANEL (STABLE)
+# ADMIN
 # =========================================================
 @app.route("/admin")
 def admin():
-
     if not session.get("admin"):
         return redirect("/login")
 
     users = load_users()
-
-    # FIX: prevent crashes from bad JSON
     users = [u for u in users if isinstance(u, dict)]
 
     for u in users:
@@ -288,7 +284,6 @@ def admin():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-
     if request.method == "POST":
         if request.form.get("password") == ADMIN_PASSWORD:
             session["admin"] = True
@@ -309,11 +304,8 @@ def logout():
     return redirect("/login")
 
 
-# FIXED APPROVE ROUTE
-@app.route("/approve/<code>")
 @app.route("/approve/<code>/<plan>")
 def approve(code, plan="monthly"):
-
     if not session.get("admin"):
         return redirect("/login")
 
@@ -333,7 +325,6 @@ def approve(code, plan="monthly"):
 
 @app.route("/reject/<code>")
 def reject(code):
-
     if not session.get("admin"):
         return redirect("/login")
 
