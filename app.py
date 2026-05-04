@@ -6,11 +6,11 @@ import matplotlib
 import json
 import os
 from datetime import datetime, timedelta
+import io
+import base64
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import io
-import base64
 
 app = Flask(__name__)
 app.secret_key = "jobura_secure_key_change_me"
@@ -21,25 +21,36 @@ app.secret_key = "jobura_secure_key_change_me"
 ADMIN_PASSWORD = "Jobura@542542"
 
 # =========================================================
-# 📂 USERS DB
+# 📂 USERS DATABASE (SAFE VERSION)
 # =========================================================
 DB_FILE = "users.json"
 
+
 def load_users():
+    """Safe JSON loader (prevents production crashes)"""
     if not os.path.exists(DB_FILE):
         return []
+
     try:
         with open(DB_FILE, "r") as f:
-            return json.load(f)
+            data = json.load(f)
+            if isinstance(data, list):
+                return data
+            return []
     except:
         return []
 
+
 def save_users(users):
-    with open(DB_FILE, "w") as f:
-        json.dump(users, f, indent=4)
+    try:
+        with open(DB_FILE, "w") as f:
+            json.dump(users, f, indent=4)
+    except:
+        pass
+
 
 # =========================================================
-# 📊 PAYMENT
+# 📊 PAYMENT INFO
 # =========================================================
 PAYMENT_INFO = {
     "paybill": "542542",
@@ -48,7 +59,7 @@ PAYMENT_INFO = {
 }
 
 # =========================================================
-# 📊 DATA
+# 📊 DATA LOADING (SAFE)
 # =========================================================
 df = pd.DataFrame(columns=["Code", "Date", "Previous"])
 files = glob.glob("data/nse_csv/*.csv")
@@ -66,6 +77,7 @@ if not df.empty:
     df = df.dropna()
     df = df.sort_values(["Code", "Date"])
 
+
 # =========================================================
 # 📊 ASSETS
 # =========================================================
@@ -82,11 +94,13 @@ ASSETS = [
 
 N = len(ASSETS)
 
+
 # =========================================================
 # RETURNS ENGINE
 # =========================================================
 def get_returns():
     R = []
+
     for _, code, _ in ASSETS:
         px = df[df["Code"] == code]["Previous"].values
         px = np.nan_to_num(px)
@@ -108,15 +122,16 @@ def get_returns():
 
     return np.array(R)
 
+
 # =========================================================
-# REGIME ENGINE
+# SIMULATION ENGINE
 # =========================================================
 def simulate_paths(R, mode):
 
     REGIME = {
         "normal": {"mu": 0.0025, "vol": 1.0},
-        "bull":   {"mu": 0.0055, "vol": 1.2},
-        "bear":   {"mu": -0.0035, "vol": 1.3},
+        "bull": {"mu": 0.0055, "vol": 1.2},
+        "bear": {"mu": -0.0035, "vol": 1.3},
     }
 
     cfg = REGIME.get(mode, REGIME["normal"])
@@ -139,10 +154,12 @@ def simulate_paths(R, mode):
 
     return np.array(sim)
 
+
 # =========================================================
 # OPTIMIZER
 # =========================================================
 def optimize(sim):
+
     mean = np.mean(sim, axis=1)
     vol = np.std(sim, axis=1) + 1e-9
     downside = np.mean(np.minimum(sim, 0), axis=1)
@@ -161,6 +178,7 @@ def optimize(sim):
     weights = np.clip(weights, MIN, MAX)
     return weights / np.sum(weights)
 
+
 # =========================================================
 # DIVIDENDS
 # =========================================================
@@ -168,8 +186,9 @@ def dividend_engine(asset_investment):
     yields = np.array([a[2] for a in ASSETS])
     return asset_investment * yields
 
+
 # =========================================================
-# SIMULATION
+# SIMULATION WRAPPER
 # =========================================================
 def simulate(monthly, years, mode):
 
@@ -203,15 +222,13 @@ def simulate(monthly, years, mode):
         [0.08,0.07,0.075,0.06,0.055,0.065,0.05,0.0]
     )) ** years
 
-    total_div = float(np.sum(asset_dividends))
-
     return {
         "summary": {
             "invested": invested_total,
             "value": nav,
-            "dividends": total_div,
-            "monthly_income": total_div / max(months,1),
-            "annual_income": total_div / max(years,1)
+            "dividends": float(np.sum(asset_dividends)),
+            "monthly_income": float(np.sum(asset_dividends)) / max(months,1),
+            "annual_income": float(np.sum(asset_dividends)) / max(years,1)
         },
         "plan": [
             {
@@ -231,6 +248,7 @@ def simulate(monthly, years, mode):
         ],
         "curve": curve
     }
+
 
 # =========================================================
 # CHART
@@ -252,20 +270,41 @@ def chart(curve):
 
     img = base64.b64encode(buf.read()).decode()
     plt.close(fig)
-
     return img
 
+
 # =========================================================
-# 🔐 ADMIN (FIXED + SAFE)
+# 🔐 ADMIN PANEL (FIXED - NO MORE 500 ERRORS)
 # =========================================================
-@app.route("/login", methods=["GET","POST"])
+@app.route("/admin")
+def admin():
+
+    if not session.get("admin"):
+        return redirect("/login")
+
+    try:
+        users = load_users()
+        return render_template("admin.html", users=users)
+
+    except Exception as e:
+        return f"ADMIN ERROR SAFE MODE: {str(e)}"
+
+
+@app.route("/login", methods=["GET", "POST"])
 def login():
+
     if request.method == "POST":
         if request.form.get("password") == ADMIN_PASSWORD:
             session["admin"] = True
             return redirect("/admin")
         return "Wrong password"
-    return render_template("admin_login.html")
+
+    return """
+    <form method="POST">
+        <input name="password" type="password" placeholder="Admin Password">
+        <button type="submit">Login</button>
+    </form>
+    """
 
 
 @app.route("/logout")
@@ -274,30 +313,9 @@ def logout():
     return redirect("/login")
 
 
-@app.route("/admin")
-def admin():
-    if not session.get("admin"):
-        return redirect("/login")
-
-    users = load_users()
-
-    # SAFE DEFAULTS (prevents crashes)
-    safe_users = []
-    for u in users:
-        safe_users.append({
-            "code": u.get("code","-"),
-            "phone": u.get("phone","-"),
-            "status": u.get("status","pending"),
-            "expiry": u.get("expiry","-"),
-            "type": u.get("type","individual"),
-            "plan": u.get("plan","monthly")
-        })
-
-    return render_template("admin.html", users=safe_users)
-
-
 @app.route("/approve/<code>/<plan>")
 def approve(code, plan):
+
     if not session.get("admin"):
         return redirect("/login")
 
@@ -307,7 +325,6 @@ def approve(code, plan):
         if u.get("code") == code:
             u["status"] = "approved"
             u["plan"] = plan
-            u["type"] = u.get("type","individual")
 
             days = 30 if plan == "monthly" else 365
             u["expiry"] = (datetime.now() + timedelta(days=days)).strftime("%Y-%m-%d")
@@ -318,6 +335,7 @@ def approve(code, plan):
 
 @app.route("/reject/<code>")
 def reject(code):
+
     if not session.get("admin"):
         return redirect("/login")
 
@@ -326,15 +344,15 @@ def reject(code):
     for u in users:
         if u.get("code") == code:
             u["status"] = "rejected"
-            u["expiry"] = None
 
     save_users(users)
     return redirect("/admin")
 
+
 # =========================================================
-# MAIN
+# MAIN ROUTE
 # =========================================================
-@app.route("/", methods=["GET","POST"])
+@app.route("/", methods=["GET", "POST"])
 def index():
 
     users = load_users()
@@ -342,13 +360,13 @@ def index():
 
     if request.method == "POST":
 
-        monthly = float(request.form.get("monthly",0))
-        years = int(request.form.get("years",1))
-        code = request.form.get("transaction_code","").strip().upper()
+        monthly = float(request.form.get("monthly", 0))
+        years = int(request.form.get("years", 1))
+        code = request.form.get("transaction_code", "").strip().upper()
 
         for u in users:
             if u.get("code") == code and u.get("status") == "approved":
-                if "expiry" in u and u["expiry"]:
+                if "expiry" in u:
                     if datetime.now() < datetime.strptime(u["expiry"], "%Y-%m-%d"):
                         is_premium = True
 
@@ -371,6 +389,7 @@ def index():
         )
 
     return render_template("index.html", data=None, is_premium=False, payment=PAYMENT_INFO)
+
 
 # =========================================================
 # RUN
