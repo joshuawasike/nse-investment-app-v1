@@ -11,14 +11,12 @@ body {
     margin: 0;
 }
 
-/* CONTAINER */
 .container {
     max-width: 1100px;
     margin: auto;
     padding: 20px;
 }
 
-/* TOP BAR */
 .topbar {
     display: flex;
     justify-content: flex-end;
@@ -31,13 +29,45 @@ body {
     font-weight: bold;
 }
 
-/* HEADINGS */
 h2 { color: #60a5fa; }
 h3 { color: #93c5fd; }
 
 .section-title {
-    margin-top: 15px;
+    margin-top: 20px;
+    margin-bottom: 10px;
     color: #60a5fa;
+}
+
+/* FIXED TABLE STYLE */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-family: monospace;
+    background: #0f172a;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+th {
+    background: #111827;
+    color: #93c5fd;
+    text-align: left;
+    padding: 10px;
+}
+
+td {
+    padding: 10px;
+    border-bottom: 1px solid #1f2937;
+    text-align: left;
+}
+
+/* SCENARIO CARD */
+.card {
+    background: #111827;
+    padding: 20px;
+    margin-top: 20px;
+    border-radius: 12px;
 }
 
 /* INFO BOX */
@@ -49,7 +79,6 @@ h3 { color: #93c5fd; }
     border: 1px solid #1e293b;
 }
 
-/* GUIDE */
 .guide-box {
     background: #052e16;
     padding: 15px;
@@ -62,10 +91,9 @@ h3 { color: #93c5fd; }
 /* FORM */
 .form-box input,
 .form-box select {
-    display: block;
     width: 100%;
-    margin-bottom: 10px;
     padding: 12px;
+    margin-bottom: 10px;
     border-radius: 6px;
     background: #111827;
     color: white;
@@ -73,25 +101,16 @@ h3 { color: #93c5fd; }
 }
 
 button {
-    padding: 12px;
     width: 100%;
+    padding: 12px;
     background: linear-gradient(90deg,#2563eb,#1d4ed8);
     color: white;
     border: none;
     border-radius: 8px;
-    cursor: pointer;
     font-weight: bold;
 }
 
-/* CARD */
-.card {
-    background: #111827;
-    padding: 20px;
-    margin-top: 20px;
-    border-radius: 12px;
-}
-
-/* LOCKED */
+/* LOCK */
 .locked {
     background: #1f2937;
     padding: 15px;
@@ -109,26 +128,10 @@ button {
     border: 1px solid #374151;
 }
 
-/* TABLE */
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-    font-family: monospace;
-}
-
-th, td {
-    padding: 8px;
-    border-bottom: 1px solid #374151;
-}
-
-/* IMAGE */
 img {
     width: 100%;
     margin-top: 10px;
     border-radius: 10px;
-    background: #0b0f19;
-    padding: 10px;
 }
 </style>
 </head>
@@ -137,7 +140,6 @@ img {
 
 <div class="container">
 
-<!-- TOP BAR -->
 <div class="topbar">
     <a href="/login" style="color:#60a5fa;">Admin Login</a>
 
@@ -165,7 +167,6 @@ img {
 🔒 Bull & Bear (Premium)
 </div>
 
-<!-- FORM -->
 <form method="POST" class="form-box">
 
 <input name="monthly" placeholder="Monthly Investment (KES)" required>
@@ -184,21 +185,16 @@ img {
 
 </form>
 
-<!-- PAYMENT -->
 <div class="payment-box">
 <h3>💳 Payment Access (PayBill)</h3>
 
-<b>Individual:</b> KES 400/month or 4,000/year<br>
-<b>Institutional:</b> KES 2,000/month or 18,000/year<br><br>
-
-PayBill: <b>{{ payment.paybill }}</b><br>
-Account: <b>{{ payment.account_number }}</b><br>
-Name: <b>{{ payment.account_name }}</b>
+<b>PayBill:</b> {{ payment.paybill }}<br>
+<b>Account:</b> {{ payment.account_number }}<br>
+<b>Name:</b> {{ payment.account_name }}
 </div>
 
 <hr>
 
-<!-- STATUS -->
 {% if not is_premium %}
 <div class="locked">
 🔒 FREE VERSION — Only Normal Scenario Visible
@@ -209,7 +205,7 @@ Name: <b>{{ payment.account_name }}</b>
 
 {% if data %}
 
-<!-- NORMAL -->
+<!-- ================= NORMAL ================= -->
 <div class="card">
 <h3>📊 NORMAL SCENARIO</h3>
 
@@ -219,9 +215,7 @@ Name: <b>{{ payment.account_name }}</b>
 
 <h4 class="section-title">💰 Investment Plan</h4>
 <table>
-<tr>
-<th>Asset</th><th>%</th><th>KES</th>
-</tr>
+<tr><th>Asset</th><th>%</th><th>KES</th></tr>
 {% for c in data.normal.plan %}
 <tr>
 <td>{{ c.name }}</td>
@@ -233,9 +227,7 @@ Name: <b>{{ payment.account_name }}</b>
 
 <h4 class="section-title">📊 Returns</h4>
 <table>
-<tr>
-<th>Asset</th><th>Dividends</th><th>Value</th>
-</tr>
+<tr><th>Asset</th><th>Dividends</th><th>Value</th></tr>
 {% for r in data.normal.returns %}
 <tr>
 <td>{{ r.name }}</td>
@@ -249,7 +241,6 @@ Name: <b>{{ payment.account_name }}</b>
 </div>
 
 <!-- ================= BULL ================= -->
-{% if is_premium %}
 <div class="card">
 <h3>📈 BULL SCENARIO</h3>
 
@@ -257,9 +248,7 @@ Name: <b>{{ payment.account_name }}</b>
 
 <h4 class="section-title">💰 Investment Plan</h4>
 <table>
-<tr>
-<th>Asset</th><th>%</th><th>KES</th>
-</tr>
+<tr><th>Asset</th><th>%</th><th>KES</th></tr>
 {% for c in data.bull.plan %}
 <tr>
 <td>{{ c.name }}</td>
@@ -271,9 +260,7 @@ Name: <b>{{ payment.account_name }}</b>
 
 <h4 class="section-title">📊 Returns</h4>
 <table>
-<tr>
-<th>Asset</th><th>Dividends</th><th>Value</th>
-</tr>
+<tr><th>Asset</th><th>Dividends</th><th>Value</th></tr>
 {% for r in data.bull.returns %}
 <tr>
 <td>{{ r.name }}</td>
@@ -294,9 +281,7 @@ Name: <b>{{ payment.account_name }}</b>
 
 <h4 class="section-title">💰 Investment Plan</h4>
 <table>
-<tr>
-<th>Asset</th><th>%</th><th>KES</th>
-</tr>
+<tr><th>Asset</th><th>%</th><th>KES</th></tr>
 {% for c in data.bear.plan %}
 <tr>
 <td>{{ c.name }}</td>
@@ -308,9 +293,7 @@ Name: <b>{{ payment.account_name }}</b>
 
 <h4 class="section-title">📊 Returns</h4>
 <table>
-<tr>
-<th>Asset</th><th>Dividends</th><th>Value</th>
-</tr>
+<tr><th>Asset</th><th>Dividends</th><th>Value</th></tr>
 {% for r in data.bear.returns %}
 <tr>
 <td>{{ r.name }}</td>
@@ -322,7 +305,6 @@ Name: <b>{{ payment.account_name }}</b>
 
 <img src="data:image/png;base64,{{ chart_bear }}">
 </div>
-{% endif %}
 
 {% endif %}
 
