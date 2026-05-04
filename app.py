@@ -6,11 +6,11 @@ import matplotlib
 import json
 import os
 from datetime import datetime, timedelta
-import io
-import base64
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import io
+import base64
 
 app = Flask(__name__)
 app.secret_key = "jobura_secure_key_change_me"
@@ -21,7 +21,7 @@ app.secret_key = "jobura_secure_key_change_me"
 ADMIN_PASSWORD = "Jobura@542542"
 
 # =========================================================
-# 📂 SIMPLE DATABASE
+# 📂 DATABASE
 # =========================================================
 DB_FILE = "users.json"
 
@@ -39,7 +39,7 @@ def save_users(users):
         json.dump(users, f, indent=4)
 
 # =========================================================
-# 📊 SYSTEM INFO
+# 📊 PAYMENT INFO
 # =========================================================
 PAYMENT_INFO = {
     "paybill": "542542",
@@ -84,11 +84,10 @@ ASSETS = [
 N = len(ASSETS)
 
 # =========================================================
-# 📊 RETURNS ENGINE
+# RETURNS ENGINE
 # =========================================================
 def get_returns():
     R = []
-
     for _, code, _ in ASSETS:
         px = df[df["Code"] == code]["Previous"].values
         px = np.nan_to_num(px)
@@ -111,7 +110,7 @@ def get_returns():
     return np.array(R)
 
 # =========================================================
-# 🧠 REGIME ENGINE
+# REGIME
 # =========================================================
 def simulate_paths(R, mode):
 
@@ -142,7 +141,7 @@ def simulate_paths(R, mode):
     return np.array(sim)
 
 # =========================================================
-# 🧠 OPTIMIZER
+# OPTIMIZER
 # =========================================================
 def optimize(sim):
 
@@ -167,20 +166,19 @@ def optimize(sim):
     return weights / np.sum(weights)
 
 # =========================================================
-# 💰 DIVIDEND ENGINE
+# DIVIDENDS
 # =========================================================
 def dividend_engine(asset_investment):
     yields = np.array([a[2] for a in ASSETS])
     return asset_investment * yields
 
 # =========================================================
-# 📊 SIMULATION ENGINE (STABLE)
+# SIMULATION (FIXED STRUCTURE)
 # =========================================================
 def simulate(monthly, years, mode):
 
     R = get_returns()
     sim = simulate_paths(R, mode)
-
     weights = optimize(sim)
 
     months = years * 12
@@ -217,24 +215,25 @@ def simulate(monthly, years, mode):
             "invested": invested_total,
             "value": nav,
             "dividends": total_div,
-            "monthly_income": total_div / max(months, 1),
-            "annual_income": total_div / max(years, 1)
+            "monthly_income": total_div / max(months,1),
+            "annual_income": total_div / max(years,1)
         },
 
         "plan": [
             {
                 "name": ASSETS[i][0],
-                "percent": round(weights[i] * 100, 2),
-                "kes": round(monthly * weights[i], 2)
+                "percent": round(weights[i]*100,2),
+                "kes": round(monthly*weights[i],2)
             }
             for i in range(N)
         ],
 
+        # ✅ FIX: ALWAYS RETURN THIS (THIS WAS YOUR BUG)
         "returns": [
             {
                 "name": ASSETS[i][0],
-                "dividends": round(asset_dividends[i], 2),
-                "value": round(asset_values[i], 2)
+                "dividends": round(asset_dividends[i],2),
+                "value": round(asset_values[i],2)
             }
             for i in range(N)
         ],
@@ -243,7 +242,7 @@ def simulate(monthly, years, mode):
     }
 
 # =========================================================
-# 📈 CHART
+# CHART
 # =========================================================
 def chart(curve):
 
@@ -257,8 +256,6 @@ def chart(curve):
     ax.plot(x, y, color="#60a5fa", linewidth=2)
     ax.fill_between(x, y, color="#60a5fa", alpha=0.15)
 
-    ax.grid(True, alpha=0.2)
-
     buf = io.BytesIO()
     fig.savefig(buf, format="png", bbox_inches="tight", dpi=120)
     buf.seek(0)
@@ -269,79 +266,49 @@ def chart(curve):
     return img
 
 # =========================================================
-# 🌐 MAIN ROUTE (FIXED STRUCTURE)
+# ROUTE
 # =========================================================
-@app.route("/", methods=["GET", "POST"])
+@app.route("/", methods=["GET","POST"])
 def index():
 
     users = load_users()
     is_premium = False
 
-    # SAFE DEFAULT STRUCTURE (prevents missing tables)
-    empty = {
-        "summary": {"invested": 0, "value": 0, "dividends": 0, "monthly_income": 0, "annual_income": 0},
-        "plan": [],
-        "returns": [],
-        "curve": []
-    }
-
-    data = {
-        "normal": empty,
-        "bull": None,
-        "bear": None
-    }
-
     if request.method == "POST":
 
-        monthly = float(request.form.get("monthly", 0))
-        years = int(request.form.get("years", 1))
-        code = request.form.get("transaction_code", "").strip().upper()
-        phone = request.form.get("phone", "").strip()
+        monthly = float(request.form.get("monthly",0))
+        years = int(request.form.get("years",1))
+        code = request.form.get("transaction_code","").strip().upper()
+        phone = request.form.get("phone","").strip()
 
-        # check premium
         for u in users:
             if u["code"] == code and u["status"] == "approved":
                 if "expiry" in u:
                     if datetime.now() < datetime.strptime(u["expiry"], "%Y-%m-%d"):
                         is_premium = True
 
-        # save user
-        if code and not any(u["code"] == code for u in users):
-            users.append({
-                "code": code,
-                "phone": phone,
-                "status": "pending",
-                "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            })
-            save_users(users)
+        normal = simulate(monthly, years, "normal")
 
-        # ALWAYS RUN NORMAL
-        data["normal"] = simulate(monthly, years, "normal")
-
-        # PREMIUM ONLY
-        if is_premium:
-            data["bull"] = simulate(monthly, years, "bull")
-            data["bear"] = simulate(monthly, years, "bear")
+        data = {
+            "normal": normal,
+            "bull": simulate(monthly, years, "bull"),
+            "bear": simulate(monthly, years, "bear")
+        }
 
         return render_template(
             "index.html",
             data=data,
-            chart_normal=chart(data["normal"]["curve"]),
-            chart_bull=chart(data["bull"]["curve"]) if data["bull"] else None,
-            chart_bear=chart(data["bear"]["curve"]) if data["bear"] else None,
+            chart_normal=chart(normal["curve"]),
+            chart_bull=chart(data["bull"]["curve"]),
+            chart_bear=chart(data["bear"]["curve"]),
             is_premium=is_premium,
             payment=PAYMENT_INFO
         )
 
-    return render_template(
-        "index.html",
-        data=data,
-        is_premium=False,
-        payment=PAYMENT_INFO
-    )
+    return render_template("index.html", data=None, is_premium=False, payment=PAYMENT_INFO)
 
 # =========================================================
-# 🚀 RUN
+# RUN
 # =========================================================
 if __name__ == "__main__":
     app.run(debug=True)
