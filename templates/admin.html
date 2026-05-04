@@ -11,6 +11,12 @@ body {
     padding: 20px;
 }
 
+/* ✅ FIX: center layout properly */
+.container {
+    max-width: 1100px;
+    margin: auto;
+}
+
 h2 { color: #60a5fa; }
 
 table {
@@ -23,17 +29,8 @@ th, td {
     padding: 10px;
     border-bottom: 1px solid #374151;
     text-align: left;
+    font-size: 14px;
 }
-
-button {
-    padding: 6px 10px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-}
-
-.approve { background: green; color: white; }
-.reject { background: red; color: white; }
 
 .card {
     background: #111827;
@@ -41,10 +38,26 @@ button {
     border-radius: 10px;
 }
 
-/* ✅ FIX: CENTER CONTENT (your production issue) */
-.container {
-    max-width: 1000px;
-    margin: auto;
+/* buttons */
+button {
+    padding: 6px 10px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.approve { background: green; color: white; }
+.reject { background: red; color: white; }
+
+/* status labels */
+.status-approved { color: lightgreen; font-weight: bold; }
+.status-pending { color: orange; font-weight: bold; }
+.status-rejected { color: red; font-weight: bold; }
+
+.small {
+    font-size: 12px;
+    opacity: 0.8;
 }
 </style>
 </head>
@@ -61,6 +74,8 @@ button {
 <tr>
 <th>Code</th>
 <th>Phone</th>
+<th>Type</th>
+<th>Plan</th>
 <th>Status</th>
 <th>Expires</th>
 <th>Action</th>
@@ -68,19 +83,52 @@ button {
 
 {% for u in users %}
 <tr>
+
 <td>{{ u.code }}</td>
 <td>{{ u.phone }}</td>
-<td>{{ u.status }}</td>
-<td>{{ u.expiry if u.expiry else "-" }}</td>
 
+<!-- TYPE -->
+<td>{{ u.type if u.type else "individual" }}</td>
+
+<!-- PLAN -->
+<td>{{ u.plan if u.plan else "pending" }}</td>
+
+<!-- STATUS -->
 <td>
-{% if u.status != "approved" %}
-<a href="/approve/{{ u.code }}">
-<button class="approve">Approve</button>
-</a>
+{% if u.status == "approved" %}
+<span class="status-approved">Approved</span>
+{% elif u.status == "rejected" %}
+<span class="status-rejected">Rejected</span>
 {% else %}
-<span style="color:lightgreen;">✔ Active</span>
+<span class="status-pending">Pending</span>
 {% endif %}
+</td>
+
+<!-- EXPIRY -->
+<td>
+{{ u.expiry if u.expiry else "-" }}
+</td>
+
+<!-- ACTIONS -->
+<td>
+
+{% if u.status != "approved" %}
+    <a href="/approve/{{ u.code }}/monthly">
+        <button class="approve">Approve Monthly</button>
+    </a>
+
+    <a href="/approve/{{ u.code }}/yearly">
+        <button class="approve">Approve Yearly</button>
+    </a>
+
+    <a href="/reject/{{ u.code }}">
+        <button class="reject">Reject</button>
+    </a>
+
+{% else %}
+    <span class="status-approved">✔ Active</span>
+{% endif %}
+
 </td>
 
 </tr>
