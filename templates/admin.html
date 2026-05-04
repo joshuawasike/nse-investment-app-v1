@@ -22,7 +22,6 @@ table {
 th, td {
     padding: 10px;
     border-bottom: 1px solid #374151;
-    text-align: left;
 }
 
 button {
@@ -30,11 +29,9 @@ button {
     border: none;
     border-radius: 6px;
     cursor: pointer;
-    margin-right: 5px;
 }
 
 .approve { background: green; color: white; }
-.yearly { background: #2563eb; color: white; }
 .reject { background: red; color: white; }
 
 .card {
@@ -42,28 +39,12 @@ button {
     padding: 20px;
     border-radius: 10px;
 }
-
-.top-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.logout {
-    background: #374151;
-    color: white;
-}
 </style>
 </head>
 
 <body>
 
-<div class="top-bar">
-    <h2>🔐 Jobura Admin Panel</h2>
-    <a href="/logout">
-        <button class="logout">Logout</button>
-    </a>
-</div>
+<h2>🔐 Jobura Admin Panel</h2>
 
 <div class="card">
 
@@ -79,33 +60,18 @@ button {
 {% for u in users %}
 <tr>
 <td>{{ u.code }}</td>
-<td>{{ u.phone if u.phone else "-" }}</td>
+<td>{{ u.phone }}</td>
 <td>{{ u.status }}</td>
-<td>{{ u.expiry if u.expiry else "-" }}</td>
+<td>{{ u.expiry }}</td>
 
 <td>
-
 {% if u.status != "approved" %}
-
-<!-- ✅ MONTHLY APPROVE -->
-<a href="/approve/{{ u.code }}/monthly">
-<button class="approve">Monthly</button>
+<a href="/approve/{{ u.code }}">
+<button class="approve">Approve</button>
 </a>
-
-<!-- ✅ YEARLY APPROVE -->
-<a href="/approve/{{ u.code }}/yearly">
-<button class="yearly">Yearly</button>
-</a>
-
-<!-- ✅ REJECT -->
-<a href="/reject/{{ u.code }}">
-<button class="reject">Reject</button>
-</a>
-
 {% else %}
 <span style="color:lightgreen;">✔ Active</span>
 {% endif %}
-
 </td>
 
 </tr>
