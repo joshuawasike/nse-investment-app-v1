@@ -48,7 +48,7 @@ PAYMENT_INFO = {
 }
 
 # =========================================================
-# 📊 DATA (UNCHANGED)
+# 📊 DATA
 # =========================================================
 df = pd.DataFrame(columns=["Code", "Date", "Previous"])
 files = glob.glob("data/nse_csv/*.csv")
@@ -83,7 +83,7 @@ ASSETS = [
 N = len(ASSETS)
 
 # =========================================================
-# RETURNS ENGINE (UNCHANGED)
+# RETURNS ENGINE
 # =========================================================
 def get_returns():
     R = []
@@ -140,7 +140,7 @@ def simulate_paths(R, mode):
     return np.array(sim)
 
 # =========================================================
-# OPTIMIZER (UNCHANGED)
+# OPTIMIZER
 # =========================================================
 def optimize(sim):
     mean = np.mean(sim, axis=1)
@@ -203,13 +203,15 @@ def simulate(monthly, years, mode):
         [0.08,0.07,0.075,0.06,0.055,0.065,0.05,0.0]
     )) ** years
 
+    total_div = float(np.sum(asset_dividends))
+
     return {
         "summary": {
             "invested": invested_total,
             "value": nav,
-            "dividends": float(np.sum(asset_dividends)),
-            "monthly_income": float(np.sum(asset_dividends)) / max(months,1),
-            "annual_income": float(np.sum(asset_dividends)) / max(years,1)
+            "dividends": total_div,
+            "monthly_income": total_div / max(months,1),
+            "annual_income": total_div / max(years,1)
         },
         "plan": [
             {
@@ -254,7 +256,7 @@ def chart(curve):
     return img
 
 # =========================================================
-# 🔐 ADMIN PANEL (FULL VERSION)
+# 🔐 ADMIN (FIXED + SAFE)
 # =========================================================
 @app.route("/login", methods=["GET","POST"])
 def login():
@@ -263,7 +265,6 @@ def login():
             session["admin"] = True
             return redirect("/admin")
         return "Wrong password"
-
     return render_template("admin_login.html")
 
 
@@ -279,7 +280,20 @@ def admin():
         return redirect("/login")
 
     users = load_users()
-    return render_template("admin.html", users=users)
+
+    # SAFE DEFAULTS (prevents crashes)
+    safe_users = []
+    for u in users:
+        safe_users.append({
+            "code": u.get("code","-"),
+            "phone": u.get("phone","-"),
+            "status": u.get("status","pending"),
+            "expiry": u.get("expiry","-"),
+            "type": u.get("type","individual"),
+            "plan": u.get("plan","monthly")
+        })
+
+    return render_template("admin.html", users=safe_users)
 
 
 @app.route("/approve/<code>/<plan>")
@@ -290,7 +304,7 @@ def approve(code, plan):
     users = load_users()
 
     for u in users:
-        if u["code"] == code:
+        if u.get("code") == code:
             u["status"] = "approved"
             u["plan"] = plan
             u["type"] = u.get("type","individual")
@@ -310,14 +324,15 @@ def reject(code):
     users = load_users()
 
     for u in users:
-        if u["code"] == code:
+        if u.get("code") == code:
             u["status"] = "rejected"
+            u["expiry"] = None
 
     save_users(users)
     return redirect("/admin")
 
 # =========================================================
-# MAIN ROUTE
+# MAIN
 # =========================================================
 @app.route("/", methods=["GET","POST"])
 def index():
@@ -332,8 +347,8 @@ def index():
         code = request.form.get("transaction_code","").strip().upper()
 
         for u in users:
-            if u["code"] == code and u["status"] == "approved":
-                if "expiry" in u:
+            if u.get("code") == code and u.get("status") == "approved":
+                if "expiry" in u and u["expiry"]:
                     if datetime.now() < datetime.strptime(u["expiry"], "%Y-%m-%d"):
                         is_premium = True
 
