@@ -22,6 +22,7 @@ table {
 th, td {
     padding: 10px;
     border-bottom: 1px solid #374151;
+    text-align: left;
 }
 
 button {
@@ -39,10 +40,18 @@ button {
     padding: 20px;
     border-radius: 10px;
 }
+
+/* ✅ FIX: CENTER CONTENT (your production issue) */
+.container {
+    max-width: 1000px;
+    margin: auto;
+}
 </style>
 </head>
 
 <body>
+
+<div class="container">
 
 <h2>🔐 Jobura Admin Panel</h2>
 
@@ -62,7 +71,7 @@ button {
 <td>{{ u.code }}</td>
 <td>{{ u.phone }}</td>
 <td>{{ u.status }}</td>
-<td>{{ u.expiry }}</td>
+<td>{{ u.expiry if u.expiry else "-" }}</td>
 
 <td>
 {% if u.status != "approved" %}
@@ -78,6 +87,8 @@ button {
 {% endfor %}
 
 </table>
+
+</div>
 
 </div>
 
