@@ -39,7 +39,7 @@ def save_users(users):
         json.dump(users, f, indent=4)
 
 # =========================================================
-# 📊 DATA LOAD
+# 📊 DATA
 # =========================================================
 df = pd.DataFrame(columns=["Code", "Date", "Previous"])
 
@@ -75,7 +75,7 @@ ASSETS = [
 N = len(ASSETS)
 
 # =========================================================
-# 📈 SIMULATION (UNCHANGED)
+# 📈 SIMULATION
 # =========================================================
 def get_returns():
     R = []
@@ -151,7 +151,6 @@ def simulate(monthly, years, mode):
 
     R = get_returns()
     sim = simulate_paths(R, mode)
-
     weights = optimize(sim)
 
     months = years * 12
@@ -170,20 +169,40 @@ def simulate(monthly, years, mode):
         nav = nav * (1 + port_ret) + monthly
         curve.append(nav)
 
+    # ✅ RETURNS FIX (THIS WAS YOUR MAIN BUG)
     asset_investment = invested_total * weights
     asset_dividends = dividend_engine(asset_investment)
+
+    returns = []
+    for i in range(N):
+        returns.append({
+            "name": ASSETS[i][0],
+            "dividends": round(asset_dividends[i], 2),
+            "value": round(asset_investment[i] * (1 + 0.1 * years), 2)
+        })
 
     return {
         "summary": {
             "invested": invested_total,
             "value": nav,
             "dividends": float(np.sum(asset_dividends)),
+            "monthly_income": float(np.sum(asset_dividends)) / months,
+            "annual_income": float(np.sum(asset_dividends)) / years
         },
+        "plan": [
+            {
+                "name": ASSETS[i][0],
+                "percent": round(weights[i]*100,2),
+                "kes": round(monthly*weights[i],2)
+            }
+            for i in range(N)
+        ],
+        "returns": returns,   # ✅ FIXED
         "curve": curve
     }
 
 # =========================================================
-# 📈 CHART (FIXED DARK + SHADED)
+# 📈 CHART
 # =========================================================
 def chart(curve):
     fig, ax = plt.subplots(figsize=(10,5))
@@ -219,10 +238,15 @@ def login():
         return "❌ Wrong password"
     return """
     <form method="POST">
-        <input name="password" type="password">
+        <input name="password" type="password" placeholder="Admin Password">
         <button>Login</button>
     </form>
     """
+
+@app.route("/logout")
+def logout():
+    session.pop("admin", None)
+    return redirect("/login")
 
 # =========================================================
 # 🌐 MAIN
@@ -242,9 +266,8 @@ def index():
 
         for u in users:
             if u["code"] == code and u["status"] == "approved":
-                if "expiry" in u:
-                    if datetime.now() < datetime.strptime(u["expiry"], "%Y-%m-%d"):
-                        is_premium = True
+                if "expiry" not in u or datetime.now() < datetime.strptime(u["expiry"], "%Y-%m-%d"):
+                    is_premium = True
 
         if code and not any(u["code"] == code for u in users):
             users.append({
@@ -274,7 +297,7 @@ def index():
     return render_template("index.html", data=None, is_premium=False)
 
 # =========================================================
-# 🛠 ADMIN PANEL (FINAL FIX)
+# 🛠 ADMIN PANEL
 # =========================================================
 @app.route("/admin")
 def admin():
@@ -282,10 +305,8 @@ def admin():
         return redirect("/login")
     return render_template("admin.html", users=load_users())
 
-# ✅ APPROVE WITH PLAN
 @app.route("/approve/<code>/<plan>")
 def approve(code, plan):
-
     if not session.get("admin"):
         return redirect("/login")
 
@@ -293,7 +314,6 @@ def approve(code, plan):
 
     for u in users:
         if u["code"] == code:
-
             u["status"] = "approved"
 
             if plan == "monthly":
@@ -306,16 +326,18 @@ def approve(code, plan):
     save_users(users)
     return redirect("/admin")
 
-# ✅ REJECT
 @app.route("/reject/<code>")
 def reject(code):
-
     if not session.get("admin"):
         return redirect("/login")
 
-    users = [u for u in load_users() if u["code"] != code]
-    save_users(users)
+    users = load_users()
 
+    for u in users:
+        if u["code"] == code:
+            u["status"] = "rejected"
+
+    save_users(users)
     return redirect("/admin")
 
 # =========================================================
