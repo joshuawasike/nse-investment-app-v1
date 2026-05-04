@@ -21,7 +21,7 @@ app.secret_key = "jobura_secure_key_change_me"
 ADMIN_PASSWORD = "Jobura@542542"
 
 # =========================================================
-# 📂 DATABASE
+# 📂 SIMPLE DATABASE
 # =========================================================
 DB_FILE = "users.json"
 
@@ -30,17 +30,13 @@ def load_users():
         return []
     try:
         with open(DB_FILE, "r") as f:
-            data = json.load(f)
-            return data if isinstance(data, list) else []
+            return json.load(f)
     except:
         return []
 
 def save_users(users):
-    try:
-        with open(DB_FILE, "w") as f:
-            json.dump(users, f, indent=4)
-    except:
-        pass
+    with open(DB_FILE, "w") as f:
+        json.dump(users, f, indent=4)
 
 # =========================================================
 # 📊 SYSTEM INFO
@@ -52,9 +48,10 @@ PAYMENT_INFO = {
 }
 
 # =========================================================
-# 📊 DATA LOAD
+# 📊 DATA
 # =========================================================
 df = pd.DataFrame(columns=["Code", "Date", "Previous"])
+
 files = glob.glob("data/nse_csv/*.csv")
 
 for file in files:
@@ -87,7 +84,7 @@ ASSETS = [
 N = len(ASSETS)
 
 # =========================================================
-# 📊 SIMULATION CORE (UNCHANGED LOGIC)
+# (SIMULATION LOGIC — UNCHANGED)
 # =========================================================
 def get_returns():
     R = []
@@ -112,12 +109,11 @@ def get_returns():
 
     return np.array(R)
 
-
 def simulate_paths(R, mode):
     REGIME = {
         "normal": {"mu": 0.0025, "vol": 1.0},
-        "bull": {"mu": 0.0055, "vol": 1.2},
-        "bear": {"mu": -0.0035, "vol": 1.3},
+        "bull":   {"mu": 0.0055, "vol": 1.2},
+        "bear":   {"mu": -0.0035, "vol": 1.3},
     }
 
     cfg = REGIME[mode]
@@ -140,7 +136,6 @@ def simulate_paths(R, mode):
 
     return np.array(sim)
 
-
 def optimize(sim):
     mean = np.mean(sim, axis=1)
     vol = np.std(sim, axis=1) + 1e-9
@@ -161,15 +156,10 @@ def optimize(sim):
     weights = np.clip(weights, MIN, MAX)
     return weights / np.sum(weights)
 
-
 def dividend_engine(asset_investment):
     yields = np.array([a[2] for a in ASSETS])
     return asset_investment * yields
 
-
-# =========================================================
-# 🔥 FIXED SIMULATION OUTPUT STRUCTURE
-# =========================================================
 def simulate(monthly, years, mode):
 
     R = get_returns()
@@ -200,27 +190,26 @@ def simulate(monthly, years, mode):
     asset_dividends = dividend_engine(asset_investment)
 
     return {
-        "invested": invested_total,
-        "final_value": float(nav),
-        "dividends": float(np.sum(asset_dividends)),
-        "monthly_income": float(np.sum(asset_dividends)) / months,
-        "annual_income": float(np.sum(asset_dividends)) / years,
-
+        "summary": {
+            "invested": invested_total,
+            "value": nav,
+            "dividends": float(np.sum(asset_dividends)),
+            "monthly_income": float(np.sum(asset_dividends)) / months,
+            "annual_income": float(np.sum(asset_dividends)) / years
+        },
         "plan": [
             {
                 "name": ASSETS[i][0],
-                "percent": round(weights[i]*100, 2),
-                "kes": round(monthly*weights[i], 2)
+                "percent": round(weights[i]*100,2),
+                "kes": round(monthly*weights[i],2)
             }
             for i in range(N)
         ],
-
         "curve": curve
     }
 
-
 # =========================================================
-# 📈 CHART
+# 📈 CHART (FIXED DARK STYLE)
 # =========================================================
 def chart(curve):
     fig, ax = plt.subplots(figsize=(10,5))
@@ -232,6 +221,7 @@ def chart(curve):
 
     ax.plot(x, y, color="#60a5fa", linewidth=2)
     ax.fill_between(x, y, color="#60a5fa", alpha=0.15)
+
     ax.grid(True, alpha=0.2)
 
     buf = io.BytesIO()
@@ -243,7 +233,6 @@ def chart(curve):
 
     return img
 
-
 # =========================================================
 # 🔐 LOGIN
 # =========================================================
@@ -254,7 +243,6 @@ def login():
             session["admin"] = True
             return redirect("/admin")
         return "❌ Wrong password"
-
     return """
     <form method="POST">
         <input name="password" type="password" placeholder="Admin Password">
@@ -262,12 +250,10 @@ def login():
     </form>
     """
 
-
 @app.route("/logout")
 def logout():
     session.pop("admin", None)
     return redirect("/login")
-
 
 # =========================================================
 # 🌐 MAIN ROUTE
@@ -285,15 +271,14 @@ def index():
         code = request.form.get("transaction_code", "").strip().upper()
         phone = request.form.get("phone", "").strip()
 
+        # ✅ Check approval + expiry
         for u in users:
             if u["code"] == code and u["status"] == "approved":
                 if "expiry" in u:
-                    try:
-                        if datetime.now() < datetime.strptime(u["expiry"], "%Y-%m-%d"):
-                            is_premium = True
-                    except:
-                        pass
+                    if datetime.now() < datetime.strptime(u["expiry"], "%Y-%m-%d"):
+                        is_premium = True
 
+        # ✅ Save new user
         if code and not any(u["code"] == code for u in users):
             users.append({
                 "code": code,
@@ -322,16 +307,14 @@ def index():
 
     return render_template("index.html", data=None, is_premium=False, payment=PAYMENT_INFO)
 
-
 # =========================================================
-# 🛠 ADMIN
+# 🛠 ADMIN PANEL
 # =========================================================
 @app.route("/admin")
 def admin():
     if not session.get("admin"):
         return redirect("/login")
     return render_template("admin.html", users=load_users())
-
 
 @app.route("/approve/<code>/<plan>")
 def approve(code, plan):
@@ -353,23 +336,6 @@ def approve(code, plan):
 
     save_users(users)
     return redirect("/admin")
-
-
-@app.route("/reject/<code>")
-def reject(code):
-    if not session.get("admin"):
-        return redirect("/login")
-
-    users = load_users()
-
-    for u in users:
-        if u["code"] == code:
-            u["status"] = "rejected"
-            u["expiry"] = "—"
-
-    save_users(users)
-    return redirect("/admin")
-
 
 # =========================================================
 # 🚀 RUN
