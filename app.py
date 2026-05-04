@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, session, url_for
 import pandas as pd
 import numpy as np
 import glob
@@ -13,6 +13,12 @@ import io
 import base64
 
 app = Flask(__name__)
+app.secret_key = "jobura_secure_key_change_me"  # 🔐 REQUIRED FOR LOGIN
+
+# =========================================================
+# 🔐 ADMIN PASSWORD
+# =========================================================
+ADMIN_PASSWORD = "Jobura@542542"
 
 # =========================================================
 # 📂 SIMPLE DATABASE
@@ -87,9 +93,8 @@ ASSETS = [
 N = len(ASSETS)
 
 # =========================================================
-# (UNCHANGED SIMULATION LOGIC)
+# (SIMULATION LOGIC - UNCHANGED)
 # =========================================================
-
 def get_returns():
     R = []
     for _, code, _ in ASSETS:
@@ -179,7 +184,6 @@ def simulate(monthly, years, mode):
     curve = []
 
     for t in range(months):
-
         idx = t % sim.shape[1]
         port_ret = np.dot(weights, sim[:, idx])
 
@@ -228,6 +232,32 @@ def chart(curve):
     return img
 
 # =========================================================
+# 🔐 LOGIN ROUTES
+# =========================================================
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        password = request.form.get("password")
+
+        if password == ADMIN_PASSWORD:
+            session["admin"] = True
+            return redirect("/admin")
+
+        return "❌ Wrong password"
+
+    return """
+    <form method="POST">
+        <input name="password" placeholder="Admin Password" type="password">
+        <button type="submit">Login</button>
+    </form>
+    """
+
+@app.route("/logout")
+def logout():
+    session.pop("admin", None)
+    return redirect("/login")
+
+# =========================================================
 # 🌐 MAIN ROUTE
 # =========================================================
 @app.route("/", methods=["GET", "POST"])
@@ -242,13 +272,10 @@ def index():
         years = int(request.form.get("years", 1))
         code = request.form.get("transaction_code", "").strip().upper()
 
-        # ✅ Check approval
         for u in users:
             if u["code"] == code and u["status"] == "approved":
                 is_premium = True
-                break
 
-        # ✅ Save new code (only once)
         if code and not any(u["code"] == code for u in users):
             users.append({
                 "code": code,
@@ -282,19 +309,28 @@ def index():
     )
 
 # =========================================================
-# 🛠 ADMIN PANEL
+# 🛠 ADMIN PANEL (PROTECTED)
 # =========================================================
 @app.route("/admin")
 def admin():
+
+    if not session.get("admin"):
+        return redirect("/login")
+
     users = load_users()
     return render_template("admin.html", users=users)
 
 @app.route("/approve/<code>")
 def approve(code):
+
+    if not session.get("admin"):
+        return redirect("/login")
+
     users = load_users()
     for u in users:
         if u["code"] == code:
             u["status"] = "approved"
+
     save_users(users)
     return redirect("/admin")
 
