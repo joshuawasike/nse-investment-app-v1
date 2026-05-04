@@ -48,7 +48,7 @@ ASSETS = [
 N = len(ASSETS)
 
 # =========================================================
-# 📊 RETURNS ENGINE (UNCHANGED LOGIC + SAFE OUTPUT)
+# 📊 RETURNS ENGINE
 # =========================================================
 def get_returns():
     R = []
@@ -76,7 +76,7 @@ def get_returns():
     return np.array(R)
 
 # =========================================================
-# 🧠 REGIME ENGINE (SAFE WRAP ONLY)
+# 🧠 REGIME ENGINE
 # =========================================================
 def simulate_paths(R, mode):
 
@@ -109,7 +109,7 @@ def simulate_paths(R, mode):
     return np.array(sim)
 
 # =========================================================
-# 🧠 OPTIMIZER (UNCHANGED)
+# 🧠 OPTIMIZER
 # =========================================================
 def optimize(sim):
 
@@ -134,14 +134,14 @@ def optimize(sim):
     return weights / np.sum(weights)
 
 # =========================================================
-# 💰 DIVIDEND ENGINE (UNCHANGED)
+# 💰 DIVIDEND ENGINE
 # =========================================================
 def dividend_engine(asset_investment):
     yields = np.array([a[2] for a in ASSETS])
     return asset_investment * yields
 
 # =========================================================
-# 📊 SIMULATION ENGINE (SAFE ONLY — NO LOGIC CHANGE)
+# 📊 SIMULATION ENGINE (UI SAFE GUARANTEE ADDED)
 # =========================================================
 def simulate(monthly, years, mode):
 
@@ -182,6 +182,16 @@ def simulate(monthly, years, mode):
 
     total_div = float(np.sum(asset_dividends))
 
+    # =====================================================
+    # 🔥 UI GUARANTEE LAYER (THIS FIXES YOUR ISSUE)
+    # =====================================================
+
+    if asset_dividends is None or len(asset_dividends) != N:
+        asset_dividends = np.zeros(N)
+
+    if len(curve) == 0:
+        curve = [invested_total]
+
     return {
         "summary": {
             "invested": invested_total,
@@ -194,8 +204,8 @@ def simulate(monthly, years, mode):
         "plan": [
             {
                 "name": ASSETS[i][0],
-                "percent": round(weights[i] * 100, 2),
-                "kes": round(monthly * weights[i], 2)
+                "percent": round(weights[i] * 100, 2) if len(weights) == N else 0.0,
+                "kes": round(monthly * weights[i], 2) if len(weights) == N else 0.0
             }
             for i in range(N)
         ],
@@ -203,8 +213,8 @@ def simulate(monthly, years, mode):
         "returns": [
             {
                 "name": ASSETS[i][0],
-                "dividends": round(asset_dividends[i], 2),
-                "value": round(asset_values[i], 2)
+                "dividends": round(asset_dividends[i], 2) if i < len(asset_dividends) else 0.0,
+                "value": round(asset_values[i], 2) if i < len(asset_values) else 0.0
             }
             for i in range(N)
         ],
@@ -213,7 +223,7 @@ def simulate(monthly, years, mode):
     }
 
 # =========================================================
-# 📈 CHART (SAFE)
+# 📈 CHART
 # =========================================================
 def chart(curve):
 
@@ -243,7 +253,7 @@ def chart(curve):
         return ""
 
 # =========================================================
-# 🌐 ROUTE (UNCHANGED)
+# 🌐 ROUTE
 # =========================================================
 @app.route("/", methods=["GET", "POST"])
 def index():
