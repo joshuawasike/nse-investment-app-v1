@@ -1,11 +1,11 @@
-from flask import Flask, render_template, request, session
+from flask import Flask, render_template, request, redirect, session
 import pandas as pd
 import numpy as np
 import glob
 import matplotlib
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -173,7 +173,7 @@ def dividend_engine(asset_investment):
     return asset_investment * yields
 
 # =========================================================
-# SIMULATION ENGINE (FIXED CONTRACT)
+# SIMULATION
 # =========================================================
 def simulate(monthly, years, mode):
 
@@ -217,26 +217,22 @@ def simulate(monthly, years, mode):
             "monthly_income": total_div / max(months, 1),
             "annual_income": total_div / max(years, 1)
         },
-
         "plan": [
             {
                 "name": ASSETS[i][0],
-                "percent": round(weights[i] * 100, 2),
-                "kes": round(monthly * weights[i], 2)
+                "percent": round(weights[i]*100,2),
+                "kes": round(monthly*weights[i],2)
             }
             for i in range(N)
         ],
-
-        # ✅ ALWAYS PRESENT (FIXED MISSING TABLE BUG)
         "returns": [
             {
                 "name": ASSETS[i][0],
-                "dividends": round(asset_dividends[i], 2),
-                "value": round(asset_values[i], 2)
+                "dividends": round(asset_dividends[i],2),
+                "value": round(asset_values[i],2)
             }
             for i in range(N)
         ],
-
         "curve": curve
     }
 
@@ -265,9 +261,67 @@ def chart(curve):
     return img
 
 # =========================================================
-# ROUTE
+# 🔐 ADMIN ROUTES (RESTORED)
 # =========================================================
-@app.route("/", methods=["GET", "POST"])
+@app.route("/login", methods=["GET","POST"])
+def login():
+    if request.method == "POST":
+        if request.form.get("password") == ADMIN_PASSWORD:
+            session["admin"] = True
+            return redirect("/admin")
+        return "Wrong password"
+
+    return """
+    <form method='POST'>
+        <input name='password' type='password' placeholder='Admin Password'>
+        <button>Login</button>
+    </form>
+    """
+
+@app.route("/logout")
+def logout():
+    session.pop("admin", None)
+    return redirect("/")
+
+@app.route("/admin")
+def admin():
+    if not session.get("admin"):
+        return redirect("/login")
+
+    users = load_users()
+
+    html = "<h2>Admin Panel</h2><ul>"
+    for u in users:
+        html += f"<li>{u.get('code')} - {u.get('status')} - <a href='/approve/{u.get('code')}/monthly'>Approve Monthly</a> | <a href='/approve/{u.get('code')}/yearly'>Approve Yearly</a></li>"
+    html += "</ul>"
+
+    return html
+
+@app.route("/approve/<code>/<plan>")
+def approve(code, plan):
+    if not session.get("admin"):
+        return redirect("/login")
+
+    users = load_users()
+
+    for u in users:
+        if u["code"] == code:
+            u["status"] = "approved"
+
+            if plan == "monthly":
+                expiry = datetime.now() + timedelta(days=30)
+            else:
+                expiry = datetime.now() + timedelta(days=365)
+
+            u["expiry"] = expiry.strftime("%Y-%m-%d")
+
+    save_users(users)
+    return redirect("/admin")
+
+# =========================================================
+# MAIN ROUTE
+# =========================================================
+@app.route("/", methods=["GET","POST"])
 def index():
 
     users = load_users()
@@ -275,9 +329,9 @@ def index():
 
     if request.method == "POST":
 
-        monthly = float(request.form.get("monthly", 0))
-        years = int(request.form.get("years", 1))
-        code = request.form.get("transaction_code", "").strip().upper()
+        monthly = float(request.form.get("monthly",0))
+        years = int(request.form.get("years",1))
+        code = request.form.get("transaction_code","").strip().upper()
 
         for u in users:
             if u["code"] == code and u["status"] == "approved":
