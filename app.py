@@ -261,7 +261,7 @@ def chart(curve):
     return img
 
 # =========================================================
-# 🔐 ADMIN ROUTES (RESTORED)
+# 🔐 ADMIN ROUTES (FIXED)
 # =========================================================
 @app.route("/login", methods=["GET","POST"])
 def login():
@@ -271,17 +271,14 @@ def login():
             return redirect("/admin")
         return "Wrong password"
 
-    return """
-    <form method='POST'>
-        <input name='password' type='password' placeholder='Admin Password'>
-        <button>Login</button>
-    </form>
-    """
+    return render_template("login.html")
+
 
 @app.route("/logout")
 def logout():
     session.pop("admin", None)
     return redirect("/")
+
 
 @app.route("/admin")
 def admin():
@@ -290,12 +287,9 @@ def admin():
 
     users = load_users()
 
-    html = "<h2>Admin Panel</h2><ul>"
-    for u in users:
-        html += f"<li>{u.get('code')} - {u.get('status')} - <a href='/approve/{u.get('code')}/monthly'>Approve Monthly</a> | <a href='/approve/{u.get('code')}/yearly'>Approve Yearly</a></li>"
-    html += "</ul>"
+    # ✅ FIX: USE TEMPLATE (THIS WAS YOUR PROBLEM)
+    return render_template("admin.html", users=users)
 
-    return html
 
 @app.route("/approve/<code>/<plan>")
 def approve(code, plan):
@@ -317,6 +311,7 @@ def approve(code, plan):
 
     save_users(users)
     return redirect("/admin")
+
 
 # =========================================================
 # MAIN ROUTE
@@ -358,6 +353,7 @@ def index():
         )
 
     return render_template("index.html", data=None, is_premium=False, payment=PAYMENT_INFO)
+
 
 # =========================================================
 # RUN
