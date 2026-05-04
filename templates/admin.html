@@ -29,6 +29,7 @@ button {
     border: none;
     border-radius: 6px;
     cursor: pointer;
+    margin-right: 5px;
 }
 
 .approve { background: green; color: white; }
@@ -62,16 +63,32 @@ button {
 <td>{{ u.code }}</td>
 <td>{{ u.phone }}</td>
 <td>{{ u.status }}</td>
-<td>{{ u.expiry }}</td>
+<td>{{ u.expiry if u.expiry else "—" }}</td>
 
 <td>
-{% if u.status != "approved" %}
-<a href="/approve/{{ u.code }}">
-<button class="approve">Approve</button>
-</a>
-{% else %}
-<span style="color:lightgreen;">✔ Active</span>
+
+{% if u.status == "pending" %}
+
+    <a href="/approve/{{ u.code }}/monthly">
+        <button class="approve">Approve Monthly</button>
+    </a>
+
+    <a href="/approve/{{ u.code }}/yearly">
+        <button class="approve">Approve Yearly</button>
+    </a>
+
+    <a href="/reject/{{ u.code }}">
+        <button class="reject">Reject</button>
+    </a>
+
+{% elif u.status == "approved" %}
+    <span style="color:lightgreen;">✔ Active</span>
+
+{% elif u.status == "rejected" %}
+    <span style="color:red;">✖ Rejected</span>
+
 {% endif %}
+
 </td>
 
 </tr>
