@@ -1,11 +1,11 @@
-from flask import Flask, render_template, request, redirect, session
+from flask import Flask, render_template, request, session
 import pandas as pd
 import numpy as np
 import glob
 import matplotlib
 import json
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -16,12 +16,12 @@ app = Flask(__name__)
 app.secret_key = "jobura_secure_key_change_me"
 
 # =========================================================
-# 🔐 ADMIN PASSWORD
+# 🔐 ADMIN
 # =========================================================
 ADMIN_PASSWORD = "Jobura@542542"
 
 # =========================================================
-# 📂 DATABASE
+# 📂 USERS DB
 # =========================================================
 DB_FILE = "users.json"
 
@@ -39,7 +39,7 @@ def save_users(users):
         json.dump(users, f, indent=4)
 
 # =========================================================
-# 📊 PAYMENT INFO
+# 📊 PAYMENT
 # =========================================================
 PAYMENT_INFO = {
     "paybill": "542542",
@@ -110,7 +110,7 @@ def get_returns():
     return np.array(R)
 
 # =========================================================
-# REGIME
+# REGIME ENGINE
 # =========================================================
 def simulate_paths(R, mode):
 
@@ -173,7 +173,7 @@ def dividend_engine(asset_investment):
     return asset_investment * yields
 
 # =========================================================
-# SIMULATION (FIXED STRUCTURE)
+# SIMULATION ENGINE (FIXED CONTRACT)
 # =========================================================
 def simulate(monthly, years, mode):
 
@@ -188,7 +188,6 @@ def simulate(monthly, years, mode):
     curve = []
 
     for t in range(months):
-
         idx = t % sim.shape[1]
         port_ret = np.dot(weights, sim[:, idx])
 
@@ -215,25 +214,25 @@ def simulate(monthly, years, mode):
             "invested": invested_total,
             "value": nav,
             "dividends": total_div,
-            "monthly_income": total_div / max(months,1),
-            "annual_income": total_div / max(years,1)
+            "monthly_income": total_div / max(months, 1),
+            "annual_income": total_div / max(years, 1)
         },
 
         "plan": [
             {
                 "name": ASSETS[i][0],
-                "percent": round(weights[i]*100,2),
-                "kes": round(monthly*weights[i],2)
+                "percent": round(weights[i] * 100, 2),
+                "kes": round(monthly * weights[i], 2)
             }
             for i in range(N)
         ],
 
-        # ✅ FIX: ALWAYS RETURN THIS (THIS WAS YOUR BUG)
+        # ✅ ALWAYS PRESENT (FIXED MISSING TABLE BUG)
         "returns": [
             {
                 "name": ASSETS[i][0],
-                "dividends": round(asset_dividends[i],2),
-                "value": round(asset_values[i],2)
+                "dividends": round(asset_dividends[i], 2),
+                "value": round(asset_values[i], 2)
             }
             for i in range(N)
         ],
@@ -268,7 +267,7 @@ def chart(curve):
 # =========================================================
 # ROUTE
 # =========================================================
-@app.route("/", methods=["GET","POST"])
+@app.route("/", methods=["GET", "POST"])
 def index():
 
     users = load_users()
@@ -276,10 +275,9 @@ def index():
 
     if request.method == "POST":
 
-        monthly = float(request.form.get("monthly",0))
-        years = int(request.form.get("years",1))
-        code = request.form.get("transaction_code","").strip().upper()
-        phone = request.form.get("phone","").strip()
+        monthly = float(request.form.get("monthly", 0))
+        years = int(request.form.get("years", 1))
+        code = request.form.get("transaction_code", "").strip().upper()
 
         for u in users:
             if u["code"] == code and u["status"] == "approved":
