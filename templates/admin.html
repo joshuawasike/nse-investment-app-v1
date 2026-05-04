@@ -45,6 +45,10 @@ button {
     padding: 20px;
     border-radius: 10px;
 }
+
+.status-approved { color: #22c55e; font-weight: bold; }
+.status-rejected { color: #ef4444; font-weight: bold; }
+.status-pending { color: #facc15; font-weight: bold; }
 </style>
 </head>
 
@@ -61,29 +65,50 @@ button {
 <th>Code</th>
 <th>Phone</th>
 <th>Status</th>
+<th>Plan</th>
 <th>Expires</th>
 <th>Action</th>
 </tr>
 
 {% for u in users %}
 <tr>
-<td>{{ u.code }}</td>
-<td>{{ u.phone }}</td>
-<td>{{ u.status }}</td>
-<td>{{ u.expiry if u.expiry else "-" }}</td>
+
+<td>{{ u["code"] }}</td>
+<td>{{ u["phone"] }}</td>
 
 <td>
-{% if u.status != "approved" %}
-<a href="/approve/{{ u.code }}">
-<button class="approve">Approve</button>
+{% if u["status"] == "approved" %}
+<span class="status-approved">✔ Approved</span>
+{% elif u["status"] == "rejected" %}
+<span class="status-rejected">✖ Rejected</span>
+{% else %}
+<span class="status-pending">⏳ Pending</span>
+{% endif %}
+</td>
+
+<td>{{ u["plan"] if u["plan"] else "-" }}</td>
+
+<td>{{ u["expiry"] if u["expiry"] else "-" }}</td>
+
+<td>
+
+{% if u["status"] != "approved" %}
+<a href="/approve/{{ u["code"] }}/monthly">
+<button class="approve">Monthly</button>
 </a>
 
-<a href="/reject/{{ u.code }}">
+<a href="/approve/{{ u["code"] }}/yearly">
+<button class="approve">Yearly</button>
+</a>
+
+<a href="/reject/{{ u["code"] }}">
 <button class="reject">Reject</button>
 </a>
+
 {% else %}
-<span style="color:lightgreen;">✔ Active</span>
+<span style="color:lightgreen;">ACTIVE</span>
 {% endif %}
+
 </td>
 
 </tr>
