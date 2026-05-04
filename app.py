@@ -21,10 +21,9 @@ app.secret_key = "jobura_secure_key_change_me"
 ADMIN_PASSWORD = "Jobura@542542"
 
 # =========================================================
-# 📂 SIMPLE DATABASE
+# 📂 DATABASE
 # =========================================================
 DB_FILE = "users.json"
-
 
 def load_users():
     if not os.path.exists(DB_FILE):
@@ -36,14 +35,12 @@ def load_users():
     except:
         return []
 
-
 def save_users(users):
     try:
         with open(DB_FILE, "w") as f:
             json.dump(users, f, indent=4)
     except:
         pass
-
 
 # =========================================================
 # 📊 SYSTEM INFO
@@ -55,10 +52,9 @@ PAYMENT_INFO = {
 }
 
 # =========================================================
-# 📊 DATA
+# 📊 DATA LOAD
 # =========================================================
 df = pd.DataFrame(columns=["Code", "Date", "Previous"])
-
 files = glob.glob("data/nse_csv/*.csv")
 
 for file in files:
@@ -91,7 +87,7 @@ ASSETS = [
 N = len(ASSETS)
 
 # =========================================================
-# (SIMULATION LOGIC — UNCHANGED)
+# 📊 SIMULATION CORE (UNCHANGED LOGIC)
 # =========================================================
 def get_returns():
     R = []
@@ -171,7 +167,11 @@ def dividend_engine(asset_investment):
     return asset_investment * yields
 
 
+# =========================================================
+# 🔥 FIXED SIMULATION OUTPUT STRUCTURE
+# =========================================================
 def simulate(monthly, years, mode):
+
     R = get_returns()
     sim = simulate_paths(R, mode)
 
@@ -200,21 +200,21 @@ def simulate(monthly, years, mode):
     asset_dividends = dividend_engine(asset_investment)
 
     return {
-        "summary": {
-            "invested": invested_total,
-            "value": nav,
-            "dividends": float(np.sum(asset_dividends)),
-            "monthly_income": float(np.sum(asset_dividends)) / months,
-            "annual_income": float(np.sum(asset_dividends)) / years
-        },
+        "invested": invested_total,
+        "final_value": float(nav),
+        "dividends": float(np.sum(asset_dividends)),
+        "monthly_income": float(np.sum(asset_dividends)) / months,
+        "annual_income": float(np.sum(asset_dividends)) / years,
+
         "plan": [
             {
                 "name": ASSETS[i][0],
-                "percent": round(weights[i]*100,2),
-                "kes": round(monthly*weights[i],2)
+                "percent": round(weights[i]*100, 2),
+                "kes": round(monthly*weights[i], 2)
             }
             for i in range(N)
         ],
+
         "curve": curve
     }
 
@@ -270,14 +270,16 @@ def logout():
 
 
 # =========================================================
-# 🌐 MAIN
+# 🌐 MAIN ROUTE
 # =========================================================
 @app.route("/", methods=["GET", "POST"])
 def index():
+
     users = load_users()
     is_premium = False
 
     if request.method == "POST":
+
         monthly = float(request.form.get("monthly", 0))
         years = int(request.form.get("years", 1))
         code = request.form.get("transaction_code", "").strip().upper()
