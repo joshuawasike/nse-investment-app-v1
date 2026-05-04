@@ -1,11 +1,11 @@
-from flask import Flask, render_template, request, redirect, session, url_for
+from flask import Flask, render_template, request, redirect, session
 import pandas as pd
 import numpy as np
 import glob
 import matplotlib
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -13,7 +13,7 @@ import io
 import base64
 
 app = Flask(__name__)
-app.secret_key = "jobura_secure_key_change_me"  # 🔐 REQUIRED FOR LOGIN
+app.secret_key = "jobura_secure_key_change_me"
 
 # =========================================================
 # 🔐 ADMIN PASSWORD
@@ -41,19 +41,10 @@ def save_users(users):
 # =========================================================
 # 📊 SYSTEM INFO
 # =========================================================
-TERMINAL_INFO = """
-Jobura NSE Capital Terminal is:
-A long-term portfolio construction + projection engine
-"""
-
 PAYMENT_INFO = {
     "paybill": "542542",
     "account_number": "31909",
     "account_name": "Jobura Solutions",
-    "individual_monthly": 400,
-    "individual_annual": 4000,
-    "institution_monthly": 2000,
-    "institution_annual": 18000
 }
 
 # =========================================================
@@ -93,7 +84,7 @@ ASSETS = [
 N = len(ASSETS)
 
 # =========================================================
-# (SIMULATION LOGIC - UNCHANGED)
+# (SIMULATION LOGIC — UNCHANGED)
 # =========================================================
 def get_returns():
     R = []
@@ -151,7 +142,6 @@ def optimize(sim):
     downside = np.mean(np.minimum(sim, 0), axis=1)
 
     score = (mean / vol) - (1.1 * np.abs(downside))
-
     score[3] *= 1.3
     score[7] *= 0.01
 
@@ -219,36 +209,44 @@ def simulate(monthly, years, mode):
     }
 
 # =========================================================
-# 📈 CHART
+# 📈 CHART (FIXED DARK STYLE)
 # =========================================================
 def chart(curve):
-    fig, ax = plt.subplots()
-    ax.plot(curve)
+    fig, ax = plt.subplots(figsize=(10,5))
+    fig.patch.set_facecolor("#0b0f19")
+    ax.set_facecolor("#0b0f19")
+
+    x = np.arange(len(curve))
+    y = np.array(curve)
+
+    ax.plot(x, y, color="#60a5fa", linewidth=2)
+    ax.fill_between(x, y, color="#60a5fa", alpha=0.15)
+
+    ax.grid(True, alpha=0.2)
+
     buf = io.BytesIO()
-    fig.savefig(buf, format="png")
+    fig.savefig(buf, format="png", bbox_inches="tight", dpi=120)
     buf.seek(0)
+
     img = base64.b64encode(buf.read()).decode()
     plt.close(fig)
+
     return img
 
 # =========================================================
-# 🔐 LOGIN ROUTES
+# 🔐 LOGIN
 # =========================================================
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        password = request.form.get("password")
-
-        if password == ADMIN_PASSWORD:
+        if request.form.get("password") == ADMIN_PASSWORD:
             session["admin"] = True
             return redirect("/admin")
-
         return "❌ Wrong password"
-
     return """
     <form method="POST">
-        <input name="password" placeholder="Admin Password" type="password">
-        <button type="submit">Login</button>
+        <input name="password" type="password" placeholder="Admin Password">
+        <button>Login</button>
     </form>
     """
 
@@ -271,14 +269,20 @@ def index():
         monthly = float(request.form.get("monthly", 0))
         years = int(request.form.get("years", 1))
         code = request.form.get("transaction_code", "").strip().upper()
+        phone = request.form.get("phone", "").strip()
 
+        # ✅ Check approval + expiry
         for u in users:
             if u["code"] == code and u["status"] == "approved":
-                is_premium = True
+                if "expiry" in u:
+                    if datetime.now() < datetime.strptime(u["expiry"], "%Y-%m-%d"):
+                        is_premium = True
 
+        # ✅ Save new user
         if code and not any(u["code"] == code for u in users):
             users.append({
                 "code": code,
+                "phone": phone,
                 "status": "pending",
                 "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             })
@@ -301,35 +305,34 @@ def index():
             payment=PAYMENT_INFO
         )
 
-    return render_template(
-        "index.html",
-        data=None,
-        is_premium=False,
-        payment=PAYMENT_INFO
-    )
+    return render_template("index.html", data=None, is_premium=False, payment=PAYMENT_INFO)
 
 # =========================================================
-# 🛠 ADMIN PANEL (PROTECTED)
+# 🛠 ADMIN PANEL
 # =========================================================
 @app.route("/admin")
 def admin():
+    if not session.get("admin"):
+        return redirect("/login")
+    return render_template("admin.html", users=load_users())
 
+@app.route("/approve/<code>/<plan>")
+def approve(code, plan):
     if not session.get("admin"):
         return redirect("/login")
 
     users = load_users()
-    return render_template("admin.html", users=users)
 
-@app.route("/approve/<code>")
-def approve(code):
-
-    if not session.get("admin"):
-        return redirect("/login")
-
-    users = load_users()
     for u in users:
         if u["code"] == code:
             u["status"] = "approved"
+
+            if plan == "monthly":
+                expiry = datetime.now() + timedelta(days=30)
+            else:
+                expiry = datetime.now() + timedelta(days=365)
+
+            u["expiry"] = expiry.strftime("%Y-%m-%d")
 
     save_users(users)
     return redirect("/admin")
