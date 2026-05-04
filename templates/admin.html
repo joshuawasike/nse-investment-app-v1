@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Jobura Admin Panel</title>
+<title>Admin Panel - Jobura</title>
 
 <style>
 body {
@@ -11,7 +11,7 @@ body {
     padding: 20px;
 }
 
-h2 { color: gold; }
+h2 { color: #60a5fa; }
 
 table {
     width: 100%;
@@ -24,19 +24,20 @@ th, td {
     border-bottom: 1px solid #374151;
 }
 
-.pending { color: orange; }
-.approved { color: lightgreen; }
-
-a {
+button {
     padding: 6px 10px;
-    background: #2563eb;
-    color: white;
+    border: none;
     border-radius: 6px;
-    text-decoration: none;
+    cursor: pointer;
 }
 
-.expired {
-    color: red;
+.approve { background: green; color: white; }
+.reject { background: red; color: white; }
+
+.card {
+    background: #111827;
+    padding: 20px;
+    border-radius: 10px;
 }
 </style>
 </head>
@@ -45,39 +46,40 @@ a {
 
 <h2>🔐 Jobura Admin Panel</h2>
 
+<div class="card">
+
 <table>
 <tr>
-    <th>Transaction Code</th>
-    <th>Status</th>
-    <th>Plan</th>
-    <th>Expires</th>
-    <th>Action</th>
+<th>Code</th>
+<th>Phone</th>
+<th>Status</th>
+<th>Expires</th>
+<th>Action</th>
 </tr>
 
 {% for u in users %}
 <tr>
-    <td>{{ u.code }}</td>
+<td>{{ u.code }}</td>
+<td>{{ u.phone }}</td>
+<td>{{ u.status }}</td>
+<td>{{ u.expiry }}</td>
 
-    <td class="{{ u.status }}">
-        {{ u.status }}
-    </td>
+<td>
+{% if u.status != "approved" %}
+<a href="/approve/{{ u.code }}">
+<button class="approve">Approve</button>
+</a>
+{% else %}
+<span style="color:lightgreen;">✔ Active</span>
+{% endif %}
+</td>
 
-    <td>{{ u.plan if u.plan else "N/A" }}</td>
-
-    <td class="{% if u.expiry and u.expiry < now %}expired{% endif %}">
-        {{ u.expiry if u.expiry else "—" }}
-    </td>
-
-    <td>
-        {% if u.status == "pending" %}
-            <a href="/approve/{{ u.code }}?plan=monthly">Approve Monthly</a>
-            <a href="/approve/{{ u.code }}?plan=annual">Approve Annual</a>
-        {% endif %}
-    </td>
 </tr>
 {% endfor %}
 
 </table>
+
+</div>
 
 </body>
 </html>
