@@ -6,11 +6,11 @@ import matplotlib
 import json
 import os
 from datetime import datetime, timedelta
+import io
+import base64
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import io
-import base64
 
 app = Flask(__name__)
 app.secret_key = "jobura_secure_key_change_me"
@@ -174,7 +174,7 @@ def dividend_engine(asset_investment):
     return asset_investment * yields
 
 # =========================================================
-# 📊 SIMULATION ENGINE (FIXED STRUCTURE ONLY)
+# 📊 SIMULATION ENGINE (STABLE)
 # =========================================================
 def simulate(monthly, years, mode):
 
@@ -212,7 +212,6 @@ def simulate(monthly, years, mode):
 
     total_div = float(np.sum(asset_dividends))
 
-    # ✅ UNIVERSAL OUTPUT STRUCTURE (FIX)
     return {
         "summary": {
             "invested": invested_total,
@@ -270,13 +269,27 @@ def chart(curve):
     return img
 
 # =========================================================
-# 🌐 MAIN ROUTE
+# 🌐 MAIN ROUTE (FIXED STRUCTURE)
 # =========================================================
 @app.route("/", methods=["GET", "POST"])
 def index():
 
     users = load_users()
     is_premium = False
+
+    # SAFE DEFAULT STRUCTURE (prevents missing tables)
+    empty = {
+        "summary": {"invested": 0, "value": 0, "dividends": 0, "monthly_income": 0, "annual_income": 0},
+        "plan": [],
+        "returns": [],
+        "curve": []
+    }
+
+    data = {
+        "normal": empty,
+        "bull": None,
+        "bear": None
+    }
 
     if request.method == "POST":
 
@@ -285,12 +298,14 @@ def index():
         code = request.form.get("transaction_code", "").strip().upper()
         phone = request.form.get("phone", "").strip()
 
+        # check premium
         for u in users:
             if u["code"] == code and u["status"] == "approved":
                 if "expiry" in u:
                     if datetime.now() < datetime.strptime(u["expiry"], "%Y-%m-%d"):
                         is_premium = True
 
+        # save user
         if code and not any(u["code"] == code for u in users):
             users.append({
                 "code": code,
@@ -300,29 +315,27 @@ def index():
             })
             save_users(users)
 
-        normal = simulate(monthly, years, "normal")
-        bull = simulate(monthly, years, "bull")
-        bear = simulate(monthly, years, "bear")
+        # ALWAYS RUN NORMAL
+        data["normal"] = simulate(monthly, years, "normal")
 
-        data = {
-            "normal": normal,
-            "bull": bull,
-            "bear": bear
-        }
+        # PREMIUM ONLY
+        if is_premium:
+            data["bull"] = simulate(monthly, years, "bull")
+            data["bear"] = simulate(monthly, years, "bear")
 
         return render_template(
             "index.html",
             data=data,
-            chart_normal=chart(normal["curve"]),
-            chart_bull=chart(bull["curve"]),
-            chart_bear=chart(bear["curve"]),
+            chart_normal=chart(data["normal"]["curve"]),
+            chart_bull=chart(data["bull"]["curve"]) if data["bull"] else None,
+            chart_bear=chart(data["bear"]["curve"]) if data["bear"] else None,
             is_premium=is_premium,
             payment=PAYMENT_INFO
         )
 
     return render_template(
         "index.html",
-        data=None,
+        data=data,
         is_premium=False,
         payment=PAYMENT_INFO
     )
