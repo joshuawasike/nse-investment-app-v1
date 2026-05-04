@@ -29,7 +29,6 @@ DB_FILE = "users.json"
 def load_users():
     if not os.path.exists(DB_FILE):
         return []
-
     try:
         with open(DB_FILE, "r") as f:
             data = json.load(f)
@@ -44,6 +43,16 @@ def save_users(users):
             json.dump(users, f, indent=4)
     except:
         pass
+
+
+def is_active(user):
+    """Check expiry safely"""
+    try:
+        if not user.get("expiry"):
+            return False
+        return datetime.now() < datetime.strptime(user["expiry"], "%Y-%m-%d")
+    except:
+        return False
 
 
 # =========================================================
@@ -91,11 +100,10 @@ ASSETS = [
 N = len(ASSETS)
 
 # =========================================================
-# ENGINE (UNCHANGED)
+# ENGINE
 # =========================================================
 def get_returns():
     R = []
-
     for _, code, _ in ASSETS:
         px = df[df["Code"] == code]["Previous"].values
         px = np.nan_to_num(px)
@@ -254,7 +262,7 @@ def chart(curve):
 
 
 # =========================================================
-# 🔐 ADMIN SAFE PANEL (FIXED)
+# 🔐 ADMIN PANEL (STABLE)
 # =========================================================
 @app.route("/admin")
 def admin():
@@ -264,7 +272,9 @@ def admin():
 
     users = load_users()
 
-    # 🔥 CRITICAL FIX: prevent missing-field crashes
+    # FIX: prevent crashes from bad JSON
+    users = [u for u in users if isinstance(u, dict)]
+
     for u in users:
         u.setdefault("code", "")
         u.setdefault("phone", "")
@@ -299,8 +309,10 @@ def logout():
     return redirect("/login")
 
 
+# FIXED APPROVE ROUTE
+@app.route("/approve/<code>")
 @app.route("/approve/<code>/<plan>")
-def approve(code, plan):
+def approve(code, plan="monthly"):
 
     if not session.get("admin"):
         return redirect("/login")
@@ -351,10 +363,8 @@ def index():
         code = request.form.get("transaction_code", "").strip().upper()
 
         for u in users:
-            if u.get("code") == code and u.get("status") == "approved":
-                if u.get("expiry"):
-                    if datetime.now() < datetime.strptime(u["expiry"], "%Y-%m-%d"):
-                        is_premium = True
+            if u.get("code") == code and u.get("status") == "approved" and is_active(u):
+                is_premium = True
 
         normal = simulate(monthly, years, "normal")
 
