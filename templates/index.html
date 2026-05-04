@@ -44,13 +44,6 @@ button {
     border-radius: 12px;
 }
 
-.locked {
-    background: #1f2937;
-    padding: 15px;
-    border-left: 5px solid gold;
-    color: #facc15;
-}
-
 .info-box {
     background: #0f172a;
     padding: 15px;
@@ -99,21 +92,17 @@ img {
 
 <h2>📊 Jobura NSE Capital Terminal</h2>
 
-<!-- INFO -->
 <div class="info-box">
 <b>Jobura NSE Capital Terminal</b><br><br>
-✔ Long-term portfolio construction + projection engine
+✔ Portfolio simulation + dividend analytics engine
 </div>
 
-<!-- GUIDE -->
 <div class="guide-box">
 <b>🚀 Free Mode</b><br>
-Enter monthly + years → Run Engine<br>
-➡ Normal Scenario unlocked<br>
-🔒 Others require payment
+Run simulation → Normal scenario always shown<br>
+Bull & Bear available when returned from backend
 </div>
 
-<!-- FORM -->
 <form method="POST" class="form-box">
 
 <input name="monthly" placeholder="Monthly Investment (KES)" required>
@@ -130,14 +119,6 @@ Enter monthly + years → Run Engine<br>
 
 <button type="submit">🚀 Run Engine</button>
 
-<div class="card">
-<h3>💳 Payment</h3>
-PayBill: <b>542542</b><br>
-Account: <b>31909</b><br><br>
-
-⚠ Please be patient — manual verification in progress
-</div>
-
 </form>
 
 <hr>
@@ -148,14 +129,14 @@ Account: <b>31909</b><br><br>
 <div class="card">
 <h3>📊 NORMAL SCENARIO</h3>
 
-<p>💰 Invested: {{ data.normal.summary.invested }}</p>
-<p>💵 Dividends: {{ data.normal.summary.dividends }}</p>
-<p>📊 Value: {{ data.normal.summary.value }}</p>
+<p>💰 Invested: {{ data.normal.summary.get("invested", 0) }}</p>
+<p>💵 Dividends: {{ data.normal.summary.get("dividends", 0) }}</p>
+<p>📊 Value: {{ data.normal.summary.get("value", 0) }}</p>
 
 <div class="section-title">💰 Investment Plan</div>
 <table>
 <tr><th>Asset</th><th>%</th><th>KES</th></tr>
-{% for c in data.normal.plan %}
+{% for c in data.normal.get("plan", []) %}
 <tr>
 <td>{{ c.name }}</td>
 <td>{{ c.percent }}%</td>
@@ -164,11 +145,10 @@ Account: <b>31909</b><br><br>
 {% endfor %}
 </table>
 
-<!-- ✅ RETURNS TABLE ADDED -->
 <div class="section-title">📈 Expected Returns</div>
 <table>
 <tr><th>Asset</th><th>Dividends</th><th>Value</th></tr>
-{% for r in data.normal.returns %}
+{% for r in data.normal.get("returns", []) %}
 <tr>
 <td>{{ r.name }}</td>
 <td>{{ r.dividends }}</td>
@@ -181,16 +161,16 @@ Account: <b>31909</b><br><br>
 </div>
 
 <!-- ================= BULL ================= -->
-{% if data.bull %}
+{% if data.get("bull") %}
 <div class="card">
 <h3>📊 BULL SCENARIO</h3>
 
-<p>📊 Value: {{ data.bull.summary.value }}</p>
+<p>📊 Value: {{ data.bull.summary.get("value", 0) }}</p>
 
 <div class="section-title">📈 Expected Returns</div>
 <table>
 <tr><th>Asset</th><th>Dividends</th><th>Value</th></tr>
-{% for r in data.bull.returns %}
+{% for r in data.bull.get("returns", []) %}
 <tr>
 <td>{{ r.name }}</td>
 <td>{{ r.dividends }}</td>
@@ -204,16 +184,16 @@ Account: <b>31909</b><br><br>
 {% endif %}
 
 <!-- ================= BEAR ================= -->
-{% if data.bear %}
+{% if data.get("bear") %}
 <div class="card">
 <h3>📊 BEAR SCENARIO</h3>
 
-<p>📊 Value: {{ data.bear.summary.value }}</p>
+<p>📊 Value: {{ data.bear.summary.get("value", 0) }}</p>
 
 <div class="section-title">📈 Expected Returns</div>
 <table>
 <tr><th>Asset</th><th>Dividends</th><th>Value</th></tr>
-{% for r in data.bear.returns %}
+{% for r in data.bear.get("returns", []) %}
 <tr>
 <td>{{ r.name }}</td>
 <td>{{ r.dividends }}</td>
