@@ -126,7 +126,7 @@ button {
     border: 1px solid #374151;
 }
 
-/* PRICING BOX (NEW FIX) */
+/* PRICING */
 .pricing-box {
     background: #0f172a;
     padding: 15px;
@@ -218,7 +218,6 @@ img {
 <b>Account:</b> {{ payment.account_number }}<br>
 <b>Name:</b> {{ payment.account_name }}
 
-<!-- ✅ PRICING RESTORED -->
 <div class="pricing-box">
 <h4>💰 Pricing Plans</h4>
 
@@ -252,7 +251,7 @@ KES 18,000 / year
 
 {% if data %}
 
-<!-- NORMAL -->
+<!-- NORMAL (ALWAYS FULL) -->
 <div class="card">
 <h3>📊 NORMAL SCENARIO</h3>
 
@@ -287,6 +286,8 @@ KES 18,000 / year
 <img src="data:image/png;base64,{{ chart_normal }}">
 </div>
 
+{% if is_premium %}
+
 <!-- BULL -->
 <div class="card">
 <h3>📈 BULL SCENARIO</h3>
@@ -294,6 +295,30 @@ KES 18,000 / year
 <p>💰 Invested: {{ data.bull.summary.invested }}</p>
 <p>💵 Dividends: {{ data.bull.summary.dividends }}</p>
 <p>📊 Value: {{ data.bull.summary.value }}</p>
+
+<h4 class="section-title">💰 Investment Plan</h4>
+<table>
+<tr><th>Asset</th><th>%</th><th>KES</th></tr>
+{% for c in data.bull.plan %}
+<tr>
+<td>{{ c.name }}</td>
+<td>{{ c.percent }}%</td>
+<td>{{ c.kes }}</td>
+</tr>
+{% endfor %}
+</table>
+
+<h4 class="section-title">📊 Returns</h4>
+<table>
+<tr><th>Asset</th><th>Dividends</th><th>Value</th></tr>
+{% for r in data.bull.returns %}
+<tr>
+<td>{{ r.name }}</td>
+<td>{{ r.dividends }}</td>
+<td>{{ r.value }}</td>
+</tr>
+{% endfor %}
+</table>
 
 <img src="data:image/png;base64,{{ chart_bull }}">
 </div>
@@ -306,8 +331,34 @@ KES 18,000 / year
 <p>💵 Dividends: {{ data.bear.summary.dividends }}</p>
 <p>📊 Value: {{ data.bear.summary.value }}</p>
 
+<h4 class="section-title">💰 Investment Plan</h4>
+<table>
+<tr><th>Asset</th><th>%</th><th>KES</th></tr>
+{% for c in data.bear.plan %}
+<tr>
+<td>{{ c.name }}</td>
+<td>{{ c.percent }}%</td>
+<td>{{ c.kes }}</td>
+</tr>
+{% endfor %}
+</table>
+
+<h4 class="section-title">📊 Returns</h4>
+<table>
+<tr><th>Asset</th><th>Dividends</th><th>Value</th></tr>
+{% for r in data.bear.returns %}
+<tr>
+<td>{{ r.name }}</td>
+<td>{{ r.dividends }}</td>
+<td>{{ r.value }}</td>
+</tr>
+{% endfor %}
+</table>
+
 <img src="data:image/png;base64,{{ chart_bear }}">
 </div>
+
+{% endif %}
 
 {% endif %}
 
