@@ -39,7 +39,7 @@ def save_users(users):
         json.dump(users, f, indent=4)
 
 # =========================================================
-# 📊 SYSTEM INFO
+# 📊 PAYMENT INFO
 # =========================================================
 PAYMENT_INFO = {
     "paybill": "542542",
@@ -84,7 +84,7 @@ ASSETS = [
 N = len(ASSETS)
 
 # =========================================================
-# (SIMULATION LOGIC — UNCHANGED)
+# ENGINE (UNCHANGED)
 # =========================================================
 def get_returns():
     R = []
@@ -160,6 +160,9 @@ def dividend_engine(asset_investment):
     yields = np.array([a[2] for a in ASSETS])
     return asset_investment * yields
 
+# =========================================================
+# 🔥 FIXED SIMULATION (ADDED RETURNS)
+# =========================================================
 def simulate(monthly, years, mode):
 
     R = get_returns()
@@ -189,6 +192,18 @@ def simulate(monthly, years, mode):
     asset_investment = invested_total * weights
     asset_dividends = dividend_engine(asset_investment)
 
+    # ✅ NEW (fix tables)
+    asset_values = asset_investment * (1 + np.array([0.08,0.07,0.075,0.06,0.055,0.065,0.05,0.0])) ** years
+
+    returns = [
+        {
+            "name": ASSETS[i][0],
+            "dividends": round(asset_dividends[i], 2),
+            "value": round(asset_values[i], 2)
+        }
+        for i in range(N)
+    ]
+
     return {
         "summary": {
             "invested": invested_total,
@@ -205,11 +220,12 @@ def simulate(monthly, years, mode):
             }
             for i in range(N)
         ],
+        "returns": returns,  # ✅ FIXED
         "curve": curve
     }
 
 # =========================================================
-# 📈 CHART (FIXED DARK STYLE)
+# 📈 CHART
 # =========================================================
 def chart(curve):
     fig, ax = plt.subplots(figsize=(10,5))
@@ -243,12 +259,12 @@ def login():
             session["admin"] = True
             return redirect("/admin")
         return "❌ Wrong password"
-    return """
+    return '''
     <form method="POST">
         <input name="password" type="password" placeholder="Admin Password">
         <button>Login</button>
     </form>
-    """
+    '''
 
 @app.route("/logout")
 def logout():
@@ -271,14 +287,11 @@ def index():
         code = request.form.get("transaction_code", "").strip().upper()
         phone = request.form.get("phone", "").strip()
 
-        # ✅ Check approval + expiry
         for u in users:
             if u["code"] == code and u["status"] == "approved":
-                if "expiry" in u:
-                    if datetime.now() < datetime.strptime(u["expiry"], "%Y-%m-%d"):
-                        is_premium = True
+                if "expiry" not in u or datetime.now() < datetime.strptime(u["expiry"], "%Y-%m-%d"):
+                    is_premium = True
 
-        # ✅ Save new user
         if code and not any(u["code"] == code for u in users):
             users.append({
                 "code": code,
@@ -326,14 +339,19 @@ def approve(code, plan):
     for u in users:
         if u["code"] == code:
             u["status"] = "approved"
-
-            if plan == "monthly":
-                expiry = datetime.now() + timedelta(days=30)
-            else:
-                expiry = datetime.now() + timedelta(days=365)
-
+            expiry = datetime.now() + (timedelta(days=30) if plan == "monthly" else timedelta(days=365))
             u["expiry"] = expiry.strftime("%Y-%m-%d")
 
+    save_users(users)
+    return redirect("/admin")
+
+# ✅ NEW
+@app.route("/reject/<code>")
+def reject(code):
+    if not session.get("admin"):
+        return redirect("/login")
+
+    users = [u for u in load_users() if u["code"] != code]
     save_users(users)
     return redirect("/admin")
 
