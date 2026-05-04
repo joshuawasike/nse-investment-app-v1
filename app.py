@@ -48,10 +48,9 @@ PAYMENT_INFO = {
 }
 
 # =========================================================
-# 📊 DATA
+# 📊 DATA (UNCHANGED)
 # =========================================================
 df = pd.DataFrame(columns=["Code", "Date", "Previous"])
-
 files = glob.glob("data/nse_csv/*.csv")
 
 for file in files:
@@ -84,7 +83,7 @@ ASSETS = [
 N = len(ASSETS)
 
 # =========================================================
-# RETURNS ENGINE
+# RETURNS ENGINE (UNCHANGED)
 # =========================================================
 def get_returns():
     R = []
@@ -141,19 +140,16 @@ def simulate_paths(R, mode):
     return np.array(sim)
 
 # =========================================================
-# OPTIMIZER
+# OPTIMIZER (UNCHANGED)
 # =========================================================
 def optimize(sim):
-
     mean = np.mean(sim, axis=1)
     vol = np.std(sim, axis=1) + 1e-9
     downside = np.mean(np.minimum(sim, 0), axis=1)
 
     score = (mean / vol) - (1.1 * np.abs(downside))
-
     score[3] *= 1.3
     score[7] *= 0.01
-
     score = np.tanh(score * 2.0)
 
     weights = np.exp(score)
@@ -207,15 +203,13 @@ def simulate(monthly, years, mode):
         [0.08,0.07,0.075,0.06,0.055,0.065,0.05,0.0]
     )) ** years
 
-    total_div = float(np.sum(asset_dividends))
-
     return {
         "summary": {
             "invested": invested_total,
             "value": nav,
-            "dividends": total_div,
-            "monthly_income": total_div / max(months, 1),
-            "annual_income": total_div / max(years, 1)
+            "dividends": float(np.sum(asset_dividends)),
+            "monthly_income": float(np.sum(asset_dividends)) / max(months,1),
+            "annual_income": float(np.sum(asset_dividends)) / max(years,1)
         },
         "plan": [
             {
@@ -240,7 +234,6 @@ def simulate(monthly, years, mode):
 # CHART
 # =========================================================
 def chart(curve):
-
     fig, ax = plt.subplots(figsize=(10,5))
     fig.patch.set_facecolor("#0b0f19")
     ax.set_facecolor("#0b0f19")
@@ -261,7 +254,7 @@ def chart(curve):
     return img
 
 # =========================================================
-# 🔐 ADMIN ROUTES (FIXED)
+# 🔐 ADMIN PANEL (FULL VERSION)
 # =========================================================
 @app.route("/login", methods=["GET","POST"])
 def login():
@@ -271,13 +264,13 @@ def login():
             return redirect("/admin")
         return "Wrong password"
 
-    return render_template("login.html")
+    return render_template("admin_login.html")
 
 
 @app.route("/logout")
 def logout():
-    session.pop("admin", None)
-    return redirect("/")
+    session.clear()
+    return redirect("/login")
 
 
 @app.route("/admin")
@@ -286,8 +279,6 @@ def admin():
         return redirect("/login")
 
     users = load_users()
-
-    # ✅ FIX: USE TEMPLATE (THIS WAS YOUR PROBLEM)
     return render_template("admin.html", users=users)
 
 
@@ -301,17 +292,29 @@ def approve(code, plan):
     for u in users:
         if u["code"] == code:
             u["status"] = "approved"
+            u["plan"] = plan
+            u["type"] = u.get("type","individual")
 
-            if plan == "monthly":
-                expiry = datetime.now() + timedelta(days=30)
-            else:
-                expiry = datetime.now() + timedelta(days=365)
-
-            u["expiry"] = expiry.strftime("%Y-%m-%d")
+            days = 30 if plan == "monthly" else 365
+            u["expiry"] = (datetime.now() + timedelta(days=days)).strftime("%Y-%m-%d")
 
     save_users(users)
     return redirect("/admin")
 
+
+@app.route("/reject/<code>")
+def reject(code):
+    if not session.get("admin"):
+        return redirect("/login")
+
+    users = load_users()
+
+    for u in users:
+        if u["code"] == code:
+            u["status"] = "rejected"
+
+    save_users(users)
+    return redirect("/admin")
 
 # =========================================================
 # MAIN ROUTE
@@ -353,7 +356,6 @@ def index():
         )
 
     return render_template("index.html", data=None, is_premium=False, payment=PAYMENT_INFO)
-
 
 # =========================================================
 # RUN
