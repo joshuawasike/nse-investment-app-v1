@@ -4,51 +4,86 @@
 <title>Admin Panel - Jobura</title>
 
 <style>
-body {
-    font-family: Arial;
-    background: #0b0f19;
-    color: #e5e7eb;
-    padding: 20px;
+body{
+    font-family:Arial;
+    background:#0b0f19;
+    color:#e5e7eb;
+    padding:20px;
 }
 
-.container {
-    max-width: 1000px;
-    margin: auto;
+.container{
+    max-width:1200px;
+    margin:auto;
 }
 
-h2 { color: #60a5fa; }
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
+.card{
+    background:#111827;
+    padding:20px;
+    border-radius:10px;
 }
 
-th, td {
-    padding: 10px;
-    border-bottom: 1px solid #374151;
-    text-align: left;
+h2{
+    color:#60a5fa;
 }
 
-button {
-    padding: 6px 10px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:20px;
 }
 
-.approve { background: green; color: white; }
-.reject { background: red; color: white; }
-
-.card {
-    background: #111827;
-    padding: 20px;
-    border-radius: 10px;
+th,td{
+    padding:10px;
+    border-bottom:1px solid #374151;
+    text-align:left;
 }
 
-.status-approved { color: #22c55e; font-weight: bold; }
-.status-rejected { color: #ef4444; font-weight: bold; }
-.status-pending { color: #facc15; font-weight: bold; }
+th{
+    color:#93c5fd;
+}
+
+button{
+    padding:6px 10px;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+    margin-right:4px;
+}
+
+.monthly{
+    background:#16a34a;
+    color:white;
+}
+
+.yearly{
+    background:#2563eb;
+    color:white;
+}
+
+.reject{
+    background:#dc2626;
+    color:white;
+}
+
+.cancel{
+    background:#f59e0b;
+    color:black;
+}
+
+.status-approved{
+    color:#22c55e;
+    font-weight:bold;
+}
+
+.status-rejected{
+    color:#ef4444;
+    font-weight:bold;
+}
+
+.status-pending{
+    color:#facc15;
+    font-weight:bold;
+}
 </style>
 </head>
 
@@ -61,57 +96,63 @@ button {
 <div class="card">
 
 <table>
+
 <tr>
 <th>Code</th>
 <th>Phone</th>
 <th>Status</th>
 <th>Plan</th>
-<th>Expires</th>
-<th>Action</th>
+<th>Actions</th>
 </tr>
 
 {% for u in users %}
+
 <tr>
 
 <td>{{ u["code"] }}</td>
 <td>{{ u["phone"] }}</td>
 
 <td>
-{% if u["status"] == "approved" %}
-<span class="status-approved">✔ Approved</span>
+
+{% if u["status"] == "approved_monthly" %}
+<span class="status-approved">✔ Approved Monthly</span>
+
+{% elif u["status"] == "approved_yearly" %}
+<span class="status-approved">✔ Approved Yearly</span>
+
 {% elif u["status"] == "rejected" %}
 <span class="status-rejected">✖ Rejected</span>
+
 {% else %}
 <span class="status-pending">⏳ Pending</span>
 {% endif %}
+
 </td>
 
 <td>{{ u["plan"] if u["plan"] else "-" }}</td>
 
-<td>{{ u["expiry"] if u["expiry"] else "-" }}</td>
-
 <td>
 
-{% if u["status"] != "approved" %}
-<a href="/approve/{{ u["code"] }}/monthly">
-<button class="approve">Monthly</button>
+<a href="/approve/{{ u['code'] }}/monthly">
+<button class="monthly">Monthly</button>
 </a>
 
-<a href="/approve/{{ u["code"] }}/yearly">
-<button class="approve">Yearly</button>
+<a href="/approve/{{ u['code'] }}/yearly">
+<button class="yearly">Yearly</button>
 </a>
 
-<a href="/reject/{{ u["code"] }}">
+<a href="/cancel/{{ u['code'] }}">
+<button class="cancel">Cancel</button>
+</a>
+
+<a href="/reject/{{ u['code'] }}">
 <button class="reject">Reject</button>
 </a>
-
-{% else %}
-<span style="color:lightgreen;">ACTIVE</span>
-{% endif %}
 
 </td>
 
 </tr>
+
 {% endfor %}
 
 </table>
