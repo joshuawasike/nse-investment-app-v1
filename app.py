@@ -46,12 +46,13 @@ def save_users(users):
 
 
 def is_active(user):
-    try:
-        if not user.get("expiry"):
-            return False
-        return datetime.now() < datetime.strptime(user["expiry"], "%Y-%m-%d")
-    except:
-        return False
+
+    status = user.get("status", "")
+
+    return status in [
+        "approved_monthly",
+        "approved_yearly"
+    ]
 
 
 # =========================================================
@@ -303,18 +304,25 @@ def logout():
 
 
 @app.route("/approve/<code>/<plan>")
-def approve(code, plan="monthly"):
+def approve(code, plan):
+
     if not session.get("admin"):
         return redirect("/login")
 
     users = load_users()
 
     for u in users:
+
         if u.get("code") == code:
-            u["status"] = "approved"
-            u["plan"] = plan
-            days = 30 if plan == "monthly" else 365
-            u["expiry"] = (datetime.now() + timedelta(days=days)).strftime("%Y-%m-%d")
+
+            if plan == "monthly":
+                u["status"] = "approved_monthly"
+                u["plan"] = "Monthly"
+            else:
+                u["status"] = "approved_yearly"
+                u["plan"] = "Yearly"
+
+            u["expiry"] = "ACTIVE"
 
     save_users(users)
     return redirect("/admin")
@@ -330,6 +338,24 @@ def reject(code):
     for u in users:
         if u.get("code") == code:
             u["status"] = "rejected"
+
+    save_users(users)
+    return redirect("/admin")
+
+
+@app.route("/cancel/<code>")
+def cancel(code):
+
+    if not session.get("admin"):
+        return redirect("/login")
+
+    users = load_users()
+
+    for u in users:
+        if u.get("code") == code:
+            u["status"] = "pending"
+            u["plan"] = ""
+            u["expiry"] = ""
 
     save_users(users)
     return redirect("/admin")
@@ -353,7 +379,7 @@ def index():
         phone = request.form.get("phone", "").strip()
 
         for u in users:
-            if u.get("code") == code and u.get("status") == "approved" and is_active(u):
+            if u.get("code") == code and is_active(u):
                 is_premium = True
 
         normal = simulate(monthly, years, "normal")
