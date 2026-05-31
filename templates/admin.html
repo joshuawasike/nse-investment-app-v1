@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Admin Panel - Jobura</title>
+<title>Jobura Admin Dashboard</title>
 
 <style>
+
 body{
     font-family:Arial;
     background:#0b0f19;
@@ -12,8 +13,32 @@ body{
 }
 
 .container{
-    max-width:1200px;
+    max-width:1400px;
     margin:auto;
+}
+
+h2{
+    color:#60a5fa;
+}
+
+.dashboard{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:15px;
+    margin-bottom:20px;
+}
+
+.stat-card{
+    background:#111827;
+    padding:20px;
+    border-radius:10px;
+    text-align:center;
+}
+
+.stat-number{
+    font-size:28px;
+    font-weight:bold;
+    margin-top:10px;
 }
 
 .card{
@@ -22,18 +47,26 @@ body{
     border-radius:10px;
 }
 
-h2{
-    color:#60a5fa;
+.search-box{
+    margin-bottom:20px;
+}
+
+.search-box input{
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:8px;
+    background:#0f172a;
+    color:white;
 }
 
 table{
     width:100%;
     border-collapse:collapse;
-    margin-top:20px;
 }
 
 th,td{
-    padding:10px;
+    padding:12px;
     border-bottom:1px solid #374151;
     text-align:left;
 }
@@ -43,11 +76,12 @@ th{
 }
 
 button{
-    padding:6px 10px;
     border:none;
+    padding:8px 12px;
     border-radius:6px;
     cursor:pointer;
-    margin-right:4px;
+    margin:2px;
+    font-weight:bold;
 }
 
 .monthly{
@@ -60,18 +94,28 @@ button{
     color:white;
 }
 
-.reject{
-    background:#dc2626;
-    color:white;
-}
-
 .cancel{
     background:#f59e0b;
     color:black;
 }
 
+.reject{
+    background:#dc2626;
+    color:white;
+}
+
+.delete{
+    background:#7f1d1d;
+    color:white;
+}
+
 .status-approved{
     color:#22c55e;
+    font-weight:bold;
+}
+
+.status-pending{
+    color:#facc15;
     font-weight:bold;
 }
 
@@ -80,22 +124,117 @@ button{
     font-weight:bold;
 }
 
-.status-pending{
-    color:#facc15;
+.status-expired{
+    color:#fb923c;
     font-weight:bold;
 }
+
+.topbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+}
+
+.logout{
+    color:#ef4444;
+    text-decoration:none;
+    font-weight:bold;
+}
+
 </style>
+
+<script>
+
+function searchUsers(){
+
+    let input =
+        document.getElementById("search").value.toLowerCase();
+
+    let rows =
+        document.querySelectorAll("tbody tr");
+
+    rows.forEach(row=>{
+
+        let text =
+            row.innerText.toLowerCase();
+
+        row.style.display =
+            text.includes(input)
+            ? ""
+            : "none";
+
+    });
+
+}
+
+</script>
+
 </head>
 
 <body>
 
 <div class="container">
 
-<h2>🔐 Jobura Admin Panel</h2>
+<div class="topbar">
+
+<h2>🔐 Jobura Admin Dashboard</h2>
+
+<a href="/logout" class="logout">
+Logout
+</a>
+
+</div>
+
+<!-- DASHBOARD -->
+
+<div class="dashboard">
+
+<div class="stat-card">
+Total Users
+<div class="stat-number">
+{{ users|length }}
+</div>
+</div>
+
+<div class="stat-card">
+Monthly
+<div class="stat-number">
+{{ users|selectattr("status","equalto","approved_monthly")|list|length }}
+</div>
+</div>
+
+<div class="stat-card">
+Yearly
+<div class="stat-number">
+{{ users|selectattr("status","equalto","approved_yearly")|list|length }}
+</div>
+</div>
+
+<div class="stat-card">
+Pending
+<div class="stat-number">
+{{ users|selectattr("status","equalto","pending")|list|length }}
+</div>
+</div>
+
+</div>
 
 <div class="card">
 
+<div class="search-box">
+
+<input
+id="search"
+type="text"
+placeholder="Search Code / Phone"
+onkeyup="searchUsers()">
+
+</div>
+
 <table>
+
+<thead>
 
 <tr>
 <th>Code</th>
@@ -105,26 +244,44 @@ button{
 <th>Actions</th>
 </tr>
 
+</thead>
+
+<tbody>
+
 {% for u in users %}
 
 <tr>
 
 <td>{{ u["code"] }}</td>
+
 <td>{{ u["phone"] }}</td>
 
 <td>
 
 {% if u["status"] == "approved_monthly" %}
-<span class="status-approved">✔ Approved Monthly</span>
+<span class="status-approved">
+✔ Monthly
+</span>
 
 {% elif u["status"] == "approved_yearly" %}
-<span class="status-approved">✔ Approved Yearly</span>
+<span class="status-approved">
+✔ Yearly
+</span>
+
+{% elif u["status"] == "expired" %}
+<span class="status-expired">
+⌛ Expired
+</span>
 
 {% elif u["status"] == "rejected" %}
-<span class="status-rejected">✖ Rejected</span>
+<span class="status-rejected">
+✖ Rejected
+</span>
 
 {% else %}
-<span class="status-pending">⏳ Pending</span>
+<span class="status-pending">
+⏳ Pending
+</span>
 {% endif %}
 
 </td>
@@ -134,19 +291,27 @@ button{
 <td>
 
 <a href="/approve/{{ u['code'] }}/monthly">
-<button class="monthly">Monthly</button>
+<button class="monthly">
+Monthly
+</button>
 </a>
 
 <a href="/approve/{{ u['code'] }}/yearly">
-<button class="yearly">Yearly</button>
+<button class="yearly">
+Yearly
+</button>
 </a>
 
 <a href="/cancel/{{ u['code'] }}">
-<button class="cancel">Cancel</button>
+<button class="cancel">
+Cancel
+</button>
 </a>
 
 <a href="/reject/{{ u['code'] }}">
-<button class="reject">Reject</button>
+<button class="reject">
+Reject
+</button>
 </a>
 
 </td>
@@ -154,6 +319,8 @@ button{
 </tr>
 
 {% endfor %}
+
+</tbody>
 
 </table>
 
