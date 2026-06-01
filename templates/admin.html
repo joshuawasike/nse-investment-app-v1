@@ -200,14 +200,14 @@ Total Users
 <div class="stat-card">
 Monthly
 <div class="stat-number">
-{{ users|selectattr("status","equalto","approved_monthly")|list|length }}
+{{ users|selectattr("status","contains","monthly")|list|length }}
 </div>
 </div>
 
 <div class="stat-card">
 Yearly
 <div class="stat-number">
-{{ users|selectattr("status","equalto","approved_yearly")|list|length }}
+{{ users|selectattr("status","contains","yearly")|list|length }}
 </div>
 </div>
 
@@ -239,6 +239,7 @@ onkeyup="searchUsers()">
 <tr>
 <th>Code</th>
 <th>Phone</th>
+<th>Type</th>
 <th>Status</th>
 <th>Plan</th>
 <th>Actions</th>
@@ -255,33 +256,25 @@ onkeyup="searchUsers()">
 <td>{{ u["code"] }}</td>
 
 <td>{{ u["phone"] }}</td>
+    
+<td>{{ u["type"] if u.get("type") else "Individual" }}</td>
 
 <td>
 
-{% if u["status"] == "approved_monthly" %}
-<span class="status-approved">
-✔ Monthly
-</span>
+{% if "monthly" in u["status"] %}
+    <span class="status-approved">✔ Monthly</span>
 
-{% elif u["status"] == "approved_yearly" %}
-<span class="status-approved">
-✔ Yearly
-</span>
+{% elif "yearly" in u["status"] %}
+    <span class="status-approved">✔ Yearly</span>
 
 {% elif u["status"] == "expired" %}
-<span class="status-expired">
-⌛ Expired
-</span>
+    <span class="status-expired">⌛ Expired</span>
 
 {% elif u["status"] == "rejected" %}
-<span class="status-rejected">
-✖ Rejected
-</span>
+    <span class="status-rejected">✖ Rejected</span>
 
 {% else %}
-<span class="status-pending">
-⏳ Pending
-</span>
+    <span class="status-pending">⏳ Pending</span>
 {% endif %}
 
 </td>
