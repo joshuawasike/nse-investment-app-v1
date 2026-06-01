@@ -263,6 +263,7 @@ def chart(curve):
 # =========================================================
 @app.route("/admin")
 def admin():
+
     if not session.get("admin"):
         return redirect("/login")
 
@@ -278,58 +279,58 @@ def admin():
         u.setdefault("type", "Individual")
         u.setdefault("amount", 0)
         u.setdefault("date", "")
-        total_users = len(users)
 
-pending_users = len([
-    u for u in users
-    if u.get("status") == "pending"
-])
+    total_users = len(users)
 
-approved_monthly = len([
-    u for u in users
-    if "monthly" in u.get("status", "")
-])
+    pending_users = len([
+        u for u in users
+        if u.get("status") == "pending"
+    ])
 
-approved_yearly = len([
-    u for u in users
-    if "yearly" in u.get("status", "")
-])
+    approved_monthly = len([
+        u for u in users
+        if "monthly" in u.get("status", "")
+    ])
 
-rejected_users = len([
-    u for u in users
-    if u.get("status") == "rejected"
-])
+    approved_yearly = len([
+        u for u in users
+        if "yearly" in u.get("status", "")
+    ])
 
-total_revenue = sum(
-    float(u.get("amount", 0))
-    for u in users
-)
+    rejected_users = len([
+        u for u in users
+        if u.get("status") == "rejected"
+    ])
 
-monthly_revenue = sum(
-    float(u.get("amount", 0))
-    for u in users
-    if "monthly" in u.get("status", "")
-)
+    total_revenue = sum(
+        float(u.get("amount", 0))
+        for u in users
+    )
 
-yearly_revenue = sum(
-    float(u.get("amount", 0))
-    for u in users
-    if "yearly" in u.get("status", "")
-)
+    monthly_revenue = sum(
+        float(u.get("amount", 0))
+        for u in users
+        if "monthly" in u.get("status", "")
+    )
 
-   return render_template(
-    "admin.html",
-    users=users,
-    total_users=total_users,
-    pending_users=pending_users,
-    approved_monthly=approved_monthly,
-    approved_yearly=approved_yearly,
-    rejected_users=rejected_users,
-    total_revenue=total_revenue,
-    monthly_revenue=monthly_revenue,
-    yearly_revenue=yearly_revenue
-)
+    yearly_revenue = sum(
+        float(u.get("amount", 0))
+        for u in users
+        if "yearly" in u.get("status", "")
+    )
 
+    return render_template(
+        "admin.html",
+        users=users,
+        total_users=total_users,
+        pending_users=pending_users,
+        approved_monthly=approved_monthly,
+        approved_yearly=approved_yearly,
+        rejected_users=rejected_users,
+        total_revenue=total_revenue,
+        monthly_revenue=monthly_revenue,
+        yearly_revenue=yearly_revenue
+    )
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -362,34 +363,42 @@ def approve(code, plan):
     users = load_users()
 
     for u in users:
+
         if u.get("code") == code:
 
-            membership_type = request.args.get("type", "Individual")
+            membership_type = request.args.get(
+                "type",
+                u.get("type", "Individual")
+            )
 
             if plan == "monthly":
-    u["status"] = f"{membership_type.lower()}_monthly"
-    u["plan"] = "Monthly"
 
-    if membership_type == "Institutional":
-        u["amount"] = 2000
-    else:
-        u["amount"] = 400
+                u["status"] = f"{membership_type.lower()}_monthly"
+                u["plan"] = "Monthly"
 
-else:
-    u["status"] = f"{membership_type.lower()}_yearly"
-    u["plan"] = "Yearly"
+                if membership_type == "Institutional":
+                    u["amount"] = 2000
+                else:
+                    u["amount"] = 400
 
-    if membership_type == "Institutional":
-        u["amount"] = 18000
-    else:
-        u["amount"] = 4000
+            else:
 
-u["date"] = datetime.now().strftime("%Y-%m-%d")
+                u["status"] = f"{membership_type.lower()}_yearly"
+                u["plan"] = "Yearly"
+
+                if membership_type == "Institutional":
+                    u["amount"] = 18000
+                else:
+                    u["amount"] = 4000
 
             u["type"] = membership_type
             u["expiry"] = "ACTIVE"
+            u["date"] = datetime.now().strftime("%Y-%m-%d")
+
+            break
 
     save_users(users)
+
     return redirect("/admin")
 
 
@@ -461,12 +470,15 @@ def index():
         if code:
             if not any(u.get("code") == code for u in users):
                 users.append({
-                    "code": code,
-                    "phone": phone,
-                    "status": "pending",
-                    "plan": "",
-                    "expiry": ""
-                })
+    "code": code,
+    "phone": phone,
+    "status": "pending",
+    "plan": "",
+    "expiry": "",
+    "type": "Individual",
+    "amount": 0,
+    "date": ""
+})
                 save_users(users)
 
         return render_template(
