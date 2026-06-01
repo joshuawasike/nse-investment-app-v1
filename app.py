@@ -218,14 +218,40 @@ def simulate(monthly, years, mode):
         if t % 6 == 0:
             weights = optimize(sim)
 
-    asset_investment = invested_total * weights
-    asset_dividends = dividend_engine(asset_investment)
-
-    asset_values = asset_investment * (1 + np.array(
-        [0.08,0.07,0.075,0.06,0.055,0.065,0.05,0.0]
+        asset_values = asset_investment * (1 + np.array(
+        [0.08, 0.07, 0.075, 0.06, 0.055, 0.065, 0.05, 0.0]
     )) ** years
 
-   result = {
+    result = {
+        "summary": {
+            "invested": invested_total,
+            "value": nav,
+            "dividends": float(np.sum(asset_dividends)),
+            "monthly_income": float(np.sum(asset_dividends)) / max(months, 1),
+            "annual_income": float(np.sum(asset_dividends)) / max(years, 1)
+        },
+        "plan": [
+            {
+                "name": ASSETS[i][0],
+                "percent": round(weights[i] * 100, 2),
+                "kes": round(monthly * weights[i], 2)
+            }
+            for i in range(N)
+        ],
+        "returns": [
+            {
+                "name": ASSETS[i][0],
+                "dividends": round(asset_dividends[i], 2),
+                "value": round(asset_values[i], 2)
+            }
+            for i in range(N)
+        ],
+        "curve": curve,
+
+        "ai": ai_portfolio_advisor(weights, sim, ASSETS)
+    }
+
+    return result
     "summary": {
         "invested": invested_total,
         "value": nav,
@@ -251,16 +277,10 @@ def simulate(monthly, years, mode):
     ],
     "curve": curve,
 
-    # 🧠 ADD AI LAYER HERE
-    "ai": ai_portfolio_advisor(weights, sim, ASSETS)
-}
-
-return result
 # =========================================================
 # 🧠 AI PORTFOLIO ADVISOR ENGINE (V2)
 # =========================================================
-
-def ai_portfolio_advisor(weights, sim, assets):
+   def ai_portfolio_advisor(weights, sim, assets):
     insights = []
 
     mean = np.mean(sim, axis=1)
@@ -321,7 +341,9 @@ def chart(curve):
     img = base64.b64encode(buf.read()).decode()
     plt.close(fig)
     return img
+}
 
+return result
 
 # =========================================================
 # 🔐 ADMIN ROUTES
