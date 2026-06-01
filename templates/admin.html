@@ -13,7 +13,7 @@ body{
 }
 
 .container{
-    max-width:1400px;
+    max-width:1600px;
     margin:auto;
 }
 
@@ -23,7 +23,7 @@ h2{
 
 .dashboard{
     display:grid;
-    grid-template-columns:repeat(4,1fr);
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
     gap:15px;
     margin-bottom:20px;
 }
@@ -33,12 +33,19 @@ h2{
     padding:20px;
     border-radius:10px;
     text-align:center;
+    border:1px solid #1f2937;
+}
+
+.stat-title{
+    color:#9ca3af;
+    font-size:14px;
 }
 
 .stat-number{
     font-size:28px;
     font-weight:bold;
     margin-top:10px;
+    color:#60a5fa;
 }
 
 .card{
@@ -58,6 +65,7 @@ h2{
     border-radius:8px;
     background:#0f172a;
     color:white;
+    font-size:15px;
 }
 
 table{
@@ -75,15 +83,19 @@ th{
     color:#93c5fd;
 }
 
-button, .monthly, .yearly, .cancel, .reject{
+.monthly,
+.yearly,
+.cancel,
+.reject{
     border:none;
-    padding:8px 12px;
+    padding:8px 10px;
     border-radius:6px;
     cursor:pointer;
     margin:2px;
     font-weight:bold;
     text-decoration:none;
     display:inline-block;
+    font-size:12px;
 }
 
 .monthly{
@@ -103,11 +115,6 @@ button, .monthly, .yearly, .cancel, .reject{
 
 .reject{
     background:#dc2626;
-    color:white;
-}
-
-.delete{
-    background:#7f1d1d;
     color:white;
 }
 
@@ -144,25 +151,47 @@ button, .monthly, .yearly, .cancel, .reject{
     font-weight:bold;
 }
 
+.type-individual{
+    color:#60a5fa;
+    font-weight:bold;
+}
+
+.type-institutional{
+    color:#22c55e;
+    font-weight:bold;
+}
+
 </style>
 
 <script>
 
 let timeout;
 
-function searchUsers() {
+function searchUsers(){
+
     clearTimeout(timeout);
 
     timeout = setTimeout(() => {
-        let input = document.getElementById("search").value.toLowerCase();
-        let rows = document.querySelectorAll("tbody tr");
+
+        let input =
+            document.getElementById("search")
+            .value
+            .toLowerCase();
+
+        let rows =
+            document.querySelectorAll("tbody tr");
 
         rows.forEach(row => {
+
             row.style.display =
-                row.innerText.toLowerCase().includes(input) ? "" : "none";
+                row.innerText.toLowerCase().includes(input)
+                ? ""
+                : "none";
+
         });
 
-    }, 150);
+    },150);
+
 }
 
 </script>
@@ -177,36 +206,59 @@ function searchUsers() {
 
 <h2>🔐 Jobura Admin Dashboard</h2>
 
-<a href="/logout" class="logout">Logout</a>
+<a href="/logout" class="logout">
+Logout
+</a>
 
 </div>
 
 <!-- DASHBOARD -->
+
 <div class="dashboard">
 
 <div class="stat-card">
-Total Users
-<div class="stat-number">{{ users|length }}</div>
+<div class="stat-title">Total Users</div>
+<div class="stat-number">{{ total_users }}</div>
 </div>
 
 <div class="stat-card">
-Monthly
+<div class="stat-title">Pending</div>
+<div class="stat-number">{{ pending_users }}</div>
+</div>
+
+<div class="stat-card">
+<div class="stat-title">Approved Monthly</div>
+<div class="stat-number">{{ approved_monthly }}</div>
+</div>
+
+<div class="stat-card">
+<div class="stat-title">Approved Yearly</div>
+<div class="stat-number">{{ approved_yearly }}</div>
+</div>
+
+<div class="stat-card">
+<div class="stat-title">Rejected</div>
+<div class="stat-number">{{ rejected_users }}</div>
+</div>
+
+<div class="stat-card">
+<div class="stat-title">Monthly Revenue</div>
 <div class="stat-number">
-{{ users|selectattr("status")|select("string")|select("contains","monthly")|list|length }}
+KES {{ "{:,.0f}".format(monthly_revenue) }}
 </div>
 </div>
 
 <div class="stat-card">
-Yearly
+<div class="stat-title">Yearly Revenue</div>
 <div class="stat-number">
-{{ users|selectattr("status")|select("string")|select("contains","yearly")|list|length }}
+KES {{ "{:,.0f}".format(yearly_revenue) }}
 </div>
 </div>
 
 <div class="stat-card">
-Pending
+<div class="stat-title">Total Revenue</div>
 <div class="stat-number">
-{{ users|selectattr("status","equalto","pending")|list|length }}
+KES {{ "{:,.0f}".format(total_revenue) }}
 </div>
 </div>
 
@@ -215,68 +267,125 @@ Pending
 <div class="card">
 
 <div class="search-box">
+
 <input
 id="search"
 type="text"
-placeholder="Search Code / Phone"
+placeholder="Search Transaction Code or Phone Number"
 onkeyup="searchUsers()">
+
 </div>
 
 <table>
 
 <thead>
+
 <tr>
 <th>Code</th>
 <th>Phone</th>
 <th>Type</th>
 <th>Status</th>
 <th>Plan</th>
+<th>Amount</th>
+<th>Date</th>
 <th>Actions</th>
 </tr>
+
 </thead>
 
 <tbody>
 
 {% for u in users %}
+
 <tr>
-    <td>{{ u["code"] }}</td>
-    <td>{{ u["phone"] }}</td>
-    <td>{{ u.get("type", "Individual") }}</td>
 
-    <td>
-        {% if "monthly" in u.get("status", "") %}
-            <span class="status-approved">✔ Monthly</span>
+<td>{{ u.get("code","") }}</td>
 
-        {% elif "yearly" in u.get("status", "") %}
-            <span class="status-approved">✔ Yearly</span>
+<td>{{ u.get("phone","") }}</td>
 
-        {% elif u.get("status") == "expired" %}
-            <span class="status-expired">⌛ Expired</span>
+<td>
+{% if u.get("type","Individual") == "Institutional" %}
+<span class="type-institutional">🏢 Institutional</span>
+{% else %}
+<span class="type-individual">👤 Individual</span>
+{% endif %}
+</td>
 
-        {% elif u.get("status") == "rejected" %}
-            <span class="status-rejected">✖ Rejected</span>
+<td>
 
-        {% else %}
-            <span class="status-pending">⏳ Pending</span>
-        {% endif %}
-    </td>
+{% if "monthly" in u.get("status","") %}
+<span class="status-approved">✔ Monthly</span>
 
-    <td>{{ u.get("plan", "-") }}</td>
+{% elif "yearly" in u.get("status","") %}
+<span class="status-approved">✔ Yearly</span>
 
-    <td>
-        <a class="monthly" href="/approve/{{ u['code'] }}/monthly">Monthly</a>
-        <a class="yearly" href="/approve/{{ u['code'] }}/yearly">Yearly</a>
-        <a class="cancel" href="/cancel/{{ u['code'] }}">Cancel</a>
-        <a class="reject" href="/reject/{{ u['code'] }}">Reject</a>
-    </td>
+{% elif u.get("status") == "expired" %}
+<span class="status-expired">⌛ Expired</span>
+
+{% elif u.get("status") == "rejected" %}
+<span class="status-rejected">✖ Rejected</span>
+
+{% else %}
+<span class="status-pending">⏳ Pending</span>
+
+{% endif %}
+
+</td>
+
+<td>{{ u.get("plan","-") }}</td>
+
+<td>KES {{ "{:,.0f}".format(u.get("amount",0)) }}</td>
+
+<td>{{ u.get("date","-") }}</td>
+
+<td>
+
+<a class="monthly"
+href="/approve/{{ u['code'] }}/monthly?type=Individual">
+Individual Monthly
+</a>
+
+<a class="yearly"
+href="/approve/{{ u['code'] }}/yearly?type=Individual">
+Individual Yearly
+</a>
+
+<br>
+
+<a class="monthly"
+href="/approve/{{ u['code'] }}/monthly?type=Institutional">
+Institution Monthly
+</a>
+
+<a class="yearly"
+href="/approve/{{ u['code'] }}/yearly?type=Institutional">
+Institution Yearly
+</a>
+
+<br>
+
+<a class="cancel"
+href="/cancel/{{ u['code'] }}">
+Cancel
+</a>
+
+<a class="reject"
+href="/reject/{{ u['code'] }}">
+Reject
+</a>
+
+</td>
+
 </tr>
 
 {% else %}
+
 <tr>
-    <td colspan="6" style="text-align:center; padding:20px;">
-        No users found
-    </td>
+<td colspan="8" style="text-align:center;padding:20px;">
+No users found
+</td>
 </tr>
+
 {% endfor %}
 
 </tbody>
