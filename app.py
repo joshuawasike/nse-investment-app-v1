@@ -193,6 +193,9 @@ def dividend_engine(asset_investment):
     return asset_investment * yields
 
 
+# =========================================================
+# ENGINE
+# =========================================================
 def simulate(monthly, years, mode):
 
     R = get_returns()
@@ -218,7 +221,12 @@ def simulate(monthly, years, mode):
         if t % 6 == 0:
             weights = optimize(sim)
 
-        asset_values = asset_investment * (1 + np.array(
+    # AFTER LOOP (IMPORTANT FIX)
+    asset_investment = invested_total * weights
+
+    asset_dividends = dividend_engine(asset_investment)
+
+    asset_values = asset_investment * (1 + np.array(
         [0.08, 0.07, 0.075, 0.06, 0.055, 0.065, 0.05, 0.0]
     )) ** years
 
@@ -248,35 +256,11 @@ def simulate(monthly, years, mode):
         ],
         "curve": curve,
 
+        # 🧠 AI LAYER
         "ai": ai_portfolio_advisor(weights, sim, ASSETS)
     }
 
     return result
-    "summary": {
-        "invested": invested_total,
-        "value": nav,
-        "dividends": float(np.sum(asset_dividends)),
-        "monthly_income": float(np.sum(asset_dividends)) / max(months,1),
-        "annual_income": float(np.sum(asset_dividends)) / max(years,1)
-    },
-    "plan": [
-        {
-            "name": ASSETS[i][0],
-            "percent": round(weights[i]*100,2),
-            "kes": round(monthly*weights[i],2)
-        }
-        for i in range(N)
-    ],
-    "returns": [
-        {
-            "name": ASSETS[i][0],
-            "dividends": round(asset_dividends[i],2),
-            "value": round(asset_values[i],2)
-        }
-        for i in range(N)
-    ],
-    "curve": curve,
-
 # =========================================================
 # 🧠 AI PORTFOLIO ADVISOR ENGINE (V2)
 # =========================================================
@@ -286,35 +270,23 @@ def simulate(monthly, years, mode):
     mean = np.mean(sim, axis=1)
     vol = np.std(sim, axis=1)
 
-    total_weight = np.sum(weights)
-
-    # portfolio risk score
     risk_score = np.mean(vol) * 100
 
-    # detect concentration risk
     for i in range(len(weights)):
         name = assets[i][0]
 
         if weights[i] > 0.30:
-            insights.append(f"⚠ {name}: High allocation ({weights[i]*100:.1f}%) → concentration risk.")
+            insights.append(f"⚠ {name}: High allocation risk.")
 
         if vol[i] > np.mean(vol):
-            insights.append(f"📊 {name}: Higher volatility than portfolio average.")
+            insights.append(f"📊 {name}: High volatility.")
 
         if mean[i] < 0:
-            insights.append(f"📉 {name}: Weak or negative simulated returns.")
+            insights.append(f"📉 {name}: Weak returns.")
 
-    # portfolio-level advice
     if risk_score > 3:
-        insights.append("⚠ Portfolio risk is HIGH — consider more diversification.")
+        insights.append("⚠ Portfolio risk is HIGH.")
 
-    if weights[7] > 0.1:
-        insights.append("💡 Kenya Airways exposure is risky (zero dividend asset).")
-
-    if np.max(weights) > 0.4:
-        insights.append("⚠ One asset dominates portfolio — reduce concentration.")
-
-    # final AI score (0–100)
     score = 100 - min(80, risk_score * 10)
 
     return {
@@ -322,28 +294,6 @@ def simulate(monthly, years, mode):
         "score": round(score, 1),
         "risk": round(risk_score, 2)
     }
-
-def chart(curve):
-    fig, ax = plt.subplots(figsize=(10,5))
-    fig.patch.set_facecolor("#0b0f19")
-    ax.set_facecolor("#0b0f19")
-
-    x = np.arange(len(curve))
-    y = np.array(curve)
-
-    ax.plot(x, y, color="#60a5fa", linewidth=2)
-    ax.fill_between(x, y, color="#60a5fa", alpha=0.15)
-
-    buf = io.BytesIO()
-    fig.savefig(buf, format="png", bbox_inches="tight", dpi=120)
-    buf.seek(0)
-
-    img = base64.b64encode(buf.read()).decode()
-    plt.close(fig)
-    return img
-}
-
-return result
 
 # =========================================================
 # 🔐 ADMIN ROUTES
@@ -609,15 +559,7 @@ def index():
         goal_result=None
     )
 
-    # GET REQUEST
-    return render_template(
-        "index.html",
-        data=None,
-        is_premium=False,
-        payment=PAYMENT_INFO,
-        goal_result=None
-    )
-
+   
 # =========================================================
 # RUN
 # =========================================================
