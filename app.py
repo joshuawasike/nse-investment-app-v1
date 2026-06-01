@@ -13,7 +13,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 app = Flask(__name__)
-app.secret_key = "jobura_secure_key_change_me"
+app.secret_key = "jobura_secure_secure_v3"
 
 # =========================================================
 # 🔐 CONFIG
@@ -26,6 +26,8 @@ DB_FILE = "users.json"
 # =========================================================
 def load_users():
     if not os.path.exists(DB_FILE):
+        with open(DB_FILE, "w") as f:
+            json.dump([], f)
         return []
 
     try:
@@ -35,12 +37,7 @@ def load_users():
         if not isinstance(data, list):
             return []
 
-        clean = []
-        for u in data:
-            if isinstance(u, dict) and "code" in u:
-                clean.append(u)
-
-        return clean
+        return [u for u in data if isinstance(u, dict)]
 
     except:
         return []
@@ -74,7 +71,7 @@ PAYMENT_INFO = {
 }
 
 # =========================================================
-# 📊 DATA ENGINE (SAFE LAZY LOAD)
+# 📊 DATA ENGINE
 # =========================================================
 df = None
 
@@ -234,7 +231,7 @@ def chart(curve):
     return base64.b64encode(buf.read()).decode()
 
 # =========================================================
-# 🔐 LOGIN (FIXED - MISSING BEFORE)
+# 🔐 LOGIN
 # =========================================================
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -263,13 +260,11 @@ def logout():
 def index():
 
     users = load_users()
-
     is_premium = False
     data = None
     normal = None
 
     try:
-
         if request.method == "POST":
 
             monthly = float(request.form.get("monthly") or 0)
@@ -320,7 +315,7 @@ def index():
         return f"APP ERROR: {str(e)}"
 
 # =========================================================
-# 🚀 ADMIN ROUTE
+# 🚀 ADMIN ROUTE (FIXED SAFE)
 # =========================================================
 @app.route("/admin")
 def admin():
@@ -328,10 +323,27 @@ def admin():
         return redirect("/login")
 
     users = load_users()
-    return render_template("admin.html", users=users)
+
+    safe_users = []
+    for u in users:
+        if isinstance(u, dict):
+            safe_users.append(u)
+
+    return render_template(
+        "admin.html",
+        users=safe_users,
+        total_users=len(safe_users),
+        pending_users=len([u for u in safe_users if u.get("status") == "pending"]),
+        approved_monthly=len([u for u in safe_users if u.get("status") == "approved_monthly"]),
+        approved_yearly=len([u for u in safe_users if u.get("status") == "approved_yearly"]),
+        rejected_users=len([u for u in safe_users if u.get("status") == "rejected"]),
+        monthly_revenue=0,
+        yearly_revenue=0,
+        total_revenue=0
+    )
 
 # =========================================================
-# RUN (RENDER SAFE)
+# 🚀 RUN (RENDER SAFE)
 # =========================================================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
