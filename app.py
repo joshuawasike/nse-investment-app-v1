@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask import Flask, render_template, request, redirect, session
 import pandas as pd
 import numpy as np
@@ -275,8 +276,59 @@ def admin():
         u.setdefault("expiry", "")
         u.setdefault("plan", "")
         u.setdefault("type", "Individual")
+        u.setdefault("amount", 0)
+        u.setdefault("date", "")
+        total_users = len(users)
 
-    return render_template("admin.html", users=users)
+pending_users = len([
+    u for u in users
+    if u.get("status") == "pending"
+])
+
+approved_monthly = len([
+    u for u in users
+    if "monthly" in u.get("status", "")
+])
+
+approved_yearly = len([
+    u for u in users
+    if "yearly" in u.get("status", "")
+])
+
+rejected_users = len([
+    u for u in users
+    if u.get("status") == "rejected"
+])
+
+total_revenue = sum(
+    float(u.get("amount", 0))
+    for u in users
+)
+
+monthly_revenue = sum(
+    float(u.get("amount", 0))
+    for u in users
+    if "monthly" in u.get("status", "")
+)
+
+yearly_revenue = sum(
+    float(u.get("amount", 0))
+    for u in users
+    if "yearly" in u.get("status", "")
+)
+
+   return render_template(
+    "admin.html",
+    users=users,
+    total_users=total_users,
+    pending_users=pending_users,
+    approved_monthly=approved_monthly,
+    approved_yearly=approved_yearly,
+    rejected_users=rejected_users,
+    total_revenue=total_revenue,
+    monthly_revenue=monthly_revenue,
+    yearly_revenue=yearly_revenue
+)
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -315,11 +367,24 @@ def approve(code, plan):
             membership_type = request.args.get("type", "Individual")
 
             if plan == "monthly":
-                u["status"] = f"{membership_type.lower()}_monthly"
-                u["plan"] = "Monthly"
-            else:
-                u["status"] = f"{membership_type.lower()}_yearly"
-                u["plan"] = "Yearly"
+    u["status"] = f"{membership_type.lower()}_monthly"
+    u["plan"] = "Monthly"
+
+    if membership_type == "Institutional":
+        u["amount"] = 2000
+    else:
+        u["amount"] = 400
+
+else:
+    u["status"] = f"{membership_type.lower()}_yearly"
+    u["plan"] = "Yearly"
+
+    if membership_type == "Institutional":
+        u["amount"] = 18000
+    else:
+        u["amount"] = 4000
+
+u["date"] = datetime.now().strftime("%Y-%m-%d")
 
             u["type"] = membership_type
             u["expiry"] = "ACTIVE"
