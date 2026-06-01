@@ -49,10 +49,9 @@ def is_active(user):
 
     status = user.get("status", "")
 
-    return status in [
-        "approved_monthly",
-        "approved_yearly"
-    ]
+   def is_active(user):
+    status = user.get("status", "")
+    return "approved" in status
 
 
 # =========================================================
@@ -272,11 +271,12 @@ def admin():
     users = [u for u in users if isinstance(u, dict)]
 
     for u in users:
-        u.setdefault("code", "")
-        u.setdefault("phone", "")
-        u.setdefault("status", "pending")
-        u.setdefault("expiry", "")
-        u.setdefault("plan", "")
+    u.setdefault("code", "")
+    u.setdefault("phone", "")
+    u.setdefault("status", "pending")
+    u.setdefault("expiry", "")
+    u.setdefault("plan", "")
+    u.setdefault("type", "Individual")  
 
     return render_template("admin.html", users=users)
 
@@ -315,12 +315,17 @@ def approve(code, plan):
 
         if u.get("code") == code:
 
-            if plan == "monthly":
-                u["status"] = "approved_monthly"
-                u["plan"] = "Monthly"
-            else:
-                u["status"] = "approved_yearly"
-                u["plan"] = "Yearly"
+            membership_type = request.args.get("type", "Individual")
+
+if plan == "monthly":
+    u["status"] = f"{membership_type.lower()}_monthly"
+    u["plan"] = "Monthly"
+else:
+    u["status"] = f"{membership_type.lower()}_yearly"
+    u["plan"] = "Yearly"
+
+u["type"] = membership_type
+u["expiry"] = "ACTIVE"
 
             u["expiry"] = "ACTIVE"
 
