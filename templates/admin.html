@@ -75,13 +75,15 @@ th{
     color:#93c5fd;
 }
 
-button{
+button, .monthly, .yearly, .cancel, .reject{
     border:none;
     padding:8px 12px;
     border-radius:6px;
     cursor:pointer;
     margin:2px;
     font-weight:bold;
+    text-decoration:none;
+    display:inline-block;
 }
 
 .monthly{
@@ -146,36 +148,21 @@ button{
 
 <script>
 
-function searchUsers(){
+let timeout;
 
-    let input =
-        document.getElementById("search").value.toLowerCase();
-
-    let timeout;
-function searchUsers(){
+function searchUsers() {
     clearTimeout(timeout);
+
     timeout = setTimeout(() => {
         let input = document.getElementById("search").value.toLowerCase();
         let rows = document.querySelectorAll("tbody tr");
 
         rows.forEach(row => {
-            row.style.display = row.innerText.toLowerCase().includes(input) ? "" : "none";
+            row.style.display =
+                row.innerText.toLowerCase().includes(input) ? "" : "none";
         });
+
     }, 150);
-}
-
-    rows.forEach(row=>{
-
-        let text =
-            row.innerText.toLowerCase();
-
-        row.style.display =
-            text.includes(input)
-            ? ""
-            : "none";
-
-    });
-
 }
 
 </script>
@@ -190,34 +177,29 @@ function searchUsers(){
 
 <h2>🔐 Jobura Admin Dashboard</h2>
 
-<a href="/logout" class="logout">
-Logout
-</a>
+<a href="/logout" class="logout">Logout</a>
 
 </div>
 
 <!-- DASHBOARD -->
-
 <div class="dashboard">
 
 <div class="stat-card">
 Total Users
-<div class="stat-number">
-{{ users|length }}
-</div>
+<div class="stat-number">{{ users|length }}</div>
 </div>
 
 <div class="stat-card">
 Monthly
 <div class="stat-number">
-{{ users|selectattr("status","contains","monthly")|list|length }}
+{{ users|selectattr("status")|select("string")|select("contains","monthly")|list|length }}
 </div>
 </div>
 
 <div class="stat-card">
 Yearly
 <div class="stat-number">
-{{ users|selectattr("status","contains","yearly")|list|length }}
+{{ users|selectattr("status")|select("string")|select("contains","yearly")|list|length }}
 </div>
 </div>
 
@@ -233,19 +215,16 @@ Pending
 <div class="card">
 
 <div class="search-box">
-
 <input
 id="search"
 type="text"
 placeholder="Search Code / Phone"
 onkeyup="searchUsers()">
-
 </div>
 
 <table>
 
 <thead>
-
 <tr>
 <th>Code</th>
 <th>Phone</th>
@@ -254,7 +233,6 @@ onkeyup="searchUsers()">
 <th>Plan</th>
 <th>Actions</th>
 </tr>
-
 </thead>
 
 <tbody>
@@ -264,74 +242,41 @@ onkeyup="searchUsers()">
     <td>{{ u["code"] }}</td>
     <td>{{ u["phone"] }}</td>
     <td>{{ u.get("type", "Individual") }}</td>
-    <td>{{ u["status"] }}</td>
+
+    <td>
+        {% if "monthly" in u.get("status", "") %}
+            <span class="status-approved">✔ Monthly</span>
+
+        {% elif "yearly" in u.get("status", "") %}
+            <span class="status-approved">✔ Yearly</span>
+
+        {% elif u.get("status") == "expired" %}
+            <span class="status-expired">⌛ Expired</span>
+
+        {% elif u.get("status") == "rejected" %}
+            <span class="status-rejected">✖ Rejected</span>
+
+        {% else %}
+            <span class="status-pending">⏳ Pending</span>
+        {% endif %}
+    </td>
+
     <td>{{ u.get("plan", "-") }}</td>
-    <td>Actions...</td>
+
+    <td>
+        <a class="monthly" href="/approve/{{ u['code'] }}/monthly">Monthly</a>
+        <a class="yearly" href="/approve/{{ u['code'] }}/yearly">Yearly</a>
+        <a class="cancel" href="/cancel/{{ u['code'] }}">Cancel</a>
+        <a class="reject" href="/reject/{{ u['code'] }}">Reject</a>
+    </td>
 </tr>
+
 {% else %}
 <tr>
     <td colspan="6" style="text-align:center; padding:20px;">
         No users found
     </td>
 </tr>
-{% endfor %}
-
-<tr>
-
-<td>{{ u["code"] }}</td>
-
-<td>{{ u["phone"] }}</td>
-    
-<td>{{ u["type"] if u.get("type") else "Individual" }}</td>
-
-<td>
-
-{% if "monthly" in u.get["status"] %}
-    <span class="status-approved">✔ Monthly</span>
-
-{% elif "yearly" in u.get["status"] %}
-    <span class="status-approved">✔ Yearly</span>
-
-{% elif u.get["status"] == "expired" %}
-    <span class="status-expired">⌛ Expired</span>
-
-{% elif u.get["status"] == "rejected" %}
-    <span class="status-rejected">✖ Rejected</span>
-
-{% else %}
-    <span class="status-pending">⏳ Pending</span>
-{% endif %}
-
-</td>
-
-<td>{{ u["plan"] if u["plan"] else "-" }}</td>
-
-<td>
-
-<a class="monthly" href="/approve/{{ u['code'] }}/monthly">Monthly</a>
-
-<a href="/approve/{{ u['code'] }}/yearly">
-<button class="yearly">
-Yearly
-</button>
-</a>
-
-<a href="/cancel/{{ u['code'] }}">
-<button class="cancel">
-Cancel
-</button>
-</a>
-
-<a href="/reject/{{ u['code'] }}">
-<button class="reject">
-Reject
-</button>
-</a>
-
-</td>
-
-</tr>
-
 {% endfor %}
 
 </tbody>
