@@ -29,19 +29,21 @@ DB_FILE = "users.json"
 def load_users():
     if not os.path.exists(DB_FILE):
         return []
+
     try:
         with open(DB_FILE, "r") as f:
-            return json.load(f)
+            data = json.load(f)
+
+        # ✅ CLEAN ONLY VALID DICTIONARIES
+        clean = []
+        for u in data:
+            if isinstance(u, dict):
+                clean.append(u)
+
+        return clean
+
     except:
         return []
-
-
-def save_users(users):
-    try:
-        with open(DB_FILE, "w") as f:
-            json.dump(users, f, indent=4)
-    except:
-        pass
 
 
 # =========================================================
@@ -304,19 +306,47 @@ def index():
     is_premium = False
     data = None
     normal = None
+    goal_result = None
 
     try:
+
         if request.method == "POST":
 
             monthly = float(request.form.get("monthly") or 0)
             years = int(request.form.get("years") or 1)
+            target = float(request.form.get("target_amount") or 0)
+
             code = request.form.get("transaction_code", "").strip().upper()
             phone = request.form.get("phone", "").strip()
 
+            # -------------------------------------------------
+            # FIX: SAFE PREMIUM CHECK
+            # -------------------------------------------------
             for u in users:
-                if u.get("code") == code and is_active(u):
-                    is_premium = True
+                if isinstance(u, dict):
+                    if u.get("code") == code and is_active(u):
+                        is_premium = True
 
+            # -------------------------------------------------
+            # GOAL ENGINE (SAFE)
+            # -------------------------------------------------
+            if target > 0 and monthly > 0:
+                months_needed = months_to_target(monthly, target, 0.008)
+                goal_result = {
+                    "mode": "time_to_goal",
+                    "years": round(months_needed / 12, 2)
+                }
+
+            elif target > 0 and years > 0:
+                required_monthly = contribution_to_target(target, years * 12, 0.008)
+                goal_result = {
+                    "mode": "required_contribution",
+                    "monthly": round(required_monthly, 2)
+                }
+
+            # -------------------------------------------------
+            # SIMULATION (SAFE)
+            # -------------------------------------------------
             normal = simulate(monthly, years, "normal")
 
             if is_premium:
@@ -326,29 +356,47 @@ def index():
                     "bear": simulate(monthly, years, "bear")
                 }
             else:
-                data = {"normal": normal, "bull": None, "bear": None}
+                data = {
+                    "normal": normal,
+                    "bull": None,
+                    "bear": None
+                }
 
-            if code and not any(u.get("code") == code for u in users):
-                users.append({
-                    "code": code,
-                    "phone": phone,
-                    "status": "pending",
-                })
-                save_users(users)
+            # -------------------------------------------------
+            # USER REGISTRATION (SAFE)
+            # -------------------------------------------------
+            if code:
+                exists = any(
+                    isinstance(u, dict) and u.get("code") == code
+                    for u in users
+                )
 
+                if not exists:
+                    users.append({
+                        "code": code,
+                        "phone": phone,
+                        "status": "pending",
+                        "plan": "",
+                        "expiry": "",
+                        "type": "Individual",
+                        "amount": 0,
+                        "date": ""
+                    })
+                    save_users(users)
+
+        # -------------------------------------------------
+        # RENDER (ALWAYS SAFE)
+        # -------------------------------------------------
         return render_template(
             "index.html",
             data=data,
             chart_normal=chart(normal["curve"]) if normal else None,
-            chart_bull=chart(data["bull"]["curve"]) if is_premium and data else None,
-            chart_bear=chart(data["bear"]["curve"]) if is_premium and data else None,
+            chart_bull=chart(data["bull"]["curve"]) if is_premium and data and data.get("bull") else None,
+            chart_bear=chart(data["bear"]["curve"]) if is_premium and data and data.get("bear") else None,
             is_premium=is_premium,
-            payment=PAYMENT_INFO
+            payment=PAYMENT_INFO,
+            goal_result=goal_result
         )
 
     except Exception as e:
         return f"APP ERROR: {str(e)}"
-
-
-if __name__ == "__main__":
-    app.run(debug=True)
