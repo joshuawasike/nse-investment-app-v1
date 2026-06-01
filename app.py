@@ -511,16 +511,15 @@ def index():
     data = None
     goal_result = None
 
-if request.method == "POST":
-    monthly = float(request.form.get("monthly", 0))
-    years = int(request.form.get("years", 1))
-    target = float(request.form.get("target_amount", 0))
-    code = request.form.get("transaction_code", "").strip().upper()
-    phone = request.form.get("phone", "").strip()
+    if request.method == "POST":
 
-    is_premium = False
-    goal_result = None
-    r = 0.008
+        monthly = float(request.form.get("monthly", 0))
+        years = int(request.form.get("years", 1))
+        target = float(request.form.get("target_amount", 0))
+        code = request.form.get("transaction_code", "").strip().upper()
+        phone = request.form.get("phone", "").strip()
+
+        r = 0.008
 
         # PREMIUM CHECK
         for u in users:
@@ -573,12 +572,20 @@ if request.method == "POST":
             "index.html",
             data=data,
             chart_normal=chart(normal["curve"]),
-            chart_bull = chart(data["bull"]["curve"]) if is_premium and data["bull"] else None,
-            chart_bear = chart(data["bear"]["curve"]) if is_premium and data["bear"] else None,
+            chart_bull=chart(data["bull"]["curve"]) if is_premium and data["bull"] else None,
+            chart_bear=chart(data["bear"]["curve"]) if is_premium and data["bear"] else None,
             is_premium=is_premium,
             payment=PAYMENT_INFO,
             goal_result=goal_result
         )
+
+    return render_template(
+        "index.html",
+        data=None,
+        is_premium=False,
+        payment=PAYMENT_INFO,
+        goal_result=None
+    )
 
     # GET REQUEST
     return render_template(
