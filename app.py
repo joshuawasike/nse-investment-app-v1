@@ -1,6 +1,3 @@
-@app.route("/ping")
-def ping():
-    return "APP IS RUNNING"
 from datetime import datetime
 from flask import Flask, render_template, request, redirect, session
 import pandas as pd
@@ -11,7 +8,9 @@ import json
 import os
 import io
 import base64
-
+@app.route("/ping")
+def ping():
+    return "APP IS RUNNING"
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
