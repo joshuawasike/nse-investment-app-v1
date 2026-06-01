@@ -5,7 +5,6 @@ import glob
 import matplotlib
 import json
 import os
-from datetime import datetime, timedelta
 import io
 import base64
 
@@ -45,13 +44,12 @@ def save_users(users):
         pass
 
 
+# =========================================================
+# 🔐 USER STATUS CHECK
+# =========================================================
 def is_active(user):
-
     status = user.get("status", "")
-
-   def is_active(user):
-    status = user.get("status", "")
-    return "approved" in status
+    return "monthly" in status or "yearly" in status
 
 
 # =========================================================
@@ -73,7 +71,8 @@ for file in files:
     try:
         temp = pd.read_csv(file, usecols=["Code", "Date", "Previous"])
         df = pd.concat([df, temp], ignore_index=True)
-    except:
+    except Exception as e:
+        print(f"Skipping {file}: {e}")
         continue
 
 if not df.empty:
@@ -81,7 +80,6 @@ if not df.empty:
     df["Previous"] = pd.to_numeric(df["Previous"], errors="coerce")
     df = df.dropna()
     df = df.sort_values(["Code", "Date"])
-
 
 # =========================================================
 # 📊 ASSETS
@@ -260,7 +258,7 @@ def chart(curve):
 
 
 # =========================================================
-# 🔐 ADMIN
+# 🔐 ADMIN ROUTES
 # =========================================================
 @app.route("/admin")
 def admin():
@@ -271,12 +269,12 @@ def admin():
     users = [u for u in users if isinstance(u, dict)]
 
     for u in users:
-    u.setdefault("code", "")
-    u.setdefault("phone", "")
-    u.setdefault("status", "pending")
-    u.setdefault("expiry", "")
-    u.setdefault("plan", "")
-    u.setdefault("type", "Individual")  
+        u.setdefault("code", "")
+        u.setdefault("phone", "")
+        u.setdefault("status", "pending")
+        u.setdefault("expiry", "")
+        u.setdefault("plan", "")
+        u.setdefault("type", "Individual")
 
     return render_template("admin.html", users=users)
 
@@ -312,21 +310,18 @@ def approve(code, plan):
     users = load_users()
 
     for u in users:
-
         if u.get("code") == code:
 
             membership_type = request.args.get("type", "Individual")
 
-if plan == "monthly":
-    u["status"] = f"{membership_type.lower()}_monthly"
-    u["plan"] = "Monthly"
-else:
-    u["status"] = f"{membership_type.lower()}_yearly"
-    u["plan"] = "Yearly"
+            if plan == "monthly":
+                u["status"] = f"{membership_type.lower()}_monthly"
+                u["plan"] = "Monthly"
+            else:
+                u["status"] = f"{membership_type.lower()}_yearly"
+                u["plan"] = "Yearly"
 
-u["type"] = membership_type
-u["expiry"] = "ACTIVE"
-
+            u["type"] = membership_type
             u["expiry"] = "ACTIVE"
 
     save_users(users)
@@ -367,7 +362,7 @@ def cancel(code):
 
 
 # =========================================================
-# MAIN FIXED LOGIC
+# MAIN ROUTE
 # =========================================================
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -389,13 +384,8 @@ def index():
 
         normal = simulate(monthly, years, "normal")
 
-        # 🔥 FIX: FREE = ONLY NORMAL
         if not is_premium:
-            data = {
-                "normal": normal,
-                "bull": None,
-                "bear": None
-            }
+            data = {"normal": normal, "bull": None, "bear": None}
         else:
             data = {
                 "normal": normal,
@@ -403,7 +393,6 @@ def index():
                 "bear": simulate(monthly, years, "bear")
             }
 
-        # 🔥 STORE USER FOR ADMIN APPROVAL
         if code:
             if not any(u.get("code") == code for u in users):
                 users.append({
