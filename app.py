@@ -225,33 +225,83 @@ def simulate(monthly, years, mode):
         [0.08,0.07,0.075,0.06,0.055,0.065,0.05,0.0]
     )) ** years
 
-    return {
-        "summary": {
-            "invested": invested_total,
-            "value": nav,
-            "dividends": float(np.sum(asset_dividends)),
-            "monthly_income": float(np.sum(asset_dividends)) / max(months,1),
-            "annual_income": float(np.sum(asset_dividends)) / max(years,1)
-        },
-        "plan": [
-            {
-                "name": ASSETS[i][0],
-                "percent": round(weights[i]*100,2),
-                "kes": round(monthly*weights[i],2)
-            }
-            for i in range(N)
-        ],
-        "returns": [
-            {
-                "name": ASSETS[i][0],
-                "dividends": round(asset_dividends[i],2),
-                "value": round(asset_values[i],2)
-            }
-            for i in range(N)
-        ],
-        "curve": curve
-    }
+   result = {
+    "summary": {
+        "invested": invested_total,
+        "value": nav,
+        "dividends": float(np.sum(asset_dividends)),
+        "monthly_income": float(np.sum(asset_dividends)) / max(months,1),
+        "annual_income": float(np.sum(asset_dividends)) / max(years,1)
+    },
+    "plan": [
+        {
+            "name": ASSETS[i][0],
+            "percent": round(weights[i]*100,2),
+            "kes": round(monthly*weights[i],2)
+        }
+        for i in range(N)
+    ],
+    "returns": [
+        {
+            "name": ASSETS[i][0],
+            "dividends": round(asset_dividends[i],2),
+            "value": round(asset_values[i],2)
+        }
+        for i in range(N)
+    ],
+    "curve": curve,
 
+    # 🧠 ADD AI LAYER HERE
+    "ai": ai_portfolio_advisor(weights, sim, ASSETS)
+}
+
+return result
+# =========================================================
+# 🧠 AI PORTFOLIO ADVISOR ENGINE (V2)
+# =========================================================
+
+def ai_portfolio_advisor(weights, sim, assets):
+    insights = []
+
+    mean = np.mean(sim, axis=1)
+    vol = np.std(sim, axis=1)
+
+    total_weight = np.sum(weights)
+
+    # portfolio risk score
+    risk_score = np.mean(vol) * 100
+
+    # detect concentration risk
+    for i in range(len(weights)):
+        name = assets[i][0]
+
+        if weights[i] > 0.30:
+            insights.append(f"⚠ {name}: High allocation ({weights[i]*100:.1f}%) → concentration risk.")
+
+        if vol[i] > np.mean(vol):
+            insights.append(f"📊 {name}: Higher volatility than portfolio average.")
+
+        if mean[i] < 0:
+            insights.append(f"📉 {name}: Weak or negative simulated returns.")
+
+    # portfolio-level advice
+    if risk_score > 3:
+        insights.append("⚠ Portfolio risk is HIGH — consider more diversification.")
+
+    if weights[7] > 0.1:
+        insights.append("💡 Kenya Airways exposure is risky (zero dividend asset).")
+
+    if np.max(weights) > 0.4:
+        insights.append("⚠ One asset dominates portfolio — reduce concentration.")
+
+    # final AI score (0–100)
+    score = 100 - min(80, risk_score * 10)
+
+    return {
+        "insights": insights,
+        "score": round(score, 1),
+        "risk": round(risk_score, 2)
+    }
 
 def chart(curve):
     fig, ax = plt.subplots(figsize=(10,5))
