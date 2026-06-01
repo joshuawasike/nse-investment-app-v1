@@ -1,3 +1,6 @@
+@app.route("/ping")
+def ping():
+    return "APP IS RUNNING"
 from datetime import datetime
 from flask import Flask, render_template, request, redirect, session
 import pandas as pd
