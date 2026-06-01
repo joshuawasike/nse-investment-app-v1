@@ -16,16 +16,14 @@ app = Flask(__name__)
 app.secret_key = "jobura_secure_key_change_me"
 
 # =========================================================
-# 🔐 ADMIN
+# 🔐 CONFIG
 # =========================================================
 ADMIN_PASSWORD = "Jobura@542542"
-
-# =========================================================
-# 📂 USERS DB
-# =========================================================
 DB_FILE = "users.json"
 
-
+# =========================================================
+# 📦 SAFE USER SYSTEM
+# =========================================================
 def load_users():
     if not os.path.exists(DB_FILE):
         return []
@@ -34,7 +32,15 @@ def load_users():
         with open(DB_FILE, "r") as f:
             data = json.load(f)
 
-        return [u for u in data if isinstance(u, dict)]
+        if not isinstance(data, list):
+            return []
+
+        clean = []
+        for u in data:
+            if isinstance(u, dict) and "code" in u:
+                clean.append(u)
+
+        return clean
 
     except:
         return []
@@ -48,25 +54,19 @@ def save_users(users):
         pass
 
 
-# =========================================================
-# 🔐 SAFE CHECKS
-# =========================================================
 def is_active(user):
-    return isinstance(user, dict) and (
-        "monthly" in user.get("status", "") or "yearly" in user.get("status", "")
+    return (
+        isinstance(user, dict)
+        and "status" in user
+        and (
+            "monthly" in user.get("status", "")
+            or "yearly" in user.get("status", "")
+        )
     )
 
 
-def months_to_target(P, FV, r):
-    return np.log((FV * r / P) + 1) / np.log(1 + r) if r != 0 else FV / P
-
-
-def contribution_to_target(FV, n, r):
-    return FV * r / ((1 + r) ** n - 1) if r != 0 else FV / n
-
-
 # =========================================================
-# 📊 PAYMENT INFO
+# 💳 PAYMENT INFO
 # =========================================================
 PAYMENT_INFO = {
     "paybill": "542542",
@@ -75,10 +75,9 @@ PAYMENT_INFO = {
 }
 
 # =========================================================
-# 📊 DATA ENGINE
+# 📊 DATA ENGINE (SAFE LAZY LOAD)
 # =========================================================
 df = None
-
 
 def load_data():
     df_local = pd.DataFrame(columns=["Code", "Date", "Previous"])
@@ -123,15 +122,19 @@ ASSETS = [
 N = len(ASSETS)
 
 # =========================================================
-# 🧠 AI ENGINE
+# 🧠 AI ENGINE (RESTORED + SAFE)
 # =========================================================
 def ai_portfolio_advisor(weights, sim, assets):
     insights = []
+
     mean = np.mean(sim, axis=1)
     vol = np.std(sim, axis=1)
 
+    risk = float(np.mean(vol) * 100)
+    score = float(max(0, 100 - risk * 10))
+
     for i in range(len(weights)):
-        if weights[i] > 0.3:
+        if weights[i] > 0.30:
             insights.append(f"High allocation: {assets[i][0]}")
         if vol[i] > np.mean(vol):
             insights.append(f"High volatility: {assets[i][0]}")
@@ -140,20 +143,20 @@ def ai_portfolio_advisor(weights, sim, assets):
 
     return {
         "insights": insights,
-        "score": float(max(0, 100 - np.mean(vol) * 10)),
-        "risk": float(np.mean(vol) * 100)
+        "score": round(score, 2),
+        "risk": round(risk, 2)
     }
 
 
 # =========================================================
-# 📊 SIMULATION CORE
+# 📊 SIMULATION ENGINE (STABLE)
 # =========================================================
-def simulate(monthly, years, mode):
+def simulate(monthly, years, mode="normal"):
 
     R = np.random.randn(N, 300) * 0.01
     weights = np.ones(N) / N
 
-    months = years * 12
+    months = max(int(years * 12), 1)
     invested = monthly * months
 
     nav = invested
@@ -166,13 +169,11 @@ def simulate(monthly, years, mode):
         nav = nav * (1 + port_ret) + monthly
         curve.append(nav)
 
-    asset_investment = invested * weights
-
     return {
         "summary": {
             "invested": invested,
             "value": nav,
-            "dividends": float(np.sum(asset_investment) * 0.05)
+            "dividends": invested * 0.05
         },
         "curve": curve,
         "ai": ai_portfolio_advisor(weights, R, ASSETS)
@@ -183,6 +184,9 @@ def simulate(monthly, years, mode):
 # 📊 CHART
 # =========================================================
 def chart(curve):
+    if not curve:
+        return None
+
     fig, ax = plt.subplots()
     ax.plot(curve)
 
@@ -194,7 +198,7 @@ def chart(curve):
 
 
 # =========================================================
-# 🌐 ROUTE
+# 🌐 MAIN ROUTE (PRODUCTION SAFE)
 # =========================================================
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -204,7 +208,6 @@ def index():
     is_premium = False
     data = None
     normal = None
-    goal_result = None
 
     try:
 
@@ -212,8 +215,6 @@ def index():
 
             monthly = float(request.form.get("monthly") or 0)
             years = int(request.form.get("years") or 1)
-            target = float(request.form.get("target_amount") or 0)
-
             code = request.form.get("transaction_code", "").strip().upper()
             phone = request.form.get("phone", "").strip()
 
@@ -221,13 +222,6 @@ def index():
             for u in users:
                 if u.get("code") == code and is_active(u):
                     is_premium = True
-
-            # goal engine
-            if target > 0 and monthly > 0:
-                goal_result = {
-                    "mode": "time_to_goal",
-                    "years": round(months_to_target(monthly, target, 0.008) / 12, 2)
-                }
 
             # simulation
             normal = simulate(monthly, years, "normal")
@@ -245,12 +239,14 @@ def index():
                     "bear": None
                 }
 
-            # register user
+            # register user safely
             if code and not any(u.get("code") == code for u in users):
                 users.append({
                     "code": code,
                     "phone": phone,
-                    "status": "pending"
+                    "status": "pending",
+                    "plan": "",
+                    "expiry": ""
                 })
                 save_users(users)
 
@@ -258,21 +254,18 @@ def index():
             "index.html",
             data=data,
             chart_normal=chart(normal["curve"]) if normal else None,
-            chart_bull=chart(data["bull"]["curve"]) if is_premium and data and data.get("bull") else None,
-            chart_bear=chart(data["bear"]["curve"]) if is_premium and data and data.get("bear") else None,
+            chart_bull=chart(data["bull"]["curve"]) if is_premium and data and data["bull"] else None,
+            chart_bear=chart(data["bear"]["curve"]) if is_premium and data and data["bear"] else None,
             is_premium=is_premium,
-            payment=PAYMENT_INFO,
-            goal_result=goal_result
+            payment=PAYMENT_INFO
         )
 
     except Exception as e:
         return f"APP ERROR: {str(e)}"
 
 
-import os
-
 # =========================================================
-# RUN (RENDER SAFE)
+# 🚀 RENDER SAFE RUN
 # =========================================================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
