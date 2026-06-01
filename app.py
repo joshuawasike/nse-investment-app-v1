@@ -463,86 +463,82 @@ def index():
 
     if request.method == "POST":
 
-    monthly = float(request.form.get("monthly", 0))
-    years = int(request.form.get("years", 1))
-    target = float(request.form.get("target_amount", 0))
-    code = request.form.get("transaction_code", "").strip().upper()
-    phone = request.form.get("phone", "").strip()
+        monthly = float(request.form.get("monthly", 0))
+        years = int(request.form.get("years", 1))
+        target = float(request.form.get("target_amount", 0))
+        code = request.form.get("transaction_code", "").strip().upper()
+        phone = request.form.get("phone", "").strip()
 
-    is_premium = False
-    goal_result = None
-    r = 0.008  # monthly return assumption
+        is_premium = False
+        goal_result = None
+        r = 0.008
 
-    # -----------------------------
-    # PREMIUM CHECK
-    # -----------------------------
-    for u in users:
-        if u.get("code") == code and is_active(u):
-            is_premium = True
+        # PREMIUM CHECK
+        for u in users:
+            if u.get("code") == code and is_active(u):
+                is_premium = True
 
-    # -----------------------------
-    # GOAL PLANNER (FIXED)
-    # -----------------------------
-    if target > 0 and monthly > 0:
-        months_needed = months_to_target(monthly, target, r)
-        goal_result = {
-            "mode": "time_to_goal",
-            "years": round(months_needed / 12, 2)
-        }
+        # GOAL ENGINE
+        if target > 0 and monthly > 0:
+            months_needed = months_to_target(monthly, target, r)
+            goal_result = {
+                "mode": "time_to_goal",
+                "years": round(months_needed / 12, 2)
+            }
 
-    elif target > 0 and years > 0:
-        required_monthly = contribution_to_target(target, years * 12, r)
-        goal_result = {
-            "mode": "required_contribution",
-            "monthly": round(required_monthly, 2)
-        }
+        elif target > 0 and years > 0:
+            required_monthly = contribution_to_target(target, years * 12, r)
+            goal_result = {
+                "mode": "required_contribution",
+                "monthly": round(required_monthly, 2)
+            }
 
-    # -----------------------------
-    # CORE SIMULATION (UNCHANGED)
-    # -----------------------------
-    normal = simulate(monthly, years, "normal")
+        # SIMULATION
+        normal = simulate(monthly, years, "normal")
 
-    if not is_premium:
-        data = {"normal": normal, "bull": None, "bear": None}
-    else:
-        data = {
-            "normal": normal,
-            "bull": simulate(monthly, years, "bull"),
-            "bear": simulate(monthly, years, "bear")
-        }
+        if not is_premium:
+            data = {"normal": normal, "bull": None, "bear": None}
+        else:
+            data = {
+                "normal": normal,
+                "bull": simulate(monthly, years, "bull"),
+                "bear": simulate(monthly, years, "bear")
+            }
 
-    # -----------------------------
-    # USER REGISTRATION (UNCHANGED)
-    # -----------------------------
-    if code:
-        if not any(u.get("code") == code for u in users):
-            users.append({
-                "code": code,
-                "phone": phone,
-                "status": "pending",
-                "plan": "",
-                "expiry": "",
-                "type": "Individual",
-                "amount": 0,
-                "date": ""
-            })
-            save_users(users)
+        # USER REGISTRATION
+        if code:
+            if not any(u.get("code") == code for u in users):
+                users.append({
+                    "code": code,
+                    "phone": phone,
+                    "status": "pending",
+                    "plan": "",
+                    "expiry": "",
+                    "type": "Individual",
+                    "amount": 0,
+                    "date": ""
+                })
+                save_users(users)
 
-    # -----------------------------
-    # RESPONSE (UNCHANGED)
-    # -----------------------------
+        return render_template(
+            "index.html",
+            data=data,
+            chart_normal=chart(normal["curve"]),
+            chart_bull = chart(data["bull"]["curve"]) if is_premium and data["bull"] else None,
+            chart_bear = chart(data["bear"]["curve"]) if is_premium and data["bear"] else None,
+            is_premium=is_premium,
+            payment=PAYMENT_INFO,
+            goal_result=goal_result
+        )
+
+    # GET REQUEST
     return render_template(
         "index.html",
-        data=data,
-        chart_normal=chart(normal["curve"]),
-        chart_bull=chart(data["bull"]["curve"]) if is_premium else None,
-        chart_bear=chart(data["bear"]["curve"]) if is_premium else None,
-        is_premium=is_premium,
+        data=None,
+        is_premium=False,
         payment=PAYMENT_INFO,
-        goal_result=goal_result
+        goal_result=None
     )
-    return render_template("index.html", data=None, is_premium=False, payment=PAYMENT_INFO)
-
 
 # =========================================================
 # RUN
