@@ -537,20 +537,25 @@ def index():
                 "monthly": round(required_monthly, 2)
             }
 
-        # SIMULATION
-        try:
-            normal = simulate(monthly, years, "normal")
-        except Exception as e:
-            return f"SIMULATION ERROR: {str(e)}"
+# SIMULATION
+try:
+    normal = simulate(monthly, years, "normal")
 
-        if not is_premium:
-            data = {"normal": normal, "bull": None, "bear": None}
-        else:
-            data = {
-                "normal": normal,
-                "bull": simulate(monthly, years, "bull"),
-                "bear": simulate(monthly, years, "bear")
-            }
+    if not is_premium:
+        data = {
+            "normal": normal,
+            "bull": None,
+            "bear": None
+        }
+    else:
+        data = {
+            "normal": normal,
+            "bull": simulate(monthly, years, "bull"),
+            "bear": simulate(monthly, years, "bear")
+        }
+
+except Exception as e:
+    return f"SIMULATION ERROR: {str(e)}"
 
         # USER REGISTRATION
         if code:
@@ -566,26 +571,20 @@ def index():
                     "date": ""
                 })
                 save_users(users)
-   try:
-        return render_template(
-            "index.html",
-            data=data,
-            chart_normal=chart(normal["curve"]),
-            chart_bull=chart(data["bull"]["curve"]) if is_premium and data["bull"] else None,
-            chart_bear=chart(data["bear"]["curve"]) if is_premium and data["bear"] else None,
-            is_premium=is_premium,
-            payment=PAYMENT_INFO,
-            goal_result=goal_result
-        )
-except Exception as e:
+try:
     return render_template(
         "index.html",
-        data=None,
-        is_premium=False,
+        data=data,
+        chart_normal=chart(normal["curve"]) if normal and "curve" in normal else None,
+        chart_bull=chart(data["bull"]["curve"]) if is_premium and data.get("bull") else None,
+        chart_bear=chart(data["bear"]["curve"]) if is_premium and data.get("bear") else None,
+        is_premium=is_premium,
         payment=PAYMENT_INFO,
-        goal_result=None
+        goal_result=goal_result
     )
 
+except Exception as e:
+    return f"RENDER ERROR: {str(e)}"
    
 # =========================================================
 # RUN
