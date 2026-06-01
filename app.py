@@ -64,7 +64,6 @@ def is_active(user):
         )
     )
 
-
 # =========================================================
 # 💳 PAYMENT INFO
 # =========================================================
@@ -104,7 +103,6 @@ def get_df():
         df = load_data()
     return df
 
-
 # =========================================================
 # 📊 ASSETS
 # =========================================================
@@ -122,7 +120,7 @@ ASSETS = [
 N = len(ASSETS)
 
 # =========================================================
-# 🧠 AI ENGINE (RESTORED + SAFE)
+# 🧠 AI ENGINE
 # =========================================================
 def ai_portfolio_advisor(weights, sim, assets):
     insights = []
@@ -147,9 +145,8 @@ def ai_portfolio_advisor(weights, sim, assets):
         "risk": round(risk, 2)
     }
 
-
 # =========================================================
-# 📊 SIMULATION ENGINE (STABLE)
+# 📊 SIMULATION ENGINE
 # =========================================================
 def simulate(monthly, years, mode):
 
@@ -185,7 +182,6 @@ def simulate(monthly, years, mode):
             "dividends": float(np.sum(dividends))
         },
 
-        # ✅ RESTORED: IMPORTANT FOR UI TABLES
         "plan": [
             {
                 "name": ASSETS[i][0],
@@ -207,13 +203,13 @@ def simulate(monthly, years, mode):
         "curve": curve,
         "ai": ai_portfolio_advisor(weights, R, ASSETS)
     }
+
 # =========================================================
 # 📊 CHART
 # =========================================================
 def chart(curve):
     fig, ax = plt.subplots(figsize=(10, 5))
 
-    # DARK THEME (match UI)
     fig.patch.set_facecolor("#0b0f19")
     ax.set_facecolor("#0b0f19")
 
@@ -238,7 +234,30 @@ def chart(curve):
     return base64.b64encode(buf.read()).decode()
 
 # =========================================================
-# 🌐 MAIN ROUTE (PRODUCTION SAFE)
+# 🔐 LOGIN (FIXED - MISSING BEFORE)
+# =========================================================
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        if request.form.get("password") == ADMIN_PASSWORD:
+            session["admin"] = True
+            return redirect("/admin")
+        return "Wrong password"
+
+    return """
+    <form method="POST" style="padding:20px;">
+        <input name="password" type="password" placeholder="Admin Password">
+        <button type="submit">Login</button>
+    </form>
+    """
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/login")
+
+# =========================================================
+# 🌐 MAIN ROUTE
 # =========================================================
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -258,12 +277,10 @@ def index():
             code = request.form.get("transaction_code", "").strip().upper()
             phone = request.form.get("phone", "").strip()
 
-            # premium check
             for u in users:
                 if u.get("code") == code and is_active(u):
                     is_premium = True
 
-            # simulation
             normal = simulate(monthly, years, "normal")
 
             if is_premium:
@@ -279,7 +296,6 @@ def index():
                     "bear": None
                 }
 
-            # register user safely
             if code and not any(u.get("code") == code for u in users):
                 users.append({
                     "code": code,
@@ -303,9 +319,8 @@ def index():
     except Exception as e:
         return f"APP ERROR: {str(e)}"
 
-
 # =========================================================
-# 🚀 RENDER SAFE RUN
+# 🚀 ADMIN ROUTE
 # =========================================================
 @app.route("/admin")
 def admin():
@@ -313,8 +328,11 @@ def admin():
         return redirect("/login")
 
     users = load_users()
-
     return render_template("admin.html", users=users)
+
+# =========================================================
+# RUN (RENDER SAFE)
+# =========================================================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
