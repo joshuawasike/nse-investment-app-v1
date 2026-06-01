@@ -151,8 +151,18 @@ function searchUsers(){
     let input =
         document.getElementById("search").value.toLowerCase();
 
-    let rows =
-        document.querySelectorAll("tbody tr");
+    let timeout;
+function searchUsers(){
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+        let input = document.getElementById("search").value.toLowerCase();
+        let rows = document.querySelectorAll("tbody tr");
+
+        rows.forEach(row => {
+            row.style.display = row.innerText.toLowerCase().includes(input) ? "" : "none";
+        });
+    }, 150);
+}
 
     rows.forEach(row=>{
 
@@ -250,6 +260,21 @@ onkeyup="searchUsers()">
 <tbody>
 
 {% for u in users %}
+<tr>
+    <td>{{ u["code"] }}</td>
+    <td>{{ u["phone"] }}</td>
+    <td>{{ u.get("type", "Individual") }}</td>
+    <td>{{ u["status"] }}</td>
+    <td>{{ u.get("plan", "-") }}</td>
+    <td>Actions...</td>
+</tr>
+{% else %}
+<tr>
+    <td colspan="6" style="text-align:center; padding:20px;">
+        No users found
+    </td>
+</tr>
+{% endfor %}
 
 <tr>
 
@@ -261,16 +286,16 @@ onkeyup="searchUsers()">
 
 <td>
 
-{% if "monthly" in u["status"] %}
+{% if "monthly" in u.get["status"] %}
     <span class="status-approved">✔ Monthly</span>
 
-{% elif "yearly" in u["status"] %}
+{% elif "yearly" in u.get["status"] %}
     <span class="status-approved">✔ Yearly</span>
 
-{% elif u["status"] == "expired" %}
+{% elif u.get["status"] == "expired" %}
     <span class="status-expired">⌛ Expired</span>
 
-{% elif u["status"] == "rejected" %}
+{% elif u.get["status"] == "rejected" %}
     <span class="status-rejected">✖ Rejected</span>
 
 {% else %}
@@ -283,11 +308,7 @@ onkeyup="searchUsers()">
 
 <td>
 
-<a href="/approve/{{ u['code'] }}/monthly">
-<button class="monthly">
-Monthly
-</button>
-</a>
+<a class="monthly" href="/approve/{{ u['code'] }}/monthly">Monthly</a>
 
 <a href="/approve/{{ u['code'] }}/yearly">
 <button class="yearly">
