@@ -212,58 +212,59 @@ Logout
 
 </div>
 
-<!-- DASHBOARD -->
+<!-- DASHBOARD (SAFE FALLBACKS) -->
 
 <div class="dashboard">
 
 <div class="stat-card">
 <div class="stat-title">Total Users</div>
-<div class="stat-number">{{ total_users }}</div>
+<div class="stat-number">{{ total_users or 0 }}</div>
 </div>
 
 <div class="stat-card">
 <div class="stat-title">Pending</div>
-<div class="stat-number">{{ pending_users }}</div>
+<div class="stat-number">{{ pending_users or 0 }}</div>
 </div>
 
 <div class="stat-card">
 <div class="stat-title">Approved Monthly</div>
-<div class="stat-number">{{ approved_monthly }}</div>
+<div class="stat-number">{{ approved_monthly or 0 }}</div>
 </div>
 
 <div class="stat-card">
 <div class="stat-title">Approved Yearly</div>
-<div class="stat-number">{{ approved_yearly }}</div>
+<div class="stat-number">{{ approved_yearly or 0 }}</div>
 </div>
 
 <div class="stat-card">
 <div class="stat-title">Rejected</div>
-<div class="stat-number">{{ rejected_users }}</div>
+<div class="stat-number">{{ rejected_users or 0 }}</div>
 </div>
 
 <div class="stat-card">
 <div class="stat-title">Monthly Revenue</div>
 <div class="stat-number">
-KES {{ "{:,.0f}".format(monthly_revenue) }}
+KES {{ "{:,.0f}".format(monthly_revenue or 0) }}
 </div>
 </div>
 
 <div class="stat-card">
 <div class="stat-title">Yearly Revenue</div>
 <div class="stat-number">
-KES {{ "{:,.0f}".format(yearly_revenue) }}
+KES {{ "{:,.0f}".format(yearly_revenue or 0) }}
 </div>
 </div>
 
 <div class="stat-card">
 <div class="stat-title">Total Revenue</div>
 <div class="stat-number">
-KES {{ "{:,.0f}".format(total_revenue) }}
+KES {{ "{:,.0f}".format(total_revenue or 0) }}
 </div>
 </div>
 
 </div>
 
+<!-- TABLE -->
 <div class="card">
 
 <div class="search-box">
