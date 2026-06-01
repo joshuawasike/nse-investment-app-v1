@@ -459,6 +459,7 @@ def index():
     users = load_users()
     is_premium = False
     data = None
+    goal_result = None
 
     if request.method == "POST":
 
