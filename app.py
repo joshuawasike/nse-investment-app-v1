@@ -509,9 +509,9 @@ def index():
 
     if request.method == "POST":
 
-        monthly = float(request.form.get("monthly", 0))
-        years = int(request.form.get("years", 1))
-        target = float(request.form.get("target_amount", 0))
+        monthly = float(request.form.get("monthly") or 0)
+        years = int(request.form.get("years") or 1)
+        target = float(request.form.get("target_amount") or 0)
         code = request.form.get("transaction_code", "").strip().upper()
         phone = request.form.get("phone", "").strip()
 
@@ -538,7 +538,10 @@ def index():
             }
 
         # SIMULATION
-        normal = simulate(monthly, years, "normal")
+        try:
+            normal = simulate(monthly, years, "normal")
+        except Exception as e:
+            return f"SIMULATION ERROR: {str(e)}"
 
         if not is_premium:
             data = {"normal": normal, "bull": None, "bear": None}
@@ -563,7 +566,7 @@ def index():
                     "date": ""
                 })
                 save_users(users)
-
+   try:
         return render_template(
             "index.html",
             data=data,
@@ -574,7 +577,7 @@ def index():
             payment=PAYMENT_INFO,
             goal_result=goal_result
         )
-
+except Exception as e:
     return render_template(
         "index.html",
         data=None,
