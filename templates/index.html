@@ -11,6 +11,16 @@ body {
     margin: 0;
 }
 
+.ai-box {
+    background: #0f172a;
+    padding: 12px;
+    border-radius: 10px;
+    margin-top: 10px;
+    border-left: 4px solid #60a5fa;
+    color: #e5e7eb;
+}
+</style>
+
 .container {
     max-width: 1100px;
     margin: auto;
@@ -257,10 +267,42 @@ KES 18,000 / year
 <!-- NORMAL (ALWAYS FULL) -->
 <div class="card">
 <h3>📊 NORMAL SCENARIO</h3>
+<div class="ai-box">
+    <h4>🤖 AI Portfolio Advisor</h4>
+
+    {% if data %}
+        <p>
+            {% if data.normal.summary.value > data.normal.summary.invested %}
+                📈 AI Insight: Your portfolio is in a healthy growth phase. Consider maintaining your allocation and increasing monthly contributions gradually.
+            {% else %}
+                ⚠️ AI Insight: Portfolio growth is below expectation. Consider reducing exposure to low-performing assets and increasing diversification.
+            {% endif %}
+        </p>
+
+        <p>
+            💡 Recommendation: Maintain long-term horizon strategy (5–10 years) for optimal compounding under NSE simulation conditions.
+        </p>
+    {% else %}
+        <p>Run the engine to get AI insights.</p>
+    {% endif %}
+</div>
 
 <p>💰 Invested: {{ data.normal.summary.invested }}</p>
 <p>💵 Dividends: {{ data.normal.summary.dividends }}</p>
 <p>📊 Value: {{ data.normal.summary.value }}</p>
+    <!-- 🧠 AI INSIGHT BLOCK -->
+<div class="ai-box">
+    <h4>🧠 AI Portfolio Insight</h4>
+
+    <p><b>AI Score:</b> {{ data.normal.ai.score }}/100</p>
+    <p><b>Risk Level:</b> {{ data.normal.ai.risk }}</p>
+
+    <ul>
+        {% for item in data.normal.ai.insights %}
+            <li>{{ item }}</li>
+        {% endfor %}
+    </ul>
+</div>
 
 <!-- 🎯 GOAL PLANNER (PLACE HERE) -->
 <div class="goal-box">
