@@ -194,6 +194,7 @@ img {
 
 <form method="POST" class="form-box">
 
+<input type="number" name="target_amount" placeholder="Target Amount (KES)">
 <input name="monthly" placeholder="Monthly Investment (KES)" required>
 <input name="years" placeholder="Years" required>
 
@@ -258,6 +259,17 @@ KES 18,000 / year
 <p>💰 Invested: {{ data.normal.summary.invested }}</p>
 <p>💵 Dividends: {{ data.normal.summary.dividends }}</p>
 <p>📊 Value: {{ data.normal.summary.value }}</p>
+
+<!-- 🎯 GOAL PLANNER (PLACE HERE) -->
+<div class="goal-box">
+    {% if goal_result %}
+        {% if goal_result.mode == "time_to_goal" %}
+            <strong>🎯 Goal Timeline:</strong> {{ goal_result.years }} years
+        {% else %}
+            <strong>🎯 Monthly Target:</strong> KES {{ goal_result.monthly }}
+        {% endif %}
+    {% endif %}
+</div>
 
 <h4 class="section-title">💰 Investment Plan</h4>
 <table>
