@@ -97,6 +97,21 @@ ASSETS = [
 ]
 
 N = len(ASSETS)
+# =========================================================
+# 🎯 GOAL PLANNING ENGINE (NEW FEATURE)
+# =========================================================
+
+def months_to_target(P, FV, r):
+    if r == 0:
+        return FV / P
+    n = np.log((FV * r / P) + 1) / np.log(1 + r)
+    return n
+
+
+def contribution_to_target(FV, n, r):
+    if r == 0:
+        return FV / n
+    return FV * r / ((1 + r) ** n - 1)
 
 # =========================================================
 # ENGINE
@@ -449,6 +464,7 @@ def index():
 
         monthly = float(request.form.get("monthly", 0))
         years = int(request.form.get("years", 1))
+        target = float(request.form.get("target_amount", 0))
         code = request.form.get("transaction_code", "").strip().upper()
         phone = request.form.get("phone", "").strip()
 
@@ -456,7 +472,25 @@ def index():
             if u.get("code") == code and is_active(u):
                 is_premium = True
 
-        normal = simulate(monthly, years, "normal")
+        r = 0.008  # assume 0.8% monthly return baseline (you can later link to model)
+
+goal_result = None
+
+if target > 0 and monthly > 0:
+    months_needed = months_to_target(monthly, target, r)
+    goal_result = {
+        "mode": "time_to_goal",
+        "years": round(months_needed / 12, 2)
+    }
+
+elif target > 0 and years > 0:
+    required_monthly = contribution_to_target(target, years * 12, r)
+    goal_result = {
+        "mode": "required_contribution",
+        "monthly": round(required_monthly, 2)
+    }
+
+normal = simulate(monthly, years, "normal")
 
         if not is_premium:
             data = {"normal": normal, "bull": None, "bear": None}
@@ -482,14 +516,15 @@ def index():
                 save_users(users)
 
         return render_template(
-            "index.html",
-            data=data,
-            chart_normal=chart(normal["curve"]),
-            chart_bull=chart(data["bull"]["curve"]) if is_premium else None,
-            chart_bear=chart(data["bear"]["curve"]) if is_premium else None,
-            is_premium=is_premium,
-            payment=PAYMENT_INFO
-        )
+    "index.html",
+    data=data,
+    chart_normal=chart(normal["curve"]),
+    chart_bull=chart(data["bull"]["curve"]) if is_premium else None,
+    chart_bear=chart(data["bear"]["curve"]) if is_premium else None,
+    is_premium=is_premium,
+    payment=PAYMENT_INFO,
+    goal_result=goal_result
+)
 
     return render_template("index.html", data=None, is_premium=False, payment=PAYMENT_INFO)
 
