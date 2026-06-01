@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Jobura NSE Capital Terminal</title>
+<title>Jobura NSE Capital Terminal V3</title>
 
 <style>
 body {
@@ -11,22 +11,13 @@ body {
     margin: 0;
 }
 
-.ai-box {
-    background: #0f172a;
-    padding: 12px;
-    border-radius: 10px;
-    margin-top: 10px;
-    border-left: 4px solid #60a5fa;
-    color: #e5e7eb;
-}
-
-
 .container {
     max-width: 1100px;
     margin: auto;
     padding: 20px;
 }
 
+/* TOP BAR */
 .topbar {
     display: flex;
     justify-content: flex-end;
@@ -37,53 +28,14 @@ body {
 .topbar a {
     text-decoration: none;
     font-weight: bold;
-}
-
-h2 { color: #60a5fa; }
-h3 { color: #93c5fd; }
-
-.section-title {
-    margin-top: 20px;
-    margin-bottom: 10px;
     color: #60a5fa;
 }
 
-/* TABLE FIX */
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-    font-family: monospace;
-    background: #0f172a;
-    border-radius: 8px;
-    overflow: hidden;
-}
-
-th {
-    background: #111827;
-    color: #93c5fd;
-    text-align: left;
-    padding: 10px;
-}
-
-td {
-    padding: 10px;
-    border-bottom: 1px solid #1f2937;
-}
-
-/* CARD */
-.card {
-    background: #111827;
-    padding: 20px;
-    margin-top: 20px;
-    border-radius: 12px;
-}
-
+/* INFO */
 .info-box {
     background: #0f172a;
     padding: 15px;
     border-radius: 10px;
-    margin-bottom: 15px;
     border: 1px solid #1e293b;
 }
 
@@ -91,9 +43,9 @@ td {
     background: #052e16;
     padding: 15px;
     border-radius: 10px;
-    margin-bottom: 20px;
     border: 1px solid #065f46;
     color: #bbf7d0;
+    margin-top: 10px;
 }
 
 /* FORM */
@@ -118,6 +70,47 @@ button {
     font-weight: bold;
 }
 
+/* CARDS */
+.card {
+    background: #111827;
+    padding: 20px;
+    margin-top: 20px;
+    border-radius: 12px;
+    border: 1px solid #1f2937;
+}
+
+/* TABLE */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-family: monospace;
+    background: #0f172a;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+th {
+    background: #111827;
+    color: #93c5fd;
+    text-align: left;
+    padding: 10px;
+}
+
+td {
+    padding: 10px;
+    border-bottom: 1px solid #1f2937;
+}
+
+/* AI BOX */
+.ai-box {
+    background: #0f172a;
+    padding: 12px;
+    border-radius: 10px;
+    margin-top: 10px;
+    border-left: 4px solid #60a5fa;
+}
+
 /* LOCK */
 .locked {
     background: #1f2937;
@@ -136,31 +129,17 @@ button {
     border: 1px solid #374151;
 }
 
-/* PRICING */
-.pricing-box {
-    background: #0f172a;
-    padding: 15px;
-    border-radius: 10px;
-    margin-top: 15px;
-    border: 1px solid #1e293b;
-}
-
-.pricing-box h4 {
-    color: #60a5fa;
-    margin-bottom: 10px;
-}
-
 .pricing-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 10px;
-    font-size: 14px;
 }
 
 .pricing-item {
-    background: #111827;
+    background: #0f172a;
     padding: 10px;
     border-radius: 8px;
+    border: 1px solid #1e293b;
 }
 
 img {
@@ -168,7 +147,6 @@ img {
     margin-top: 10px;
     border-radius: 10px;
 }
-   
 </style>
 </head>
 
@@ -176,37 +154,37 @@ img {
 
 <div class="container">
 
+<!-- TOP BAR -->
 <div class="topbar">
-    <a href="/login" style="color:#60a5fa;">Admin Login</a>
+    <a href="/login">Admin Login</a>
 
-    {% if session.admin %}
+    {% if session.get('admin') %}
         <a href="/admin" style="color:#22c55e;">Dashboard</a>
         <a href="/logout" style="color:#ef4444;">Logout</a>
     {% endif %}
 </div>
 
+<!-- INFO -->
 <div class="info-box">
-<h3>📊 Jobura NSE Capital Terminal</h3>
+<h3>📊 Jobura NSE Capital Terminal V3</h3>
 
-✔ Portfolio construction & optimization engine<br>
-✔ Scenario-based Monte Carlo forecasting (Bull / Normal / Bear)<br>
-✔ NSE risk-adjusted investment optimizer<br>
-✔ Goal-based financial planning<br>
-✔ Dividend income simulation engine<br>
-✔ Subscription-based premium analytics system<br>
-✔ Portfolio growth projection (NAV curve)<br>
-✔ Multi-asset allocation engine
+✔ Portfolio optimization engine<br>
+✔ Bull / Bear / Normal simulation<br>
+✔ Dividend income projection<br>
+✔ AI portfolio advisor<br>
+✔ Goal-based investing system<br>
 </div>
 
 <div class="guide-box">
-<b>🚀 How to Use Free Mode</b><br><br>
-✔ Enter Monthly Investment<br>
-✔ Enter Years<br>
-✔ Click Run Engine<br><br>
-➡ Normal Scenario (FREE)<br>
-🔒 Bull & Bear (Premium)
+<b>How to Use</b><br><br>
+✔ Enter monthly investment<br>
+✔ Enter years<br>
+✔ Click run engine<br><br>
+➡ Free: Normal only<br>
+🔒 Premium: Bull + Bear + AI depth
 </div>
 
+<!-- FORM -->
 <form method="POST" class="form-box">
 
 <input type="number" name="target_amount" placeholder="Target Amount (KES)">
@@ -219,118 +197,101 @@ img {
 <option value="aggressive">Aggressive</option>
 </select>
 
-<input name="transaction_code" placeholder="PayBill Transaction Code">
-<input name="phone" placeholder="M-Pesa Phone">
+<input name="transaction_code" placeholder="Transaction Code">
+<input name="phone" placeholder="Phone">
 
 <button type="submit">🚀 Run Engine</button>
-
 </form>
 
 <!-- PAYMENT -->
 <div class="payment-box">
-<h3>💳 Payment Access (PayBill)</h3>
+<h3>💳 Payment</h3>
 
 <b>PayBill:</b> {{ payment.paybill }}<br>
 <b>Account:</b> {{ payment.account_number }}<br>
 <b>Name:</b> {{ payment.account_name }}
 
-<div class="pricing-box">
-<h4>💰 Pricing Plans</h4>
-
 <div class="pricing-grid">
 <div class="pricing-item">
 <b>Individual</b><br>
-KES 400 / month<br>
-KES 4,000 / year
+KES 400/month<br>
+KES 4,000/year
 </div>
 
 <div class="pricing-item">
 <b>Institutional</b><br>
-KES 2,000 / month<br>
-KES 18,000 / year
+KES 2,000/month<br>
+KES 18,000/year
 </div>
 </div>
-
-</div>
-
 </div>
 
 <hr>
 
 {% if not is_premium %}
-<div class="locked">
-🔒 FREE VERSION — Only Normal Scenario Visible
-</div>
+<div class="locked">🔒 FREE VERSION ACTIVE (Normal Only)</div>
 {% else %}
 <h3 style="color:gold;">✅ PREMIUM ACTIVE</h3>
 {% endif %}
 
-{% if data %}
+<!-- ================= NORMAL ================= -->
+{% if data and data.normal %}
 
-<!-- NORMAL (ALWAYS FULL) -->
 <div class="card">
 <h3>📊 NORMAL SCENARIO</h3>
+
 <div class="ai-box">
-    <h4>🤖 AI Portfolio Advisor</h4>
+    <h4>AI Insight</h4>
 
-    {% if data %}
-        <p>
-            {% if data.normal.summary.value > data.normal.summary.invested %}
-                📈 AI Insight: Your portfolio is in a healthy growth phase. Consider maintaining your allocation and increasing monthly contributions gradually.
-            {% else %}
-                ⚠️ AI Insight: Portfolio growth is below expectation. Consider reducing exposure to low-performing assets and increasing diversification.
-            {% endif %}
-        </p>
-
-        <p>
-            💡 Recommendation: Maintain long-term horizon strategy (5–10 years) for optimal compounding under NSE simulation conditions.
-        </p>
+    {% if data.normal.summary.value > data.normal.summary.invested %}
+        📈 Growth is positive — maintain strategy.
     {% else %}
-        <p>Run the engine to get AI insights.</p>
+        ⚠️ Slow growth — diversify portfolio.
     {% endif %}
 </div>
 
 <p>💰 Invested: {{ data.normal.summary.invested }}</p>
 <p>💵 Dividends: {{ data.normal.summary.dividends }}</p>
 <p>📊 Value: {{ data.normal.summary.value }}</p>
-    <!-- 🧠 AI INSIGHT BLOCK -->
-<div class="ai-box">
-    <h4>🧠 AI Portfolio Insight</h4>
 
-    <p><b>AI Score:</b> {{ data.normal.ai.score }}/100</p>
-    <p><b>Risk Level:</b> {{ data.normal.ai.risk }}</p>
+{% if data.normal.ai %}
+<div class="ai-box">
+    <b>Score:</b> {{ data.normal.ai.score }} / 100<br>
+    <b>Risk:</b> {{ data.normal.ai.risk }}
 
     <ul>
-        {% for item in data.normal.ai.insights %}
-            <li>{{ item }}</li>
-        {% endfor %}
+    {% for i in data.normal.ai.insights %}
+        <li>{{ i }}</li>
+    {% endfor %}
     </ul>
 </div>
+{% endif %}
 
-<!-- 🎯 GOAL PLANNER (PLACE HERE) -->
-<div class="goal-box">
-    {% if goal_result %}
-        {% if goal_result.mode == "time_to_goal" %}
-            <strong>🎯 Goal Timeline:</strong> {{ goal_result.years }} years
-        {% else %}
-            <strong>🎯 Monthly Target:</strong> KES {{ goal_result.monthly }}
-        {% endif %}
+<!-- GOAL SAFE -->
+{% if goal_result %}
+<div class="ai-box">
+    <b>🎯 Goal:</b>
+    {% if goal_result.mode == "time_to_goal" %}
+        {{ goal_result.years }} years
+    {% else %}
+        KES {{ goal_result.monthly }}
     {% endif %}
 </div>
+{% endif %}
 
-<h4 class="section-title">💰 Investment Plan</h4>
+<h4>Investment Plan</h4>
 <table>
 <tr><th>Asset</th><th>%</th><th>KES</th></tr>
-{% for c in data.normal.plan %}
+{% for p in data.normal.plan %}
 <tr>
-<td>{{ c.name }}</td>
-<td>{{ c.percent }}%</td>
-<td>{{ c.kes }}</td>
+<td>{{ p.name }}</td>
+<td>{{ p.percent }}</td>
+<td>{{ p.kes }}</td>
 </tr>
 {% endfor %}
 </table>
 
-<h4 class="section-title">📊 Returns</h4>
+<h4>Returns</h4>
 <table>
 <tr><th>Asset</th><th>Dividends</th><th>Value</th></tr>
 {% for r in data.normal.returns %}
@@ -345,78 +306,25 @@ KES 18,000 / year
 <img src="data:image/png;base64,{{ chart_normal }}">
 </div>
 
+{% endif %}
+
+<!-- ================= PREMIUM ================= -->
 {% if is_premium %}
 
-<!-- BULL -->
+{% if data.bull %}
 <div class="card">
-<h3>📈 BULL SCENARIO</h3>
-
-<p>💰 Invested: {{ data.bull.summary.invested }}</p>
-<p>💵 Dividends: {{ data.bull.summary.dividends }}</p>
-<p>📊 Value: {{ data.bull.summary.value }}</p>
-
-<h4 class="section-title">💰 Investment Plan</h4>
-<table>
-<tr><th>Asset</th><th>%</th><th>KES</th></tr>
-{% for c in data.bull.plan %}
-<tr>
-<td>{{ c.name }}</td>
-<td>{{ c.percent }}%</td>
-<td>{{ c.kes }}</td>
-</tr>
-{% endfor %}
-</table>
-
-<h4 class="section-title">📊 Returns</h4>
-<table>
-<tr><th>Asset</th><th>Dividends</th><th>Value</th></tr>
-{% for r in data.bull.returns %}
-<tr>
-<td>{{ r.name }}</td>
-<td>{{ r.dividends }}</td>
-<td>{{ r.value }}</td>
-</tr>
-{% endfor %}
-</table>
-
+<h3>📈 BULL</h3>
+<p>Value: {{ data.bull.summary.value }}</p>
 <img src="data:image/png;base64,{{ chart_bull }}">
 </div>
+{% endif %}
 
-<!-- BEAR -->
+{% if data.bear %}
 <div class="card">
-<h3>📉 BEAR SCENARIO</h3>
-
-<p>💰 Invested: {{ data.bear.summary.invested }}</p>
-<p>💵 Dividends: {{ data.bear.summary.dividends }}</p>
-<p>📊 Value: {{ data.bear.summary.value }}</p>
-
-<h4 class="section-title">💰 Investment Plan</h4>
-<table>
-<tr><th>Asset</th><th>%</th><th>KES</th></tr>
-{% for c in data.bear.plan %}
-<tr>
-<td>{{ c.name }}</td>
-<td>{{ c.percent }}%</td>
-<td>{{ c.kes }}</td>
-</tr>
-{% endfor %}
-</table>
-
-<h4 class="section-title">📊 Returns</h4>
-<table>
-<tr><th>Asset</th><th>Dividends</th><th>Value</th></tr>
-{% for r in data.bear.returns %}
-<tr>
-<td>{{ r.name }}</td>
-<td>{{ r.dividends }}</td>
-<td>{{ r.value }}</td>
-</tr>
-{% endfor %}
-</table>
-
+<h3>📉 BEAR</h3>
+<p>Value: {{ data.bear.summary.value }}</p>
 <img src="data:image/png;base64,{{ chart_bear }}">
 </div>
-
 {% endif %}
 
 {% endif %}
