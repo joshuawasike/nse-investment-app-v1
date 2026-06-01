@@ -151,12 +151,12 @@ def ai_portfolio_advisor(weights, sim, assets):
 # =========================================================
 # 📊 SIMULATION ENGINE (STABLE)
 # =========================================================
-def simulate(monthly, years, mode="normal"):
+def simulate(monthly, years, mode):
 
     R = np.random.randn(N, 300) * 0.01
     weights = np.ones(N) / N
 
-    months = max(int(years * 12), 1)
+    months = years * 12
     invested = monthly * months
 
     nav = invested
@@ -169,33 +169,73 @@ def simulate(monthly, years, mode="normal"):
         nav = nav * (1 + port_ret) + monthly
         curve.append(nav)
 
+    asset_investment = invested * weights
+
+    yields = np.array([a[2] for a in ASSETS])
+    dividends = asset_investment * yields
+
+    asset_values = asset_investment * (1 + np.array(
+        [0.08,0.07,0.075,0.06,0.055,0.065,0.05,0.0]
+    )) ** years
+
     return {
         "summary": {
             "invested": invested,
             "value": nav,
-            "dividends": invested * 0.05
+            "dividends": float(np.sum(dividends))
         },
+
+        # ✅ RESTORED: IMPORTANT FOR UI TABLES
+        "plan": [
+            {
+                "name": ASSETS[i][0],
+                "percent": round(weights[i] * 100, 2),
+                "kes": round(asset_investment[i], 2)
+            }
+            for i in range(N)
+        ],
+
+        "returns": [
+            {
+                "name": ASSETS[i][0],
+                "dividends": round(dividends[i], 2),
+                "value": round(asset_values[i], 2)
+            }
+            for i in range(N)
+        ],
+
         "curve": curve,
         "ai": ai_portfolio_advisor(weights, R, ASSETS)
     }
-
-
 # =========================================================
 # 📊 CHART
 # =========================================================
 def chart(curve):
-    if not curve:
-        return None
+    fig, ax = plt.subplots(figsize=(10, 5))
 
-    fig, ax = plt.subplots()
-    ax.plot(curve)
+    # DARK THEME (match UI)
+    fig.patch.set_facecolor("#0b0f19")
+    ax.set_facecolor("#0b0f19")
+
+    x = np.arange(len(curve))
+    y = np.array(curve)
+
+    ax.plot(x, y, color="#60a5fa", linewidth=2)
+    ax.fill_between(x, y, color="#60a5fa", alpha=0.15)
+
+    ax.tick_params(colors="white")
+    ax.spines["bottom"].set_color("#334155")
+    ax.spines["left"].set_color("#334155")
+    ax.spines["top"].set_color("#0b0f19")
+    ax.spines["right"].set_color("#0b0f19")
 
     buf = io.BytesIO()
-    fig.savefig(buf, format="png")
+    fig.savefig(buf, format="png", bbox_inches="tight", dpi=120)
     buf.seek(0)
 
-    return base64.b64encode(buf.read()).decode()
+    plt.close(fig)
 
+    return base64.b64encode(buf.read()).decode()
 
 # =========================================================
 # 🌐 MAIN ROUTE (PRODUCTION SAFE)
@@ -267,6 +307,14 @@ def index():
 # =========================================================
 # 🚀 RENDER SAFE RUN
 # =========================================================
+@app.route("/admin")
+def admin():
+    if not session.get("admin"):
+        return redirect("/login")
+
+    users = load_users()
+
+    return render_template("admin.html", users=users)
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
