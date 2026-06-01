@@ -65,22 +65,26 @@ PAYMENT_INFO = {
 # =========================================================
 # 📊 DATA ENGINE
 # =========================================================
-df = pd.DataFrame(columns=["Code", "Date", "Previous"])
-files = glob.glob("data/nse_csv/*.csv")
+def load_data():
+    df = pd.DataFrame(columns=["Code", "Date", "Previous"])
+    files = glob.glob("data/nse_csv/*.csv")
 
-for file in files:
-    try:
-        temp = pd.read_csv(file, usecols=["Code", "Date", "Previous"])
-        df = pd.concat([df, temp], ignore_index=True)
-    except Exception as e:
-        print(f"Skipping {file}: {e}")
-        continue
+    for file in files:
+        try:
+            temp = pd.read_csv(file, usecols=["Code", "Date", "Previous"])
+            df = pd.concat([df, temp], ignore_index=True)
+        except Exception as e:
+            print(f"Skipping {file}: {e}")
+            continue
 
-if not df.empty:
-    df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
-    df["Previous"] = pd.to_numeric(df["Previous"], errors="coerce")
-    df = df.dropna()
-    df = df.sort_values(["Code", "Date"])
+    if not df.empty:
+        df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
+        df["Previous"] = pd.to_numeric(df["Previous"], errors="coerce")
+        df = df.dropna()
+        df = df.sort_values(["Code", "Date"])
+
+    return df
+    df = load_data()
 
 # =========================================================
 # 📊 ASSETS
@@ -264,7 +268,7 @@ def simulate(monthly, years, mode):
 # =========================================================
 # 🧠 AI PORTFOLIO ADVISOR ENGINE (V2)
 # =========================================================
-   def ai_portfolio_advisor(weights, sim, assets):
+def ai_portfolio_advisor(weights, sim, assets):
     insights = []
 
     mean = np.mean(sim, axis=1)
@@ -294,7 +298,27 @@ def simulate(monthly, years, mode):
         "score": round(score, 1),
         "risk": round(risk_score, 2)
     }
+# =========================================================
+# 📊 CHART FUNCTION
+# =========================================================
+def chart(curve):
+    fig, ax = plt.subplots(figsize=(10,5))
+    fig.patch.set_facecolor("#0b0f19")
+    ax.set_facecolor("#0b0f19")
 
+    x = np.arange(len(curve))
+    y = np.array(curve)
+
+    ax.plot(x, y, color="#60a5fa", linewidth=2)
+    ax.fill_between(x, y, color="#60a5fa", alpha=0.15)
+
+    buf = io.BytesIO()
+    fig.savefig(buf, format="png", bbox_inches="tight", dpi=120)
+    buf.seek(0)
+
+    img = base64.b64encode(buf.read()).decode()
+    plt.close(fig)
+    return img
 # =========================================================
 # 🔐 ADMIN ROUTES
 # =========================================================
