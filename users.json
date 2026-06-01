@@ -1,9 +1,10 @@
-[
-  {
-    "code": "ABC123",
-    "phone": "0712345678",
-    "status": "approved_yearly",
-    "plan": "Yearly",
-    "expiry": "ACTIVE"
-  }
-]
+{
+  "code":"ABC123",
+  "phone":"0712345678",
+  "type":"Individual",
+  "status":"individual_yearly",
+  "plan":"Yearly",
+  "amount":4000,
+  "date":"2026-06-01",
+  "expiry":"ACTIVE"
+}
