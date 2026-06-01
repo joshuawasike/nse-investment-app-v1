@@ -511,17 +511,16 @@ def index():
     data = None
     goal_result = None
 
-    if request.method == "POST":
+if request.method == "POST":
+    monthly = float(request.form.get("monthly", 0))
+    years = int(request.form.get("years", 1))
+    target = float(request.form.get("target_amount", 0))
+    code = request.form.get("transaction_code", "").strip().upper()
+    phone = request.form.get("phone", "").strip()
 
-        monthly = float(request.form.get("monthly", 0))
-        years = int(request.form.get("years", 1))
-        target = float(request.form.get("target_amount", 0))
-        code = request.form.get("transaction_code", "").strip().upper()
-        phone = request.form.get("phone", "").strip()
-
-        is_premium = False
-        goal_result = None
-        r = 0.008
+    is_premium = False
+    goal_result = None
+    r = 0.008
 
         # PREMIUM CHECK
         for u in users:
