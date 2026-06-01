@@ -557,20 +557,24 @@ try:
 except Exception as e:
     return f"SIMULATION ERROR: {str(e)}"
 
-        # USER REGISTRATION
-        if code:
-            if not any(u.get("code") == code for u in users):
-                users.append({
-                    "code": code,
-                    "phone": phone,
-                    "status": "pending",
-                    "plan": "",
-                    "expiry": "",
-                    "type": "Individual",
-                    "amount": 0,
-                    "date": ""
-                })
-                save_users(users)
+
+# USER REGISTRATION
+if code:
+    if not any(u.get("code") == code for u in users):
+        users.append({
+            "code": code,
+            "phone": phone,
+            "status": "pending",
+            "plan": "",
+            "expiry": "",
+            "type": "Individual",
+            "amount": 0,
+            "date": ""
+        })
+        save_users(users)
+
+
+# RENDER
 try:
     return render_template(
         "index.html",
