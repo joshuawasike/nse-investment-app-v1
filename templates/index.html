@@ -237,36 +237,9 @@ KES 18,000/year
 {% if data and data.normal %}
 
 <div class="card">
+
 <h3>📊 NORMAL SCENARIO</h3>
 
-{% if goal_result %}
-
-<div class="ai-box">
-<h4>🎯 Goal Planner</h4>
-
-<p>
-Years Needed:
-<b>{{ goal_result.years_needed }}</b>
-</p>
-
-<p>
-Reach target in 5 Years:
-<b>KES {{ "{:,.0f}".format(goal_result.monthly_5) }}</b>/month
-</p>
-
-<p>
-Reach target in 10 Years:
-<b>KES {{ "{:,.0f}".format(goal_result.monthly_10) }}</b>/month
-</p>
-
-<p>
-Reach target in 15 Years:
-<b>KES {{ "{:,.0f}".format(goal_result.monthly_15) }}</b>/month
-</p>
-
-</div>
-
-{% endif %}
 <div class="ai-box">
     <h4>AI Insight</h4>
 
@@ -276,6 +249,48 @@ Reach target in 15 Years:
         ⚠️ Slow growth — diversify portfolio.
     {% endif %}
 </div>
+
+<!-- PUT GOAL PLANNER HERE -->
+
+{% if goal_result %}
+<div class="ai-box">
+
+<h4>🎯 Goal Planner</h4>
+
+<p>
+Target:
+<b>KES {{ "{:,.0f}".format(goal_result.target) }}</b>
+</p>
+
+<p>
+Current Monthly Investment:
+<b>KES {{ "{:,.0f}".format(goal_result.current_monthly) }}</b>
+</p>
+
+<p>
+Estimated Time:
+<b>{{ goal_result.years_needed }} Years</b>
+</p>
+
+<p>
+To reach the goal in 5 years:
+<b>KES {{ "{:,.0f}".format(goal_result.monthly_5) }}</b>/month
+</p>
+
+<p>
+To reach the goal in 10 years:
+<b>KES {{ "{:,.0f}".format(goal_result.monthly_10) }}</b>/month
+</p>
+
+<p>
+To reach the goal in 15 years:
+<b>KES {{ "{:,.0f}".format(goal_result.monthly_15) }}</b>/month
+</p>
+
+</div>
+{% endif %}
+
+<!-- CONTINUE NORMAL RESULTS -->
 
 <p>💰 Invested: {{ data.normal.summary.invested }}</p>
 <p>💵 Dividends: {{ data.normal.summary.dividends }}</p>
