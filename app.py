@@ -70,6 +70,14 @@ PAYMENT_INFO = {
 }
 
 # =========================================================
+# 💰 PRICING CONFIG (ADD THIS HERE)
+# =========================================================
+PRICING = {
+    "monthly": 400,
+    "yearly": 4000
+}
+
+# =========================================================
 # 📊 DATA ENGINE
 # =========================================================
 df = None
@@ -146,6 +154,16 @@ def ai_portfolio_advisor(weights, sim, assets):
 # =========================================================
 def simulate(monthly, years, mode):
 
+if mode == "normal":
+    R = np.random.randn(N, 300) * 0.01
+
+elif mode == "bull":
+    R = np.random.randn(N, 300) * 0.015 + 0.002
+
+elif mode == "bear":
+    R = np.random.randn(N, 300) * 0.015 - 0.002
+
+else:
     R = np.random.randn(N, 300) * 0.01
     weights = np.ones(N) / N
 
@@ -388,22 +406,27 @@ def admin():
 
     users = load_users()
 
-    safe_users = []
-    for u in users:
-        if isinstance(u, dict):
-            safe_users.append(u)
+    safe_users = [u for u in users if isinstance(u, dict)]
+
+    monthly_users = len([u for u in safe_users if u.get("status") == "approved_monthly"])
+    yearly_users = len([u for u in safe_users if u.get("status") == "approved_yearly"])
+
+    monthly_revenue = monthly_users * PRICING["monthly"]
+    yearly_revenue = yearly_users * PRICING["yearly"]
+
+    total_revenue = monthly_revenue + yearly_revenue
 
     return render_template(
         "admin.html",
         users=safe_users,
         total_users=len(safe_users),
         pending_users=len([u for u in safe_users if u.get("status") == "pending"]),
-        approved_monthly=len([u for u in safe_users if u.get("status") == "approved_monthly"]),
-        approved_yearly=len([u for u in safe_users if u.get("status") == "approved_yearly"]),
+        approved_monthly=monthly_users,
+        approved_yearly=yearly_users,
         rejected_users=len([u for u in safe_users if u.get("status") == "rejected"]),
-        monthly_revenue=0,
-        yearly_revenue=0,
-        total_revenue=0
+        monthly_revenue=monthly_revenue,
+        yearly_revenue=yearly_revenue,
+        total_revenue=total_revenue
     )
 # =========================================================
 # ✅ APPROVE USER
