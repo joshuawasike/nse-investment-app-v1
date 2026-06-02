@@ -296,72 +296,74 @@ def index():
     normal = None
     goal_result = None
 
-try:
+    try:
 
-    if request.method == "POST":
+        if request.method == "POST":
 
-        monthly = float(request.form.get("monthly") or 0)
-        years = int(request.form.get("years") or 1)
+            monthly = float(request.form.get("monthly") or 0)
+            years = int(request.form.get("years") or 1)
 
-        target_amount = float(
-            request.form.get("target_amount") or 0
-        )
+            target_amount = float(
+                request.form.get("target_amount") or 0
+            )
 
-        if target_amount > 0:
+            if target_amount > 0:
 
-            goal_result = {
-                "target": target_amount,
-                "current_monthly": monthly,
-                "years_needed": years_to_goal(
-                    monthly,
-                    target_amount
-                ),
-                "monthly_5": monthly_for_goal(
-                    target_amount, 5
-                ),
-                "monthly_10": monthly_for_goal(
-                    target_amount, 10
-                ),
-                "monthly_15": monthly_for_goal(
-                    target_amount, 15
-                )
-            }
+                goal_result = {
+                    "target": target_amount,
+                    "current_monthly": monthly,
+                    "years_needed": years_to_goal(
+                        monthly,
+                        target_amount
+                    ),
+                    "monthly_5": monthly_for_goal(
+                        target_amount, 5
+                    ),
+                    "monthly_10": monthly_for_goal(
+                        target_amount, 10
+                    ),
+                    "monthly_15": monthly_for_goal(
+                        target_amount, 15
+                    )
+                }
 
-        code = request.form.get(
-            "transaction_code", ""
-        ).strip().upper()
+            code = request.form.get(
+                "transaction_code", ""
+            ).strip().upper()
 
-        phone = request.form.get(
-            "phone", ""
-        ).strip()
+            phone = request.form.get(
+                "phone", ""
+            ).strip()
 
-        for u in users:
-            if u.get("code") == code and is_active(u):
-                is_premium = True
+            for u in users:
+                if u.get("code") == code and is_active(u):
+                    is_premium = True
 
-        normal = simulate(monthly, years, "normal")
+            normal = simulate(monthly, years, "normal")
 
-        if is_premium:
-            data = {
-                "normal": normal,
-                "bull": simulate(monthly, years, "bull"),
-                "bear": simulate(monthly, years, "bear")
-            }
-        else:
-            data = {
-                "normal": normal,
-                "bull": None,
-                "bear": None
-            }
-    if code and not any(u.get("code") == code for u in users):
-        users.append({
-            "code": code,
-            "phone": phone,
-            "status": "pending",
-            "plan": "",
-            "expiry": ""
-        })
-        save_users(users)
+            if is_premium:
+                data = {
+                    "normal": normal,
+                    "bull": simulate(monthly, years, "bull"),
+                    "bear": simulate(monthly, years, "bear")
+                }
+            else:
+                data = {
+                    "normal": normal,
+                    "bull": None,
+                    "bear": None
+                }
+
+            if code and not any(u.get("code") == code for u in users):
+                users.append({
+                    "code": code,
+                    "phone": phone,
+                    "status": "pending",
+                    "plan": "",
+                    "expiry": ""
+                })
+                save_users(users)
+
         return render_template(
             "index.html",
             data=data,
