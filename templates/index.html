@@ -175,8 +175,21 @@ button {
 {% endif %}
 </div>
 
-{% include "goal.html" %}
+{% if goal_result %}
+<div class="ai-box">
 
+<h4>🎯 Goal Planner</h4>
+
+<p><b>Target:</b> KES {{ "{:,.0f}".format(goal_result.target) }}</p>
+<p><b>Current Monthly Investment:</b> KES {{ "{:,.0f}".format(goal_result.current_monthly) }}</p>
+<p><b>Estimated Time:</b> {{ goal_result.years_needed }} Years</p>
+
+<p><b>5 Years:</b> KES {{ "{:,.0f}".format(goal_result.monthly_5) }}/month</p>
+<p><b>10 Years:</b> KES {{ "{:,.0f}".format(goal_result.monthly_10) }}/month</p>
+<p><b>15 Years:</b> KES {{ "{:,.0f}".format(goal_result.monthly_15) }}/month</p>
+
+</div>
+{% endif %}
 <div class="ai-box">
 <b>Invested:</b> {{ data.normal.summary.invested }}<br>
 <b>Dividends:</b> {{ data.normal.summary.dividends }}<br>
