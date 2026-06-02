@@ -304,10 +304,33 @@ KES 18,000/year
 <h3>📈 BULL SCENARIO</h3>
 
 <div class="grid">
-<div class="card">💰 {{ data.bull.summary.invested }}</div>
-<div class="card">📈 {{ data.bull.summary.value }}</div>
-<div class="card">💵 {{ data.bull.summary.dividends }}</div>
-<div class="card">🧠 {{ data.bull.ai.risk }}</div>
+<div class="grid">
+
+    <div class="card">
+        <h4>💰 Total Invested</h4>
+        <h2>KES {{ "{:,.0f}".format(data.normal.summary.invested) }}</h2>
+        <small>Total capital contributed</small>
+    </div>
+
+    <div class="card">
+        <h4>📈 Portfolio Value</h4>
+        <h2>KES {{ "{:,.0f}".format(data.normal.summary.value) }}</h2>
+        <small>Projected portfolio value</small>
+    </div>
+
+    <div class="card">
+        <h4>💵 Dividend Income</h4>
+        <h2>KES {{ "{:,.0f}".format(data.normal.summary.dividends) }}</h2>
+        <small>Expected dividends earned</small>
+    </div>
+
+    <div class="card">
+        <h4>🧠 Risk Score</h4>
+        <h2>{{ data.normal.ai.risk }}</h2>
+        <small>Portfolio risk rating</small>
+    </div>
+
+</div>
 </div>
 
 {% if goal_result %}
@@ -336,10 +359,33 @@ KES 18,000/year
 <h3>📉 BEAR SCENARIO</h3>
 
 <div class="grid">
-<div class="card">💰 {{ data.bear.summary.invested }}</div>
-<div class="card">📈 {{ data.bear.summary.value }}</div>
-<div class="card">💵 {{ data.bear.summary.dividends }}</div>
-<div class="card">🧠 {{ data.bear.ai.risk }}</div>
+<div class="grid">
+
+    <div class="card">
+        <h4>💰 Total Invested</h4>
+        <h2>KES {{ "{:,.0f}".format(data.normal.summary.invested) }}</h2>
+        <small>Total capital contributed</small>
+    </div>
+
+    <div class="card">
+        <h4>📈 Portfolio Value</h4>
+        <h2>KES {{ "{:,.0f}".format(data.normal.summary.value) }}</h2>
+        <small>Projected portfolio value</small>
+    </div>
+
+    <div class="card">
+        <h4>💵 Dividend Income</h4>
+        <h2>KES {{ "{:,.0f}".format(data.normal.summary.dividends) }}</h2>
+        <small>Expected dividends earned</small>
+    </div>
+
+    <div class="card">
+        <h4>🧠 Risk Score</h4>
+        <h2>{{ data.normal.ai.risk }}</h2>
+        <small>Portfolio risk rating</small>
+    </div>
+
+</div>
 </div>
 
 {% if goal_result %}
