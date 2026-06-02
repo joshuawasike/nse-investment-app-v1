@@ -154,17 +154,18 @@ def ai_portfolio_advisor(weights, sim, assets):
 # =========================================================
 def simulate(monthly, years, mode):
 
-if mode == "normal":
-    R = np.random.randn(N, 300) * 0.01
+    if mode == "normal":
+        R = np.random.randn(N, 300) * 0.01
 
-elif mode == "bull":
-    R = np.random.randn(N, 300) * 0.015 + 0.002
+    elif mode == "bull":
+        R = np.random.randn(N, 300) * 0.015 + 0.002
 
-elif mode == "bear":
-    R = np.random.randn(N, 300) * 0.015 - 0.002
+    elif mode == "bear":
+        R = np.random.randn(N, 300) * 0.015 - 0.002
 
-else:
-    R = np.random.randn(N, 300) * 0.01
+    else:
+        R = np.random.randn(N, 300) * 0.01
+
     weights = np.ones(N) / N
 
     months = years * 12
@@ -217,7 +218,6 @@ else:
         "curve": curve,
         "ai": ai_portfolio_advisor(weights, R, ASSETS)
     }
-
 # =========================================================
 # 📊 CHART
 # =========================================================
