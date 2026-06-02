@@ -308,7 +308,202 @@ To reach the goal in 15 years:
     </ul>
 </div>
 {% endif %}
+{% if data and data.bull %}
 
+<div class="card">
+
+<h3>📊 BULL SCENARIO</h3>
+
+<div class="ai-box">
+    <h4>AI Insight</h4>
+
+    {% if data.bull.summary.value > data.bull.summary.invested %}
+        📈 Strong bull growth — aggressive gains expected.
+    {% else %}
+        ⚠️ Bull market weak — adjust exposure.
+    {% endif %}
+</div>
+
+{% if goal_result %}
+<div class="ai-box">
+<h4>🎯 Goal Planner</h4>
+
+<p>
+Target:
+<b>KES {{ "{:,.0f}".format(goal_result.target) }}</b>
+</p>
+
+<p>
+Current Monthly Investment:
+<b>KES {{ "{:,.0f}".format(goal_result.current_monthly) }}</b>
+</p>
+
+<p>
+Estimated Time:
+<b>{{ goal_result.years_needed }} Years</b>
+</p>
+
+<p>
+To reach the goal in 5 years:
+<b>KES {{ "{:,.0f}".format(goal_result.monthly_5) }}</b>/month
+</p>
+
+<p>
+To reach the goal in 10 years:
+<b>KES {{ "{:,.0f}".format(goal_result.monthly_10) }}</b>/month
+</p>
+
+<p>
+To reach the goal in 15 years:
+<b>KES {{ "{:,.0f}".format(goal_result.monthly_15) }}</b>/month
+</p>
+</div>
+{% endif %}
+
+<p>💰 Invested: {{ data.bull.summary.invested }}</p>
+<p>💵 Dividends: {{ data.bull.summary.dividends }}</p>
+<p>📊 Value: {{ data.bull.summary.value }}</p>
+
+{% if data.bull.ai %}
+<div class="ai-box">
+    <b>Score:</b> {{ data.bull.ai.score }} / 100<br>
+    <b>Risk:</b> {{ data.bull.ai.risk }}
+
+    <ul>
+    {% for i in data.bull.ai.insights %}
+        <li>{{ i }}</li>
+    {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<h4>Investment Plan</h4>
+<table>
+<tr><th>Asset</th><th>%</th><th>KES</th></tr>
+{% for p in data.bull.plan %}
+<tr>
+<td>{{ p.name }}</td>
+<td>{{ p.percent }}</td>
+<td>{{ p.kes }}</td>
+</tr>
+{% endfor %}
+</table>
+
+<h4>Returns</h4>
+<table>
+<tr><th>Asset</th><th>Dividends</th><th>Value</th></tr>
+{% for r in data.bull.returns %}
+<tr>
+<td>{{ r.name }}</td>
+<td>{{ r.dividends }}</td>
+<td>{{ r.value }}</td>
+</tr>
+{% endfor %}
+</table>
+
+<img src="data:image/png;base64,{{ chart_bull }}">
+
+</div>
+
+{% endif %}
+{% if data and data.bear %}
+
+<div class="card">
+
+<h3>📊 BEAR SCENARIO</h3>
+
+<div class="ai-box">
+    <h4>AI Insight</h4>
+
+    {% if data.bear.summary.value > data.bear.summary.invested %}
+        📉 Unexpected bear resilience — defensive assets working.
+    {% else %}
+        ⚠️ Bear market pressure — high downside risk.
+    {% endif %}
+</div>
+
+{% if goal_result %}
+<div class="ai-box">
+<h4>🎯 Goal Planner</h4>
+
+<p>
+Target:
+<b>KES {{ "{:,.0f}".format(goal_result.target) }}</b>
+</p>
+
+<p>
+Current Monthly Investment:
+<b>KES {{ "{:,.0f}".format(goal_result.current_monthly) }}</b>
+</p>
+
+<p>
+Estimated Time:
+<b>{{ goal_result.years_needed }} Years</b>
+</p>
+
+<p>
+To reach the goal in 5 years:
+<b>KES {{ "{:,.0f}".format(goal_result.monthly_5) }}</b>/month
+</p>
+
+<p>
+To reach the goal in 10 years:
+<b>KES {{ "{:,.0f}".format(goal_result.monthly_10) }}</b>/month
+</p>
+
+<p>
+To reach the goal in 15 years:
+<b>KES {{ "{:,.0f}".format(goal_result.monthly_15) }}</b>/month
+</p>
+</div>
+{% endif %}
+
+<p>💰 Invested: {{ data.bear.summary.invested }}</p>
+<p>💵 Dividends: {{ data.bear.summary.dividends }}</p>
+<p>📊 Value: {{ data.bear.summary.value }}</p>
+
+{% if data.bear.ai %}
+<div class="ai-box">
+    <b>Score:</b> {{ data.bear.ai.score }} / 100<br>
+    <b>Risk:</b> {{ data.bear.ai.risk }}
+
+    <ul>
+    {% for i in data.bear.ai.insights %}
+        <li>{{ i }}</li>
+    {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<h4>Investment Plan</h4>
+<table>
+<tr><th>Asset</th><th>%</th><th>KES</th></tr>
+{% for p in data.bear.plan %}
+<tr>
+<td>{{ p.name }}</td>
+<td>{{ p.percent }}</td>
+<td>{{ p.kes }}</td>
+</tr>
+{% endfor %}
+</table>
+
+<h4>Returns</h4>
+<table>
+<tr><th>Asset</th><th>Dividends</th><th>Value</th></tr>
+{% for r in data.bear.returns %}
+<tr>
+<td>{{ r.name }}</td>
+<td>{{ r.dividends }}</td>
+<td>{{ r.value }}</td>
+</tr>
+{% endfor %}
+</table>
+
+<img src="data:image/png;base64,{{ chart_bear }}">
+
+</div>
+
+{% endif %}
 <!-- GOAL SAFE -->
 {% if goal_result %}
 <div class="ai-box">
