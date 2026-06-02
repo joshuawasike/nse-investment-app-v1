@@ -8,9 +8,6 @@ import json
 import os
 import io
 import base64
-@app.route("/ping")
-def ping():
-    return "APP IS RUNNING"
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
@@ -343,7 +340,77 @@ def admin():
         yearly_revenue=0,
         total_revenue=0
     )
+# =========================================================
+# ✅ APPROVE USER
+# =========================================================
+@app.route("/approve/<code>/<plan>")
+def approve(code, plan):
 
+    if not session.get("admin"):
+        return redirect("/login")
+
+    users = load_users()
+
+    for u in users:
+
+        if u.get("code") == code:
+
+            if plan == "monthly":
+                u["status"] = "approved_monthly"
+                u["plan"] = "Monthly"
+
+            elif plan == "yearly":
+                u["status"] = "approved_yearly"
+                u["plan"] = "Yearly"
+
+            u["expiry"] = "ACTIVE"
+
+    save_users(users)
+
+    return redirect("/admin")
+
+
+# =========================================================
+# ❌ REJECT USER
+# =========================================================
+@app.route("/reject/<code>")
+def reject(code):
+
+    if not session.get("admin"):
+        return redirect("/login")
+
+    users = load_users()
+
+    for u in users:
+        if u.get("code") == code:
+            u["status"] = "rejected"
+
+    save_users(users)
+
+    return redirect("/admin")
+
+
+# =========================================================
+# 🔄 CANCEL SUBSCRIPTION
+# =========================================================
+@app.route("/cancel/<code>")
+def cancel(code):
+
+    if not session.get("admin"):
+        return redirect("/login")
+
+    users = load_users()
+
+    for u in users:
+
+        if u.get("code") == code:
+            u["status"] = "pending"
+            u["plan"] = ""
+            u["expiry"] = ""
+
+    save_users(users)
+
+    return redirect("/admin")
 # =========================================================
 # 🚀 RUN (RENDER SAFE)
 # =========================================================
