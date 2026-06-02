@@ -110,7 +110,6 @@ td {
     margin-top: 10px;
     border-left: 4px solid #60a5fa;
 }
-
 /* LOCK */
 .locked {
     background: #1f2937;
@@ -240,6 +239,34 @@ KES 18,000/year
 <div class="card">
 <h3>📊 NORMAL SCENARIO</h3>
 
+{% if goal_result %}
+
+<div class="ai-box">
+<h4>🎯 Goal Planner</h4>
+
+<p>
+Years Needed:
+<b>{{ goal_result.years_needed }}</b>
+</p>
+
+<p>
+Reach target in 5 Years:
+<b>KES {{ "{:,.0f}".format(goal_result.monthly_5) }}</b>/month
+</p>
+
+<p>
+Reach target in 10 Years:
+<b>KES {{ "{:,.0f}".format(goal_result.monthly_10) }}</b>/month
+</p>
+
+<p>
+Reach target in 15 Years:
+<b>KES {{ "{:,.0f}".format(goal_result.monthly_15) }}</b>/month
+</p>
+
+</div>
+
+{% endif %}
 <div class="ai-box">
     <h4>AI Insight</h4>
 
