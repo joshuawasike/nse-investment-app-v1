@@ -17,7 +17,6 @@ body {
     padding: 20px;
 }
 
-/* TOP BAR */
 .topbar {
     display: flex;
     justify-content: flex-end;
@@ -31,33 +30,68 @@ body {
     color: #60a5fa;
 }
 
-/* INFO */
+.info-box, .guide-box, .card, .ai-box, .payment-box {
+    border-radius: 10px;
+    padding: 15px;
+}
+
 .info-box {
     background: #0f172a;
-    padding: 15px;
-    border-radius: 10px;
     border: 1px solid #1e293b;
 }
 
 .guide-box {
     background: #052e16;
-    padding: 15px;
-    border-radius: 10px;
     border: 1px solid #065f46;
     color: #bbf7d0;
     margin-top: 10px;
 }
 
-/* FORM */
-.form-box input,
-.form-box select {
+.card {
+    background: #111827;
+    margin-top: 20px;
+    border: 1px solid #1f2937;
+}
+
+.ai-box {
+    background: #0f172a;
+    border-left: 4px solid #60a5fa;
+    margin-top: 10px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-family: monospace;
+    background: #0f172a;
+}
+
+th {
+    background: #111827;
+    color: #93c5fd;
+    padding: 10px;
+}
+
+td {
+    padding: 10px;
+    border-bottom: 1px solid #1f2937;
+}
+
+img {
+    width: 100%;
+    margin-top: 10px;
+    border-radius: 10px;
+}
+
+.form-box input, .form-box select {
     width: 100%;
     padding: 12px;
     margin-bottom: 10px;
-    border-radius: 6px;
     background: #111827;
     color: white;
     border: 1px solid #374151;
+    border-radius: 6px;
 }
 
 button {
@@ -70,81 +104,12 @@ button {
     font-weight: bold;
 }
 
-/* CARDS */
-.card {
-    background: #111827;
-    padding: 20px;
-    margin-top: 20px;
-    border-radius: 12px;
-    border: 1px solid #1f2937;
-}
-
-/* TABLE */
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-    font-family: monospace;
-    background: #0f172a;
-    border-radius: 8px;
-    overflow: hidden;
-}
-
-th {
-    background: #111827;
-    color: #93c5fd;
-    text-align: left;
-    padding: 10px;
-}
-
-td {
-    padding: 10px;
-    border-bottom: 1px solid #1f2937;
-}
-
-/* AI BOX */
-.ai-box {
-    background: #0f172a;
-    padding: 12px;
-    border-radius: 10px;
-    margin-top: 10px;
-    border-left: 4px solid #60a5fa;
-}
-/* LOCK */
 .locked {
     background: #1f2937;
     padding: 15px;
     border-left: 5px solid gold;
     color: #facc15;
     margin-top: 15px;
-}
-
-/* PAYMENT */
-.payment-box {
-    background: #111827;
-    padding: 15px;
-    border-radius: 10px;
-    margin-top: 20px;
-    border: 1px solid #374151;
-}
-
-.pricing-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-}
-
-.pricing-item {
-    background: #0f172a;
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid #1e293b;
-}
-
-img {
-    width: 100%;
-    margin-top: 10px;
-    border-radius: 10px;
 }
 </style>
 </head>
@@ -156,7 +121,6 @@ img {
 <!-- TOP BAR -->
 <div class="topbar">
     <a href="/login">Admin Login</a>
-
     {% if session.get('admin') %}
         <a href="/admin" style="color:#22c55e;">Dashboard</a>
         <a href="/logout" style="color:#ef4444;">Logout</a>
@@ -166,64 +130,29 @@ img {
 <!-- INFO -->
 <div class="info-box">
 <h3>📊 Jobura NSE Capital Terminal V3</h3>
-
-✔ Portfolio optimization engine<br>
+✔ Portfolio engine<br>
 ✔ Bull / Bear / Normal simulation<br>
-✔ Dividend income projection<br>
-✔ AI portfolio advisor<br>
-✔ Goal-based investing system<br>
+✔ Dividend projection<br>
+✔ AI advisor<br>
+✔ Goal system
 </div>
 
 <div class="guide-box">
 <b>How to Use</b><br><br>
 ✔ Enter monthly investment<br>
 ✔ Enter years<br>
-✔ Click run engine<br><br>
-➡ Free: Normal only<br>
-🔒 Premium: Bull + Bear + AI depth
+✔ Run engine
 </div>
 
 <!-- FORM -->
 <form method="POST" class="form-box">
-
 <input type="number" name="target_amount" placeholder="Target Amount (KES)">
 <input name="monthly" placeholder="Monthly Investment (KES)" required>
 <input name="years" placeholder="Years" required>
-
-<select name="profile">
-<option value="balanced">Balanced</option>
-<option value="conservative">Conservative</option>
-<option value="aggressive">Aggressive</option>
-</select>
-
 <input name="transaction_code" placeholder="Transaction Code">
 <input name="phone" placeholder="Phone">
-
 <button type="submit">🚀 Run Engine</button>
 </form>
-
-<!-- PAYMENT -->
-<div class="payment-box">
-<h3>💳 Payment</h3>
-
-<b>PayBill:</b> {{ payment.paybill }}<br>
-<b>Account:</b> {{ payment.account_number }}<br>
-<b>Name:</b> {{ payment.account_name }}
-
-<div class="pricing-grid">
-<div class="pricing-item">
-<b>Individual</b><br>
-KES 400/month<br>
-KES 4,000/year
-</div>
-
-<div class="pricing-item">
-<b>Institutional</b><br>
-KES 2,000/month<br>
-KES 18,000/year
-</div>
-</div>
-</div>
 
 <hr>
 
@@ -235,335 +164,136 @@ KES 18,000/year
 
 <!-- ================= NORMAL ================= -->
 {% if data and data.normal %}
-
 <div class="card">
-
 <h3>📊 NORMAL SCENARIO</h3>
 
 <div class="ai-box">
-    <h4>AI Insight</h4>
-
-    {% if data.normal.summary.value > data.normal.summary.invested %}
-        📈 Growth is positive — maintain strategy.
-    {% else %}
-        ⚠️ Slow growth — diversify portfolio.
-    {% endif %}
-</div>
-
-<!-- PUT GOAL PLANNER HERE -->
-
-{% if goal_result %}
-<div class="ai-box">
-
-<h4>🎯 Goal Planner</h4>
-
-<p>
-Target:
-<b>KES {{ "{:,.0f}".format(goal_result.target) }}</b>
-</p>
-
-<p>
-Current Monthly Investment:
-<b>KES {{ "{:,.0f}".format(goal_result.current_monthly) }}</b>
-</p>
-
-<p>
-Estimated Time:
-<b>{{ goal_result.years_needed }} Years</b>
-</p>
-
-<p>
-To reach the goal in 5 years:
-<b>KES {{ "{:,.0f}".format(goal_result.monthly_5) }}</b>/month
-</p>
-
-<p>
-To reach the goal in 10 years:
-<b>KES {{ "{:,.0f}".format(goal_result.monthly_10) }}</b>/month
-</p>
-
-<p>
-To reach the goal in 15 years:
-<b>KES {{ "{:,.0f}".format(goal_result.monthly_15) }}</b>/month
-</p>
-
-</div>
+{% if data.normal.summary.value > data.normal.summary.invested %}
+📈 Growth is positive — maintain strategy.
+{% else %}
+⚠️ Slow growth — diversify portfolio.
 {% endif %}
-
-<!-- CONTINUE NORMAL RESULTS -->
-
-<p>💰 Invested: {{ data.normal.summary.invested }}</p>
-<p>💵 Dividends: {{ data.normal.summary.dividends }}</p>
-<p>📊 Value: {{ data.normal.summary.value }}</p>
-
-{% if data.normal.ai %}
-<div class="ai-box">
-    <b>Score:</b> {{ data.normal.ai.score }} / 100<br>
-    <b>Risk:</b> {{ data.normal.ai.risk }}
-
-    <ul>
-    {% for i in data.normal.ai.insights %}
-        <li>{{ i }}</li>
-    {% endfor %}
-    </ul>
-</div>
-{% endif %}
-{% if data and data.bull %}
-
-<div class="card">
-
-<h3>📊 BULL SCENARIO</h3>
-
-<div class="ai-box">
-    <h4>AI Insight</h4>
-
-    {% if data.bull.summary.value > data.bull.summary.invested %}
-        📈 Strong bull growth — aggressive gains expected.
-    {% else %}
-        ⚠️ Bull market weak — adjust exposure.
-    {% endif %}
 </div>
 
-{% if goal_result %}
+{% include "goal.html" %}
+
 <div class="ai-box">
-<h4>🎯 Goal Planner</h4>
-
-<p>
-Target:
-<b>KES {{ "{:,.0f}".format(goal_result.target) }}</b>
-</p>
-
-<p>
-Current Monthly Investment:
-<b>KES {{ "{:,.0f}".format(goal_result.current_monthly) }}</b>
-</p>
-
-<p>
-Estimated Time:
-<b>{{ goal_result.years_needed }} Years</b>
-</p>
-
-<p>
-To reach the goal in 5 years:
-<b>KES {{ "{:,.0f}".format(goal_result.monthly_5) }}</b>/month
-</p>
-
-<p>
-To reach the goal in 10 years:
-<b>KES {{ "{:,.0f}".format(goal_result.monthly_10) }}</b>/month
-</p>
-
-<p>
-To reach the goal in 15 years:
-<b>KES {{ "{:,.0f}".format(goal_result.monthly_15) }}</b>/month
-</p>
+<b>Invested:</b> {{ data.normal.summary.invested }}<br>
+<b>Dividends:</b> {{ data.normal.summary.dividends }}<br>
+<b>Value:</b> {{ data.normal.summary.value }}
 </div>
-{% endif %}
 
-<p>💰 Invested: {{ data.bull.summary.invested }}</p>
-<p>💵 Dividends: {{ data.bull.summary.dividends }}</p>
-<p>📊 Value: {{ data.bull.summary.value }}</p>
-
-{% if data.bull.ai %}
 <div class="ai-box">
-    <b>Score:</b> {{ data.bull.ai.score }} / 100<br>
-    <b>Risk:</b> {{ data.bull.ai.risk }}
+<b>Score:</b> {{ data.normal.ai.score }} / 100<br>
+<b>Risk:</b> {{ data.normal.ai.risk }}
 
-    <ul>
-    {% for i in data.bull.ai.insights %}
-        <li>{{ i }}</li>
-    {% endfor %}
-    </ul>
-</div>
-{% endif %}
-
-<h4>Investment Plan</h4>
-<table>
-<tr><th>Asset</th><th>%</th><th>KES</th></tr>
-{% for p in data.bull.plan %}
-<tr>
-<td>{{ p.name }}</td>
-<td>{{ p.percent }}</td>
-<td>{{ p.kes }}</td>
-</tr>
+<ul>
+{% for i in data.normal.ai.insights %}
+<li>{{ i }}</li>
 {% endfor %}
-</table>
-
-<h4>Returns</h4>
-<table>
-<tr><th>Asset</th><th>Dividends</th><th>Value</th></tr>
-{% for r in data.bull.returns %}
-<tr>
-<td>{{ r.name }}</td>
-<td>{{ r.dividends }}</td>
-<td>{{ r.value }}</td>
-</tr>
-{% endfor %}
-</table>
-
-<img src="data:image/png;base64,{{ chart_bull }}">
-
+</ul>
 </div>
 
-{% endif %}
-{% if data and data.bear %}
-
-<div class="card">
-
-<h3>📊 BEAR SCENARIO</h3>
-
-<div class="ai-box">
-    <h4>AI Insight</h4>
-
-    {% if data.bear.summary.value > data.bear.summary.invested %}
-        📉 Unexpected bear resilience — defensive assets working.
-    {% else %}
-        ⚠️ Bear market pressure — high downside risk.
-    {% endif %}
-</div>
-
-{% if goal_result %}
-<div class="ai-box">
-<h4>🎯 Goal Planner</h4>
-
-<p>
-Target:
-<b>KES {{ "{:,.0f}".format(goal_result.target) }}</b>
-</p>
-
-<p>
-Current Monthly Investment:
-<b>KES {{ "{:,.0f}".format(goal_result.current_monthly) }}</b>
-</p>
-
-<p>
-Estimated Time:
-<b>{{ goal_result.years_needed }} Years</b>
-</p>
-
-<p>
-To reach the goal in 5 years:
-<b>KES {{ "{:,.0f}".format(goal_result.monthly_5) }}</b>/month
-</p>
-
-<p>
-To reach the goal in 10 years:
-<b>KES {{ "{:,.0f}".format(goal_result.monthly_10) }}</b>/month
-</p>
-
-<p>
-To reach the goal in 15 years:
-<b>KES {{ "{:,.0f}".format(goal_result.monthly_15) }}</b>/month
-</p>
-</div>
-{% endif %}
-
-<p>💰 Invested: {{ data.bear.summary.invested }}</p>
-<p>💵 Dividends: {{ data.bear.summary.dividends }}</p>
-<p>📊 Value: {{ data.bear.summary.value }}</p>
-
-{% if data.bear.ai %}
-<div class="ai-box">
-    <b>Score:</b> {{ data.bear.ai.score }} / 100<br>
-    <b>Risk:</b> {{ data.bear.ai.risk }}
-
-    <ul>
-    {% for i in data.bear.ai.insights %}
-        <li>{{ i }}</li>
-    {% endfor %}
-    </ul>
-</div>
-{% endif %}
-
-<h4>Investment Plan</h4>
-<table>
-<tr><th>Asset</th><th>%</th><th>KES</th></tr>
-{% for p in data.bear.plan %}
-<tr>
-<td>{{ p.name }}</td>
-<td>{{ p.percent }}</td>
-<td>{{ p.kes }}</td>
-</tr>
-{% endfor %}
-</table>
-
-<h4>Returns</h4>
-<table>
-<tr><th>Asset</th><th>Dividends</th><th>Value</th></tr>
-{% for r in data.bear.returns %}
-<tr>
-<td>{{ r.name }}</td>
-<td>{{ r.dividends }}</td>
-<td>{{ r.value }}</td>
-</tr>
-{% endfor %}
-</table>
-
-<img src="data:image/png;base64,{{ chart_bear }}">
-
-</div>
-
-{% endif %}
-<!-- GOAL SAFE -->
-{% if goal_result %}
-<div class="ai-box">
-    <b>🎯 Goal:</b>
-    {% if goal_result.mode == "time_to_goal" %}
-        {{ goal_result.years }} years
-    {% else %}
-        KES {{ goal_result.monthly }}
-    {% endif %}
-</div>
-{% endif %}
-
-<h4>Investment Plan</h4>
 <table>
 <tr><th>Asset</th><th>%</th><th>KES</th></tr>
 {% for p in data.normal.plan %}
-<tr>
-<td>{{ p.name }}</td>
-<td>{{ p.percent }}</td>
-<td>{{ p.kes }}</td>
-</tr>
+<tr><td>{{ p.name }}</td><td>{{ p.percent }}</td><td>{{ p.kes }}</td></tr>
 {% endfor %}
 </table>
 
-<h4>Returns</h4>
 <table>
 <tr><th>Asset</th><th>Dividends</th><th>Value</th></tr>
 {% for r in data.normal.returns %}
-<tr>
-<td>{{ r.name }}</td>
-<td>{{ r.dividends }}</td>
-<td>{{ r.value }}</td>
-</tr>
+<tr><td>{{ r.name }}</td><td>{{ r.dividends }}</td><td>{{ r.value }}</td></tr>
 {% endfor %}
 </table>
 
 <img src="data:image/png;base64,{{ chart_normal }}">
 </div>
-
 {% endif %}
 
-<!-- ================= PREMIUM ================= -->
-{% if is_premium %}
-
-{% if data.bull %}
+<!-- ================= BULL ================= -->
+{% if data and data.bull %}
 <div class="card">
-<h3>📈 BULL</h3>
-<p>Value: {{ data.bull.summary.value }}</p>
+<h3>📊 BULL SCENARIO</h3>
+
+<div class="ai-box">
+{% if data.bull.summary.value > data.bull.summary.invested %}
+📈 Strong bull growth — aggressive gains expected.
+{% else %}
+⚠️ Bull market weak — adjust exposure.
+{% endif %}
+</div>
+
+<div class="ai-box">
+<b>Invested:</b> {{ data.bull.summary.invested }}<br>
+<b>Dividends:</b> {{ data.bull.summary.dividends }}<br>
+<b>Value:</b> {{ data.bull.summary.value }}
+</div>
+
+<div class="ai-box">
+<b>Score:</b> {{ data.bull.ai.score }}<br>
+<b>Risk:</b> {{ data.bull.ai.risk }}
+</div>
+
+<table>
+<tr><th>Asset</th><th>%</th><th>KES</th></tr>
+{% for p in data.bull.plan %}
+<tr><td>{{ p.name }}</td><td>{{ p.percent }}</td><td>{{ p.kes }}</td></tr>
+{% endfor %}
+</table>
+
+<table>
+<tr><th>Asset</th><th>Dividends</th><th>Value</th></tr>
+{% for r in data.bull.returns %}
+<tr><td>{{ r.name }}</td><td>{{ r.dividends }}</td><td>{{ r.value }}</td></tr>
+{% endfor %}
+</table>
+
 <img src="data:image/png;base64,{{ chart_bull }}">
 </div>
 {% endif %}
 
-{% if data.bear %}
+<!-- ================= BEAR ================= -->
+{% if data and data.bear %}
 <div class="card">
-<h3>📉 BEAR</h3>
-<p>Value: {{ data.bear.summary.value }}</p>
+<h3>📊 BEAR SCENARIO</h3>
+
+<div class="ai-box">
+{% if data.bear.summary.value > data.bear.summary.invested %}
+📉 Defensive resilience working.
+{% else %}
+⚠️ Bear pressure high risk.
+{% endif %}
+</div>
+
+<div class="ai-box">
+<b>Invested:</b> {{ data.bear.summary.invested }}<br>
+<b>Dividends:</b> {{ data.bear.summary.dividends }}<br>
+<b>Value:</b> {{ data.bear.summary.value }}
+</div>
+
+<div class="ai-box">
+<b>Score:</b> {{ data.bear.ai.score }}<br>
+<b>Risk:</b> {{ data.bear.ai.risk }}
+</div>
+
+<table>
+<tr><th>Asset</th><th>%</th><th>KES</th></tr>
+{% for p in data.bear.plan %}
+<tr><td>{{ p.name }}</td><td>{{ p.percent }}</td><td>{{ p.kes }}</td></tr>
+{% endfor %}
+</table>
+
+<table>
+<tr><th>Asset</th><th>Dividends</th><th>Value</th></tr>
+{% for r in data.bear.returns %}
+<tr><td>{{ r.name }}</td><td>{{ r.dividends }}</td><td>{{ r.value }}</td></tr>
+{% endfor %}
+</table>
+
 <img src="data:image/png;base64,{{ chart_bear }}">
 </div>
-{% endif %}
-
 {% endif %}
 
 </div>
