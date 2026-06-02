@@ -37,6 +37,7 @@ body {
     padding: 15px;
 }
 
+/* INFO */
 .info-box {
     background: #0f172a;
     border: 1px solid #1e293b;
@@ -49,40 +50,45 @@ body {
     margin-top: 10px;
 }
 
+/* CARDS */
 .card {
     background: #111827;
     margin-top: 20px;
     border: 1px solid #1f2937;
 }
 
+/* AI BOX */
 .ai-box {
     background: #0f172a;
     border-left: 4px solid #60a5fa;
     margin-top: 10px;
 }
 
-/* TABLE */
+/* TABLE FIX (IMPORTANT FOR ALIGNMENT) */
 table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 10px;
     font-family: monospace;
     background: #0f172a;
+    table-layout: fixed;
 }
 
 th {
     background: #111827;
     color: #93c5fd;
     padding: 10px;
+    text-align: left;
 }
 
 td {
     padding: 10px;
     border-bottom: 1px solid #1f2937;
+    word-wrap: break-word;
 }
 
 /* FORM */
-.form-box input {
+.form-box input, .form-box select {
     width: 100%;
     padding: 12px;
     margin-bottom: 10px;
@@ -102,40 +108,20 @@ button {
     font-weight: bold;
 }
 
-/* PAYMENT FIXED */
-.payment-box {
-    background: #111827;
-    margin-top: 20px;
-    border: 1px solid #374151;
-}
-
-.payment-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
-    margin-top: 15px;
-}
-
-.payment-card {
-    background: #0f172a;
-    padding: 15px;
-    border-radius: 10px;
-    border: 1px solid #1e293b;
-    text-align: center;
-}
-
-img {
-    width: 100%;
-    margin-top: 10px;
-    border-radius: 10px;
-}
-
+/* LOCK */
 .locked {
     background: #1f2937;
     padding: 15px;
     border-left: 5px solid gold;
     color: #facc15;
     margin-top: 15px;
+}
+
+/* IMAGE */
+img {
+    width: 100%;
+    margin-top: 10px;
+    border-radius: 10px;
 }
 </style>
 </head>
@@ -156,18 +142,23 @@ img {
 <!-- INFO -->
 <div class="info-box">
 <h3>📊 Jobura NSE Capital Terminal V3</h3>
+
 ✔ Portfolio engine<br>
 ✔ Bull / Bear / Normal simulation<br>
 ✔ Dividend projection<br>
 ✔ AI advisor<br>
-✔ Goal system
+✔ Goal system<br>
 </div>
 
+<!-- HOW TO USE (RESTORED) -->
 <div class="guide-box">
 <b>How to Use</b><br><br>
 ✔ Enter monthly investment<br>
 ✔ Enter years<br>
-✔ Run engine
+✔ Click Run Engine<br><br>
+
+➡ FREE VERSION: Normal scenario only<br>
+🔒 PREMIUM: Bull + Bear + full AI + deeper analytics<br>
 </div>
 
 <!-- FORM -->
@@ -175,35 +166,18 @@ img {
 <input type="number" name="target_amount" placeholder="Target Amount (KES)">
 <input name="monthly" placeholder="Monthly Investment (KES)" required>
 <input name="years" placeholder="Years" required>
+
+<select name="profile">
+<option value="balanced">Balanced</option>
+<option value="conservative">Conservative</option>
+<option value="aggressive">Aggressive</option>
+</select>
+
 <input name="transaction_code" placeholder="Transaction Code">
 <input name="phone" placeholder="Phone">
+
 <button type="submit">🚀 Run Engine</button>
 </form>
-
-<hr>
-
-<!-- PAYMENT (FIXED + ALWAYS VISIBLE) -->
-<div class="payment-box">
-    <h3>💳 Payment</h3>
-
-    <p><b>PayBill:</b> {{ payment.paybill }}</p>
-    <p><b>Account:</b> {{ payment.account_number }}</p>
-    <p><b>Name:</b> {{ payment.account_name }}</p>
-
-    <div class="payment-grid">
-        <div class="payment-card">
-            <h4>Individual</h4>
-            <p>KES 400/month</p>
-            <p>KES 4,000/year</p>
-        </div>
-
-        <div class="payment-card">
-            <h4>Institutional</h4>
-            <p>KES 2,000/month</p>
-            <p>KES 18,000/year</p>
-        </div>
-    </div>
-</div>
 
 <hr>
 
@@ -219,6 +193,7 @@ img {
 <h3>📊 NORMAL SCENARIO</h3>
 
 <div class="ai-box">
+<b>AI Insight:</b><br>
 {% if data.normal.summary.value > data.normal.summary.invested %}
 📈 Growth is positive — maintain strategy.
 {% else %}
@@ -229,12 +204,14 @@ img {
 {% if goal_result %}
 <div class="ai-box">
 <h4>🎯 Goal Planner</h4>
-<p><b>Target:</b> KES {{ "{:,.0f}".format(goal_result.target) }}</p>
-<p><b>Monthly:</b> KES {{ "{:,.0f}".format(goal_result.current_monthly) }}</p>
-<p><b>Time:</b> {{ goal_result.years_needed }} years</p>
-<p><b>5Y:</b> {{ goal_result.monthly_5 }}/month</p>
-<p><b>10Y:</b> {{ goal_result.monthly_10 }}/month</p>
-<p><b>15Y:</b> {{ goal_result.monthly_15 }}/month</p>
+
+<b>Target:</b> KES {{ "{:,.0f}".format(goal_result.target) }}<br>
+<b>Monthly:</b> KES {{ "{:,.0f}".format(goal_result.current_monthly) }}<br>
+<b>Years:</b> {{ goal_result.years_needed }}<br><br>
+
+<b>5 yrs:</b> {{ goal_result.monthly_5 }} / month<br>
+<b>10 yrs:</b> {{ goal_result.monthly_10 }} / month<br>
+<b>15 yrs:</b> {{ goal_result.monthly_15 }} / month
 </div>
 {% endif %}
 
@@ -244,22 +221,40 @@ img {
 <b>Value:</b> {{ data.normal.summary.value }}
 </div>
 
+{% if data.normal.ai %}
 <div class="ai-box">
-<b>Score:</b> {{ data.normal.ai.score }}<br>
+<b>Score:</b> {{ data.normal.ai.score }} / 100<br>
 <b>Risk:</b> {{ data.normal.ai.risk }}
-</div>
 
+<ul>
+{% for i in data.normal.ai.insights %}
+<li>{{ i }}</li>
+{% endfor %}
+</ul>
+</div>
+{% endif %}
+
+<h4>Investment Plan</h4>
 <table>
 <tr><th>Asset</th><th>%</th><th>KES</th></tr>
 {% for p in data.normal.plan %}
-<tr><td>{{ p.name }}</td><td>{{ p.percent }}</td><td>{{ p.kes }}</td></tr>
+<tr>
+<td>{{ p.name }}</td>
+<td>{{ p.percent }}</td>
+<td>{{ p.kes }}</td>
+</tr>
 {% endfor %}
 </table>
 
+<h4>Returns</h4>
 <table>
 <tr><th>Asset</th><th>Dividends</th><th>Value</th></tr>
 {% for r in data.normal.returns %}
-<tr><td>{{ r.name }}</td><td>{{ r.dividends }}</td><td>{{ r.value }}</td></tr>
+<tr>
+<td>{{ r.name }}</td>
+<td>{{ r.dividends }}</td>
+<td>{{ r.value }}</td>
+</tr>
 {% endfor %}
 </table>
 
@@ -273,11 +268,8 @@ img {
 <h3>📊 BULL SCENARIO</h3>
 
 <div class="ai-box">
-{% if data.bull.summary.value > data.bull.summary.invested %}
-📈 Strong bull growth
-{% else %}
-⚠️ Weak bull market
-{% endif %}
+<b>AI Insight:</b><br>
+📈 Strong bullish expansion scenario
 </div>
 
 <div class="ai-box">
@@ -286,22 +278,25 @@ img {
 <b>Value:</b> {{ data.bull.summary.value }}
 </div>
 
-<div class="ai-box">
-<b>Score:</b> {{ data.bull.ai.score }}<br>
-<b>Risk:</b> {{ data.bull.ai.risk }}
-</div>
-
 <table>
 <tr><th>Asset</th><th>%</th><th>KES</th></tr>
 {% for p in data.bull.plan %}
-<tr><td>{{ p.name }}</td><td>{{ p.percent }}</td><td>{{ p.kes }}</td></tr>
+<tr>
+<td>{{ p.name }}</td>
+<td>{{ p.percent }}</td>
+<td>{{ p.kes }}</td>
+</tr>
 {% endfor %}
 </table>
 
 <table>
 <tr><th>Asset</th><th>Dividends</th><th>Value</th></tr>
 {% for r in data.bull.returns %}
-<tr><td>{{ r.name }}</td><td>{{ r.dividends }}</td><td>{{ r.value }}</td></tr>
+<tr>
+<td>{{ r.name }}</td>
+<td>{{ r.dividends }}</td>
+<td>{{ r.value }}</td>
+</tr>
 {% endfor %}
 </table>
 
@@ -315,11 +310,8 @@ img {
 <h3>📊 BEAR SCENARIO</h3>
 
 <div class="ai-box">
-{% if data.bear.summary.value > data.bear.summary.invested %}
-📉 Defensive strength
-{% else %}
-⚠️ Bear pressure
-{% endif %}
+<b>AI Insight:</b><br>
+📉 Defensive / risk-off market simulation
 </div>
 
 <div class="ai-box">
@@ -328,22 +320,25 @@ img {
 <b>Value:</b> {{ data.bear.summary.value }}
 </div>
 
-<div class="ai-box">
-<b>Score:</b> {{ data.bear.ai.score }}<br>
-<b>Risk:</b> {{ data.bear.ai.risk }}
-</div>
-
 <table>
 <tr><th>Asset</th><th>%</th><th>KES</th></tr>
 {% for p in data.bear.plan %}
-<tr><td>{{ p.name }}</td><td>{{ p.percent }}</td><td>{{ p.kes }}</td></tr>
+<tr>
+<td>{{ p.name }}</td>
+<td>{{ p.percent }}</td>
+<td>{{ p.kes }}</td>
+</tr>
 {% endfor %}
 </table>
 
 <table>
 <tr><th>Asset</th><th>Dividends</th><th>Value</th></tr>
 {% for r in data.bear.returns %}
-<tr><td>{{ r.name }}</td><td>{{ r.dividends }}</td><td>{{ r.value }}</td></tr>
+<tr>
+<td>{{ r.name }}</td>
+<td>{{ r.dividends }}</td>
+<td>{{ r.value }}</td>
+</tr>
 {% endfor %}
 </table>
 
@@ -352,6 +347,5 @@ img {
 {% endif %}
 
 </div>
-
 </body>
 </html>
