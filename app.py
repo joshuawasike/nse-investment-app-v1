@@ -12,6 +12,24 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 app = Flask(__name__)
+@app.route("/companies")
+def companies():
+
+    import pandas as pd
+    import glob
+
+    files = glob.glob("NSE_data_all_stock_*.csv")
+
+    df = pd.concat(
+        [pd.read_csv(f) for f in files],
+        ignore_index=True
+    )
+
+    companies = sorted(
+        df["NAME"].dropna().unique()
+    )
+
+    return "<br>".join(companies)
 app.secret_key = "jobura_secure_secure_v3"
 
 # =========================================================
