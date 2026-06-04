@@ -24,39 +24,40 @@ def companies():
     if not files:
         return "No CSV files found"
 
-    df_list = []
+    names = []
 
     for f in files:
-        temp = pd.read_csv(f)
+        try:
+            temp = pd.read_csv(f)
 
-        # clean headers
-        temp.columns = temp.columns.str.strip().str.upper()
+            # clean headers safely
+            temp.columns = temp.columns.astype(str).str.strip().str.upper()
 
-        # 🔥 FIX: detect name column safely
-        name_col = None
-        for col in temp.columns:
-            if col in ["NAME", "COMPANY", "STOCK NAME", "SECURITY NAME"]:
-                name_col = col
-                break
+            # 🔥 FLEXIBLE COLUMN DETECTION
+            possible_cols = ["NAME", "COMPANY", "STOCK", "SECURITY", "SYMBOL"]
 
-        if name_col is None:
-            continue  # skip broken file
+            name_col = None
+            for col in temp.columns:
+                if col in possible_cols:
+                    name_col = col
+                    break
 
-        temp = temp.rename(columns={name_col: "NAME"})
+            if name_col is None:
+                continue
 
-        df_list.append(temp[["NAME"]])
+            extracted = temp[name_col].dropna().astype(str).str.upper().str.strip()
 
-    if len(df_list) == 0:
-        return "No valid NAME columns found in CSV files"
+            names.extend(extracted.tolist())
 
-    df = pd.concat(df_list, ignore_index=True)
+        except Exception as e:
+            continue  # skip broken file silently
 
-    df["NAME"] = df["NAME"].astype(str).str.upper().str.strip()
+    if len(names) == 0:
+        return "No valid company names found in CSV files"
 
-    companies = sorted(df["NAME"].dropna().unique())
+    companies = sorted(set(names))
 
     return "<br>".join(companies)
-
 # =========================================================
 # 🔐 CONFIG
 # =========================================================
