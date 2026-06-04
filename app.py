@@ -451,11 +451,9 @@ def monthly_for_goal(target, years, annual_return=0.10):
 # =========================================================
 @app.route("/", methods=["GET", "POST"])
 def index():
-
     users = load_users()
     is_premium = False
-    data = None
-    normal = None
+    data = {}
     goal_result = None
 
     try:
@@ -466,8 +464,7 @@ def index():
             # =========================================================
             monthly = float(request.form.get("monthly") or 0)
             years = int(request.form.get("years") or 1)
-
-            model = request.form.get("model", "dividend")
+            model = request.form.get("model", "dividend")  # default, we will loop for all
             target_amount = float(request.form.get("target_amount") or 0)
 
             # =========================================================
@@ -494,51 +491,47 @@ def index():
                     is_premium = True
 
             # =========================================================
-            # SIMULATION (MODEL IS NOW CORE DRIVER)
+            # RUN ALL MODELS
             # =========================================================
-
-            # scenario affects market
-            normal = simulate(monthly, years, "normal", model)
-
-            if is_premium:
-                bull = simulate(monthly, years, "bull", model)
-                bear = simulate(monthly, years, "bear", model)
-
-                data = {
-                    "normal": normal,
-                    "bull": bull,
-                    "bear": bear
-                }
-            else:
-                data = {
-                    "normal": normal,
-                    "bull": None,
-                    "bear": None
-                }
+            models = ["dividend", "growth", "banking", "value", "income"]
+            for m in models:
+                # Run simulation for each scenario (normal, bull, bear)
+                normal = simulate(monthly, years, "normal", model=m)
+                if is_premium:
+                    bull = simulate(monthly, years, "bull", model=m)
+                    bear = simulate(monthly, years, "bear", model=m)
+                    data[m] = {
+                        "normal": normal,
+                        "bull": bull,
+                        "bear": bear
+                    }
+                else:
+                    data[m] = {
+                        "normal": normal,
+                        "bull": None,
+                        "bear": None
+                    }
 
             # =========================================================
-            # STORE USER
+            # STORE USER (if new code)
             # =========================================================
             if code and not any(u.get("code") == code for u in users):
                 users.append({
                     "code": code,
                     "phone": phone,
                     "status": "pending",
-                    "plan": model,   # 🔥 IMPORTANT: store model
+                    "plan": m,  # Store the model they chose
                     "expiry": ""
                 })
                 save_users(users)
 
         # =========================================================
-        # RENDER
+        # RENDER (PASS ALL MODELS FOR COMPARISON)
         # =========================================================
         return render_template(
             "index.html",
-            data=data,
+            data=data,  # All models stored here
             goal_result=goal_result,
-            chart_normal=chart(normal["curve"]) if normal else None,
-            chart_bull=chart(data["bull"]["curve"]) if is_premium and data and data["bull"] else None,
-            chart_bear=chart(data["bear"]["curve"]) if is_premium and data and data["bear"] else None,
             is_premium=is_premium,
             payment=PAYMENT_INFO
         )
