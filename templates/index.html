@@ -145,6 +145,37 @@ img {
     margin-top: 10px;
     border-radius: 10px;
 }
+.model-grid{
+    display:grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap:10px;
+    margin-bottom:15px;
+}
+
+.model-card{
+    background:#111827;
+    border:1px solid #374151;
+    padding:12px;
+    border-radius:10px;
+    cursor:pointer;
+    transition:0.2s;
+    font-size:13px;
+}
+
+.model-card:hover{
+    transform: scale(1.03);
+    border-color:#60a5fa;
+}
+
+.model-card input{
+    margin-bottom:8px;
+}
+
+.model1{ border-left:4px solid #22c55e; }
+.model2{ border-left:4px solid #3b82f6; }
+.model3{ border-left:4px solid #f59e0b; }
+.model4{ border-left:4px solid #a855f7; }
+.model5{ border-left:4px solid #ef4444; }
 </style>
 </head>
 
@@ -252,8 +283,6 @@ KES 18,000/year
 
 </div>
 
-<br>
-
 <!-- ================= INPUTS ================= -->
 <input type="number" name="target_amount" placeholder="Target Amount (KES)">
 <input name="monthly" placeholder="Monthly Investment (KES)" required>
@@ -262,6 +291,8 @@ KES 18,000/year
 <input name="phone" placeholder="Phone" required>
 
 <button type="submit">🚀 Run Engine</button>
+
+</form>
 
 </div>
 
