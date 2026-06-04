@@ -169,7 +169,23 @@ def get_df():
 # 🧠 MODEL → REAL COMPANY MAPPING (STEP 4A GOES HERE)
 # =========================================================
 def get_model_assets(model):
+
     df = get_df()
+
+    if df is None or df.empty:
+        return ASSETS
+
+    # 🔥 detect name column safely
+    possible_cols = ["NAME", "COMPANY", "SECURITY", "SYMBOL"]
+
+    name_col = None
+    for col in possible_cols:
+        if col in df.columns:
+            name_col = col
+            break
+
+    if name_col is None:
+        return ASSETS
 
     model_map = {
         "dividend": ["SAFARICOM", "KCB", "EQUITY", "CO-OP", "NCBA", "EABL", "KENGEN", "BAT"],
@@ -182,9 +198,12 @@ def get_model_assets(model):
     selected = model_map.get(model, [])
 
     assets = []
+
     for name in selected:
-        row = df[df["NAME"].str.contains(name, na=False)]
-        if not row.empty:
+
+        match = df[df[name_col].astype(str).str.upper().str.contains(name, na=False)]
+
+        if not match.empty:
             assets.append((name.title(), name[:5], 0.07))
 
     return assets if assets else ASSETS
