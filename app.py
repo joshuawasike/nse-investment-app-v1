@@ -180,19 +180,36 @@ def optimize_weights(sim):
 # =========================================================
 def simulate(monthly, years, mode):
 
+    # =========================================================
+    # 🔥 REGIME-AWARE RETURN GENERATION (FIXED CORE ISSUE)
+    # =========================================================
+    base = np.random.randn(N, 300)
+
     if mode == "normal":
-        R = np.random.randn(N, 300) * 0.01
+        drift = 0.0005
+        vol = 0.010
 
     elif mode == "bull":
-        R = np.random.randn(N, 300) * 0.015 + 0.002
+        drift = 0.0035
+        vol = 0.014
 
     elif mode == "bear":
-        R = np.random.randn(N, 300) * 0.015 - 0.002
+        drift = -0.0035
+        vol = 0.020
 
     else:
-        R = np.random.randn(N, 300) * 0.01
+        drift = 0.0005
+        vol = 0.010
 
-    # 🔥 SMART ALLOCATION (FIXED)
+    R = base * vol + drift
+
+    # 🔥 fat-tail shocks (critical upgrade from OLD engine)
+    shock = np.random.standard_t(4, size=(N, 300)) * vol * 0.5
+    R += shock
+
+    # =========================================================
+    # 🧠 SMART ALLOCATION (OLD + IMPROVED ENGINE)
+    # =========================================================
     weights = optimize_weights(R)
 
     months = years * 12
@@ -204,7 +221,7 @@ def simulate(monthly, years, mode):
     for t in range(months):
         idx = t % 300
 
-        # 🔁 periodic re-optimization (like OLD engine behavior)
+        # 🔁 periodic re-optimization (keeps dynamic behavior)
         if t % 6 == 0:
             weights = optimize_weights(R)
 
@@ -213,6 +230,9 @@ def simulate(monthly, years, mode):
         nav = nav * (1 + port_ret) + monthly
         curve.append(nav)
 
+    # =========================================================
+    # 💰 ASSET BREAKDOWN
+    # =========================================================
     asset_investment = invested * weights
 
     yields = np.array([a[2] for a in ASSETS])
