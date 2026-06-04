@@ -324,183 +324,60 @@ KES 18,000/year
         </div>
     {% endfor %}
 </div>
-<!-- ================= NORMAL ================= -->
-{% if data and data.normal %}
-<div class="card">
-<h3>📊 NORMAL SCENARIO</h3>
+{% if data %}
+
+<h2>📊 Model Comparison Dashboard</h2>
 
 <div class="grid">
 
-    <div class="card">
-        <h4>💰 Total Invested</h4>
-        <h2>KES {{ "{:,.0f}".format(data.normal.summary.invested) }}</h2>
-        <small>Total capital contributed</small>
-    </div>
+{% for model, result in data.items() %}
 
-    <div class="card">
-        <h4>📈 Portfolio Value</h4>
-        <h2>KES {{ "{:,.0f}".format(data.normal.summary.value) }}</h2>
-        <small>Projected portfolio value</small>
-    </div>
-
-    <div class="card">
-        <h4>💵 Dividend Income</h4>
-        <h2>KES {{ "{:,.0f}".format(data.normal.summary.dividends) }}</h2>
-        <small>Expected dividends earned</small>
-    </div>
-
-    <div class="card">
-        <h4>🧠 Risk Score</h4>
-        <h2>{{ data.normal.ai.risk }}</h2>
-        <small>Portfolio risk rating</small>
-    </div>
-
-</div>
-
-<div class="ai-box">
-{% if data.normal.summary.value > data.normal.summary.invested %}
-📈 Growth positive
-{% else %}
-⚠️ Slow growth
-{% endif %}
-</div>
-
-{% if goal_result %}
-<div class="ai-box">
-<h3>🎯 Goal Planner</h3>
-<p><b>Target:</b> KES {{ "{:,.0f}".format(goal_result.target) }}</p>
-<p><b>Monthly:</b> KES {{ "{:,.0f}".format(goal_result.current_monthly) }}</p>
-<p><b>Time:</b> {{ goal_result.years_needed }} years</p>
-<p><b>5 yrs:</b> {{ goal_result.monthly_5 }}/month</p>
-<p><b>10 yrs:</b> {{ goal_result.monthly_10 }}/month</p>
-<p><b>15 yrs:</b> {{ goal_result.monthly_15 }}/month</p>
-</div>
-{% endif %}
-
-<h3>📊 Allocation</h3>
-<table>
-<tr><th>Asset</th><th>%</th><th>KES</th></tr>
-{% for p in data.normal.plan %}
-<tr><td>{{ p.name }}</td><td>{{ p.percent }}</td><td>{{ p.kes }}</td></tr>
-{% endfor %}
-</table>
-
-<h3>📊 Returns</h3>
-<table>
-<tr><th>Asset</th><th>Dividends</th><th>Value</th></tr>
-{% for r in data.normal.returns %}
-<tr><td>{{ r.name }}</td><td>{{ r.dividends }}</td><td>{{ r.value }}</td></tr>
-{% endfor %}
-</table>
-
-<img src="data:image/png;base64,{{ chart_normal }}">
-</div>
-{% endif %}
-
-<!-- ================= BULL ================= -->
-{% if data and data.bull %}
 <div class="card">
-<h3>📈 BULL SCENARIO</h3>
 
-<div class="grid">
+<h3>{{ model|upper }}</h3>
 
-    <div class="card">
-        <h4>💰 Total Invested</h4>
-        <h2>KES {{ "{:,.0f}".format(data.bull.summary.invested) }}</h2>
-        <small>Total capital contributed</small>
-    </div>
+<p>
+<b>Invested:</b><br>
+KES {{ "{:,.0f}".format(result.summary.invested) }}
+</p>
 
-    <div class="card">
-        <h4>📈 Portfolio Value</h4>
-        <h2>KES {{ "{:,.0f}".format(data.bull.summary.value) }}</h2>
-        <small>Projected portfolio value</small>
-    </div>
+<p>
+<b>Portfolio Value:</b><br>
+KES {{ "{:,.0f}".format(result.summary.value) }}
+</p>
 
-    <div class="card">
-        <h4>💵 Dividend Income</h4>
-        <h2>KES {{ "{:,.0f}".format(data.bull.summary.dividends) }}</h2>
-        <small>Expected dividends earned</small>
-    </div>
+<p>
+<b>Dividends:</b><br>
+KES {{ "{:,.0f}".format(result.summary.dividends) }}
+</p>
 
-    <div class="card">
-        <h4>🧠 Risk Score</h4>
-        <h2>{{ data.bull.ai.risk }}</h2>
-        <small>Portfolio risk rating</small>
-    </div>
+<p>
+<b>Risk Score:</b>
+{{ result.ai.risk }}
+</p>
 
-</div>
-
-{% if goal_result %}
-<div class="ai-box">
-<h3>🎯 Goal Planner</h3>
-<p><b>Target:</b> KES {{ "{:,.0f}".format(goal_result.target) }}</p>
-<p><b>Monthly:</b> KES {{ "{:,.0f}".format(goal_result.current_monthly) }}</p>
-<p><b>Time:</b> {{ goal_result.years_needed }} years</p>
-</div>
-{% endif %}
+<h4>Allocation</h4>
 
 <table>
-<tr><th>Asset</th><th>%</th><th>KES</th></tr>
-{% for p in data.bull.plan %}
-<tr><td>{{ p.name }}</td><td>{{ p.percent }}</td><td>{{ p.kes }}</td></tr>
+<tr>
+<th>Asset</th>
+<th>%</th>
+</tr>
+
+{% for p in result.plan %}
+<tr>
+<td>{{ p.name }}</td>
+<td>{{ p.percent }}</td>
+</tr>
 {% endfor %}
 </table>
 
-<img src="data:image/png;base64,{{ chart_bull }}">
-</div>
-{% endif %}
-
-<!-- ================= BEAR ================= -->
-{% if data and data.bear %}
-<div class="card">
-<h3>📉 BEAR SCENARIO</h3>
-
-<div class="grid">
-
-    <div class="card">
-        <h4>💰 Total Invested</h4>
-        <h2>KES {{ "{:,.0f}".format(data.bear.summary.invested) }}</h2>
-        <small>Total capital contributed</small>
-    </div>
-
-    <div class="card">
-        <h4>📈 Portfolio Value</h4>
-        <h2>KES {{ "{:,.0f}".format(data.bear.summary.value) }}</h2>
-        <small>Projected portfolio value</small>
-    </div>
-
-    <div class="card">
-        <h4>💵 Dividend Income</h4>
-        <h2>KES {{ "{:,.0f}".format(data.bear.summary.dividends) }}</h2>
-        <small>Expected dividends earned</small>
-    </div>
-
-    <div class="card">
-        <h4>🧠 Risk Score</h4>
-        <h2>{{ data.bear.ai.risk }}</h2>
-        <small>Portfolio risk rating</small>
-    </div>
-
 </div>
 
-{% if goal_result %}
-<div class="ai-box">
-<h3>🎯 Goal Planner</h3>
-<p><b>Target:</b> KES {{ "{:,.0f}".format(goal_result.target) }}</p>
-<p><b>Monthly:</b> KES {{ "{:,.0f}".format(goal_result.current_monthly) }}</p>
-<p><b>Time:</b> {{ goal_result.years_needed }} years</p>
-</div>
-{% endif %}
-
-<table>
-<tr><th>Asset</th><th>%</th><th>KES</th></tr>
-{% for p in data.bear.plan %}
-<tr><td>{{ p.name }}</td><td>{{ p.percent }}</td><td>{{ p.kes }}</td></tr>
 {% endfor %}
-</table>
 
-<img src="data:image/png;base64,{{ chart_bear }}">
 </div>
+
 {% endif %}
 
 </div>
