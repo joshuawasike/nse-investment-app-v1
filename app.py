@@ -175,36 +175,28 @@ def get_model_assets(model):
     if df is None or df.empty:
         return ASSETS
 
-    # 🔥 detect name column safely
-    possible_cols = ["NAME", "COMPANY", "SECURITY", "SYMBOL"]
-
-    name_col = None
-    for col in possible_cols:
-        if col in df.columns:
-            name_col = col
-            break
-
-    if name_col is None:
+    if "CODE" not in df.columns:
         return ASSETS
 
+    df["CODE"] = df["CODE"].astype(str).str.upper().str.strip()
+
     model_map = {
-        "dividend": ["SAFARICOM", "KCB", "EQUITY", "CO-OP", "NCBA", "EABL", "KENGEN", "BAT"],
-        "growth": ["KENYA AIRWAYS", "CARBACID", "CIC", "JUBILEE", "STANBIC", "DIAMOND TRUST", "I&M", "ABSA"],
-        "banking": ["EQUITY", "KCB", "NCBA", "I&M", "STANBIC", "DIAMOND TRUST", "ABSA", "CO-OP"],
-        "value": ["BAMBURI", "KENYA RE", "NMG", "CIC", "TPS SERENA", "KENYA POWER", "CENTUM", "LONGHORN"],
-        "income": ["BAT", "EABL", "SAFARICOM", "KENGEN", "STANBIC", "NCBA", "CO-OP", "KCB"]
+        "dividend": ["SCOM", "KCB", "EQTY", "COOP", "NCBA", "EABL", "KEGN", "BAT"],
+        "growth": ["KQ", "CARB", "CIC", "JUB", "SBIC", "DTB", "IM", "ABSA"],
+        "banking": ["EQTY", "KCB", "NCBA", "IM", "SBIC", "DTB", "ABSA", "COOP"],
+        "value": ["BAMB", "KR", "NMG", "CIC", "TPS", "KPLC", "CTUM", "LNGH"],
+        "income": ["BAT", "EABL", "SCOM", "KEGN", "SBIC", "NCBA", "COOP", "KCB"]
     }
 
     selected = model_map.get(model, [])
 
     assets = []
 
-    for name in selected:
-
-        match = df[df[name_col].astype(str).str.upper().str.contains(name, na=False)]
+    for code in selected:
+        match = df[df["CODE"].str.contains(code, na=False)]
 
         if not match.empty:
-            assets.append((name.title(), name[:5], 0.07))
+            assets.append((code, code, 0.07))
 
     return assets if assets else ASSETS
 # =========================================================
