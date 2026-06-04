@@ -126,71 +126,55 @@ N = len(ASSETS)
 # =========================================================
 # 🧠 AI ENGINE
 # =========================================================
-def ai_portfolio_advisor(weights, sim, assets):
-    insights = []
-
-    mean = np.mean(sim, axis=1)
-    vol = np.std(sim, axis=1)
-
-    risk = float(np.mean(vol) * 100)
-    score = float(max(0, 100 - risk * 10))
-
-    for i in range(len(weights)):
-        if weights[i] > 0.30:
-            insights.append(f"High allocation: {assets[i][0]}")
-        if vol[i] > np.mean(vol):
-            insights.append(f"High volatility: {assets[i][0]}")
-        if mean[i] < 0:
-            insights.append(f"Weak returns: {assets[i][0]}")
-
-    return {
-        "insights": insights,
-        "score": round(score, 2),
-        "risk": round(risk, 2)
-    }
 def optimize_weights(sim, mode="normal"):
-    # =========================================================
-    # 1. RISK + RETURN STATISTICS
-    # =========================================================
+
     mean = np.mean(sim, axis=1)
     vol = np.std(sim, axis=1) + 1e-9
     downside = np.mean(np.minimum(sim, 0), axis=1)
 
     # =========================================================
-    # 2. RISK-PARITY BASE (inverse volatility weighting)
+    # RISK-PARITY BASE
     # =========================================================
     inv_vol = 1.0 / vol
     rp_weights = inv_vol / np.sum(inv_vol)
 
     # =========================================================
-    # 3. RETURN-DRIVEN ALPHA SIGNAL (your old engine logic)
+    # ALPHA SIGNAL (STABILIZED)
     # =========================================================
-    score = (mean / vol) - (1.1 * np.abs(downside))
+    safe_ratio = mean / (vol + 1e-9)
+    score = safe_ratio - (1.1 * np.abs(downside))
 
-    score[3] *= 1.2   # Safaricom bias
-    score[7] *= 0.05  # Kenya Airways suppression
+    score[3] *= 1.2
+    score[7] *= 0.05
 
     alpha = np.tanh(score * 2.0)
     alpha_weights = np.exp(alpha - np.max(alpha))
     alpha_weights = alpha_weights / np.sum(alpha_weights)
 
     # =========================================================
-    # 4. HYBRID BLEND (KEY INNOVATION)
+    # HYBRID BLEND
     # =========================================================
     w = 0.55 * rp_weights + 0.45 * alpha_weights
 
     # =========================================================
-    # 5. REGIME TILT (IMPORTANT FOR BULL/BEAR DIFFERENCE)
+    # REGIME TILT
     # =========================================================
     if mode == "bull":
-        w[3] *= 1.15  # Safaricom momentum
-        w[1] *= 1.05  # KCB
+        w[3] *= 1.15
+        w[1] *= 1.05
+
     elif mode == "bear":
-        w[7] *= 0.3   # cut risky exposure
-        w[4] *= 0.85  # EABL defensive tilt
+        w[7] *= 0.3
+        w[4] *= 0.85
 
     # =========================================================
-    # 6. CONSTRAINTS (REALISM LAYER)
+    # SAFETY NORMALIZATION (IMPORTANT FIX)
+    # =========================================================
+    w = np.maximum(w, 1e-6)
+    w = w / np.sum(w)
+
+    # =========================================================
+    # HARD CONSTRAINTS
     # =========================================================
     MIN = np.array([0.03,0.03,0.03,0.10,0.03,0.03,0.03,0.00])
     MAX = np.array([0.25,0.25,0.25,0.40,0.20,0.20,0.20,0.05])
@@ -202,10 +186,10 @@ def optimize_weights(sim, mode="normal"):
 # =========================================================
 # 📊 SIMULATION ENGINE (UPDATED WITH SMART ALLOCATION)
 # =========================================================
-def simulate(monthly, years, mode):
+def simulate(monthly, years, mode, model="dividend"):
 
     # =========================================================
-    # 🔥 REGIME-AWARE RETURN GENERATION (FIXED CORE ISSUE)
+    # 🌪️ REGIME-BASED RETURN GENERATION
     # =========================================================
     base = np.random.randn(N, 300)
 
@@ -227,14 +211,15 @@ def simulate(monthly, years, mode):
 
     R = base * vol + drift
 
-    # 🔥 fat-tail shocks (critical upgrade from OLD engine)
+    # 🔥 fat-tail shocks (key institutional realism upgrade)
     shock = np.random.standard_t(4, size=(N, 300)) * vol * 0.5
     R += shock
 
     # =========================================================
-    # 🧠 SMART ALLOCATION (OLD + IMPROVED ENGINE)
+    # 🧠 SMART ALLOCATION (HYBRID ENGINE)
     # =========================================================
-    weights = optimize_weights(R)
+    weights = optimize_weights(R, mode)
+    weights = apply_model_bias(weights, model)
 
     months = years * 12
     invested = monthly * months
@@ -245,9 +230,10 @@ def simulate(monthly, years, mode):
     for t in range(months):
         idx = t % 300
 
-        # 🔁 periodic re-optimization (keeps dynamic behavior)
+        # 🔁 periodic re-optimization (keeps adaptiveness)
         if t % 6 == 0:
-            weights = optimize_weights(R)
+            w = optimize_weights(R, mode)
+            weights = apply_model_bias(w, model)
 
         port_ret = np.dot(weights, R[:, idx])
 
@@ -394,52 +380,50 @@ def index():
 
         if request.method == "POST":
 
+            # =========================================================
+            # 📥 INPUTS
+            # =========================================================
             monthly = float(request.form.get("monthly") or 0)
             years = int(request.form.get("years") or 1)
 
-            target_amount = float(
-                request.form.get("target_amount") or 0
-            )
+            model = request.form.get("model", "dividend")  # 🔥 IMPORTANT FIX
 
+            target_amount = float(request.form.get("target_amount") or 0)
+
+            # =========================================================
+            # 🎯 GOAL PLANNER
+            # =========================================================
             if target_amount > 0:
 
                 goal_result = {
                     "target": target_amount,
                     "current_monthly": monthly,
-                    "years_needed": years_to_goal(
-                        monthly,
-                        target_amount
-                    ),
-                    "monthly_5": monthly_for_goal(
-                        target_amount, 5
-                    ),
-                    "monthly_10": monthly_for_goal(
-                        target_amount, 10
-                    ),
-                    "monthly_15": monthly_for_goal(
-                        target_amount, 15
-                    )
+                    "years_needed": years_to_goal(monthly, target_amount),
+                    "monthly_5": monthly_for_goal(target_amount, 5),
+                    "monthly_10": monthly_for_goal(target_amount, 10),
+                    "monthly_15": monthly_for_goal(target_amount, 15)
                 }
 
-            code = request.form.get(
-                "transaction_code", ""
-            ).strip().upper()
-
-            phone = request.form.get(
-                "phone", ""
-            ).strip()
+            # =========================================================
+            # 🔐 USER CHECK
+            # =========================================================
+            code = request.form.get("transaction_code", "").strip().upper()
+            phone = request.form.get("phone", "").strip()
 
             for u in users:
                 if u.get("code") == code and is_active(u):
                     is_premium = True
 
-            normal = simulate(monthly, years, "normal")
+            # =========================================================
+            # 📊 SIMULATION (FIXED)
+            # =========================================================
+            normal = simulate(monthly, years, "normal", model)
 
             if is_premium:
                 data = {
                     "normal": normal,
-                    "bull": simulate(monthly, years, "bull"),
-                    "bear": simulate(monthly, years, "bear")
+                    "bull": simulate(monthly, years, "bull", model),
+                    "bear": simulate(monthly, years, "bear", model)
                 }
             else:
                 data = {
@@ -448,6 +432,9 @@ def index():
                     "bear": None
                 }
 
+            # =========================================================
+            # 👤 STORE USER
+            # =========================================================
             if code and not any(u.get("code") == code for u in users):
                 users.append({
                     "code": code,
@@ -458,6 +445,9 @@ def index():
                 })
                 save_users(users)
 
+        # =========================================================
+        # 🎨 RENDER
+        # =========================================================
         return render_template(
             "index.html",
             data=data,
@@ -471,7 +461,6 @@ def index():
 
     except Exception as e:
         return f"APP ERROR: {str(e)}"
-
 # =========================================================
 # 🚀 ADMIN ROUTE (FIXED SAFE)
 # =========================================================
