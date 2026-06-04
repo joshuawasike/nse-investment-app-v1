@@ -227,6 +227,28 @@ def apply_model_bias(weights, model):
     w = w / np.sum(w)
 
     return w
+def ai_portfolio_advisor(weights, sim, assets):
+    insights = []
+
+    mean = np.mean(sim, axis=1)
+    vol = np.std(sim, axis=1)
+
+    risk = float(np.mean(vol) * 100)
+    score = float(max(0, 100 - risk * 10))
+
+    for i in range(len(weights)):
+        if weights[i] > 0.30:
+            insights.append(f"High allocation: {assets[i][0]}")
+        if vol[i] > np.mean(vol):
+            insights.append(f"High volatility: {assets[i][0]}")
+        if mean[i] < 0:
+            insights.append(f"Weak returns: {assets[i][0]}")
+
+    return {
+        "insights": insights,
+        "score": round(score, 2),
+        "risk": round(risk, 2)
+    }
 # =========================================================
 # 📊 SIMULATION ENGINE (UPDATED WITH SMART ALLOCATION)
 # =========================================================
