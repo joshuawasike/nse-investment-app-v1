@@ -304,7 +304,7 @@ KES 18,000/year
             <p><b>Invested:</b> KES {{ "{:,.0f}".format(result["summary"]["invested"]) }}</p>
             <p><b>Value:</b> KES {{ "{:,.0f}".format(result["summary"]["value"]) }}</p>
             <p><b>Dividends:</b> KES {{ "{:,.0f}".format(result["summary"]["dividends"]) }}</p>
-            <p><b>Risk Score:</b> {{ result.ai.risk }}</p>
+            <p><b>Risk Score:</b> {{ result["ai"]["risk"] }}</p>
             <h5>Allocation</h5>
             <ul>
                 {% for p in result.plan %}
