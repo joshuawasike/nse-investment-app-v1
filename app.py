@@ -183,6 +183,50 @@ def optimize_weights(sim, mode="normal"):
     w = w / np.sum(w)
 
     return w
+def apply_model_bias(weights, model):
+
+    w = weights.copy()
+
+    # DIVIDEND BLUE CHIP
+    if model == "dividend":
+        w[3] *= 1.2
+        w[0] *= 1.1
+        w[1] *= 1.1
+        w[2] *= 1.1
+        w[4] *= 1.15
+
+    # GROWTH
+    elif model == "growth":
+        w[7] *= 2.0
+        w[5] *= 1.2
+        w[6] *= 1.2
+
+    # BANKING
+    elif model == "banking":
+        w[0] *= 1.3
+        w[1] *= 1.3
+        w[2] *= 1.2
+        w[6] *= 1.2
+
+    # VALUE
+    elif model == "value":
+        w[5] *= 1.2
+        w[6] *= 1.2
+        w[7] *= 1.3
+        w[4] *= 1.1
+
+    # INCOME
+    elif model == "income":
+        w[3] *= 1.2
+        w[4] *= 1.2
+        w[1] *= 1.1
+        w[0] *= 1.1
+
+    # FINAL NORMALIZATION SAFETY
+    w = np.maximum(w, 1e-6)
+    w = w / np.sum(w)
+
+    return w
 # =========================================================
 # 📊 SIMULATION ENGINE (UPDATED WITH SMART ALLOCATION)
 # =========================================================
