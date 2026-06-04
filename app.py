@@ -284,28 +284,31 @@ def simulate(monthly, years, mode, model="dividend"):
 
     R = base * vol + drift
 
-    # 🔥 fat-tail shocks (key institutional realism upgrade)
+    # 🔥 fat-tail shocks
     shock = np.random.standard_t(4, size=(N, 300)) * vol * 0.5
     R += shock
 
     # =========================================================
     # 🧠 SMART ALLOCATION (HYBRID ENGINE)
     # =========================================================
-base_weights = optimize_weights(R, mode)
-base_weights = apply_model_bias(base_weights, model)
+    base_weights = optimize_weights(R, mode)
+    base_weights = apply_model_bias(base_weights, model)
 
-# select model universe
-idxs = MODEL_UNIVERSES.get(model, list(range(N)))
+    # select model universe
+    idxs = MODEL_UNIVERSES.get(model, list(range(N)))
 
-# expand weights only to selected universe
-weights = np.zeros(N)
+    # expand weights only to selected universe
+    weights = np.zeros(N)
 
-subset = base_weights[idxs]
-subset = subset / np.sum(subset)
+    subset = base_weights[idxs]
+    subset = subset / np.sum(subset)
 
-for i, idx in enumerate(idxs):
-    weights[idx] = subset[i]
+    for i, idx in enumerate(idxs):
+        weights[idx] = subset[i]
 
+    # =========================================================
+    # 📊 SIMULATION LOOP
+    # =========================================================
     months = years * 12
     invested = monthly * months
 
@@ -315,10 +318,11 @@ for i, idx in enumerate(idxs):
     for t in range(months):
         idx = t % 300
 
-        # 🔁 periodic re-optimization (keeps adaptiveness)
+        # periodic re-optimization
         if t % 6 == 0:
             w = optimize_weights(R, mode)
-            weights = apply_model_bias(w, model)
+            w = apply_model_bias(w, model)
+            weights = w
 
         port_ret = np.dot(weights, R[:, idx])
 
@@ -343,7 +347,6 @@ for i, idx in enumerate(idxs):
             "value": nav,
             "dividends": float(np.sum(dividends))
         },
-
         "plan": [
             {
                 "name": ASSETS[i][0],
@@ -352,7 +355,6 @@ for i, idx in enumerate(idxs):
             }
             for i in range(N)
         ],
-
         "returns": [
             {
                 "name": ASSETS[i][0],
@@ -361,7 +363,6 @@ for i, idx in enumerate(idxs):
             }
             for i in range(N)
         ],
-
         "curve": curve,
         "ai": ai_portfolio_advisor(weights, R, ASSETS)
     }
