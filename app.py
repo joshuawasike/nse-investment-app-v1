@@ -127,26 +127,34 @@ PRICING = {
 df = None
 
 def load_data():
+
     df_local = pd.DataFrame(columns=["Code", "Date", "Previous"])
     files = glob.glob("data/nse_csv/*.csv")
 
     for file in files:
         try:
-temp = pd.read_csv(file)
+            temp = pd.read_csv(file)
 
-temp.columns = temp.columns.astype(str).str.strip().str.upper()
+            # normalize columns
+            temp.columns = temp.columns.astype(str).str.strip().str.upper()
 
-# only keep safe columns if they exist
-keep = [c for c in ["CODE", "DATE", "PREVIOUS"] if c in temp.columns]
+            # only keep safe columns if they exist
+            keep = [c for c in ["CODE", "DATE", "PREVIOUS"] if c in temp.columns]
 
-temp = temp[keep]
+            if len(keep) == 0:
+                continue
+
+            temp = temp[keep]
+
             df_local = pd.concat([df_local, temp], ignore_index=True)
-        except:
+
+        except Exception:
             continue
 
+    # FINAL CLEANING
     if not df_local.empty:
-        df_local["Date"] = pd.to_datetime(df_local["Date"], errors="coerce")
-        df_local["Previous"] = pd.to_numeric(df_local["Previous"], errors="coerce")
+        df_local["DATE"] = pd.to_datetime(df_local["DATE"], errors="coerce")
+        df_local["PREVIOUS"] = pd.to_numeric(df_local["PREVIOUS"], errors="coerce")
         df_local = df_local.dropna()
 
     return df_local
