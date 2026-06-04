@@ -12,6 +12,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 app = Flask(__name__)
+app.secret_key = "jobura_secure_secure_v3"
 @app.route("/companies")
 def companies():
 
@@ -28,25 +29,33 @@ def companies():
     for f in files:
         temp = pd.read_csv(f)
 
+        # clean headers
         temp.columns = temp.columns.str.strip().str.upper()
-        df_list.append(temp)
+
+        # 🔥 FIX: detect name column safely
+        name_col = None
+        for col in temp.columns:
+            if col in ["NAME", "COMPANY", "STOCK NAME", "SECURITY NAME"]:
+                name_col = col
+                break
+
+        if name_col is None:
+            continue  # skip broken file
+
+        temp = temp.rename(columns={name_col: "NAME"})
+
+        df_list.append(temp[["NAME"]])
 
     if len(df_list) == 0:
-        return "No valid CSV data found"
+        return "No valid NAME columns found in CSV files"
 
     df = pd.concat(df_list, ignore_index=True)
-
-    df.columns = df.columns.str.strip().str.upper()
-
-    if "NAME" not in df.columns:
-        return f"Missing NAME column. Available columns: {df.columns.tolist()}"
 
     df["NAME"] = df["NAME"].astype(str).str.upper().str.strip()
 
     companies = sorted(df["NAME"].dropna().unique())
 
     return "<br>".join(companies)
-app.secret_key = "jobura_secure_secure_v3"
 
 # =========================================================
 # 🔐 CONFIG
