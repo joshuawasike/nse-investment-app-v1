@@ -278,51 +278,28 @@ def simulate(monthly, years, mode, model="dividend"):
     if mode == "normal":
         drift = 0.0005
         vol = 0.010
-
     elif mode == "bull":
         drift = 0.0035
         vol = 0.014
-
     elif mode == "bear":
         drift = -0.0035
         vol = 0.020
-
     else:
         drift = 0.0005
         vol = 0.010
 
     R = base * vol + drift
-
-    # 🔥 fat-tail shocks
     shock = np.random.standard_t(4, size=(N, 300)) * vol * 0.5
     R += shock
 
     # =========================================================
-    # 🧠 SMART ALLOCATION (HYBRID ENGINE)
+    # 🧠 SMART ALLOCATION (FIXED + MODEL-AWARE)
     # =========================================================
-    # choose model universe FIRST
-idxs = MODEL_UNIVERSES.get(model, list(range(N)))
+    base_weights = optimize_weights(R, mode)
+    base_weights = apply_model_bias(base_weights, model)
 
-# build reduced return matrix (ONLY selected stocks)
-R_model = R[idxs, :]
-
-# run optimizer ONLY on model universe
-base_weights = optimize_weights(R_model, mode)
-base_weights = apply_model_bias(base_weights, model)
-
-# expand back to full vector
-weights = np.zeros(N)
-
-subset = base_weights
-subset = subset / np.sum(subset)
-
-for i, idx in enumerate(idxs):
-    weights[idx] = subset[i]
-
-    # select model universe
     idxs = MODEL_UNIVERSES.get(model, list(range(N)))
 
-    # expand weights only to selected universe
     weights = np.zeros(N)
 
     subset = base_weights[idxs]
@@ -343,19 +320,17 @@ for i, idx in enumerate(idxs):
     for t in range(months):
         idx = t % 300
 
-        # periodic re-optimization
         if t % 6 == 0:
             w = optimize_weights(R, mode)
             w = apply_model_bias(w, model)
             weights = w
 
         port_ret = np.dot(weights, R[:, idx])
-
         nav = nav * (1 + port_ret) + monthly
         curve.append(nav)
 
     # =========================================================
-    # 💰 ASSET BREAKDOWN
+    # 💰 ASSETS
     # =========================================================
     asset_investment = invested * weights
 
