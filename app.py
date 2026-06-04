@@ -530,19 +530,20 @@ def index():
                         "bear": None
                     }
 
-            # =========================================================
-            # STORE USER (if new code)
-            # =========================================================
-            if code and not any(u.get("code") == code for u in users):
-                users.append({
-                    "code": code,
-                    "phone": phone,
-                    "status": "pending",
-                    "plan": m,  # Store the model they chose
-                    "expiry": ""
-                })
-                save_users(users)
+# =========================================================
+# STORE USER (if new code)
+# =========================================================
+if code and not any(u.get("code") == code for u in users):
 
+    users.append({
+        "code": code,
+        "phone": phone,
+        "status": "pending",
+        "plan": "all_models",
+        "expiry": ""
+    })
+
+    save_users(users)
         # =========================================================
         # RENDER (PASS ALL MODELS FOR COMPARISON)
         # =========================================================
