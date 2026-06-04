@@ -16,9 +16,6 @@ app.secret_key = "jobura_secure_secure_v3"
 @app.route("/companies")
 def companies():
 
-    import pandas as pd
-    import glob
-
     files = glob.glob("NSE_data_all_stock_*.csv")
 
     if not files:
@@ -30,11 +27,11 @@ def companies():
         try:
             temp = pd.read_csv(f)
 
-            # clean headers safely
+            # normalize column names
             temp.columns = temp.columns.astype(str).str.strip().str.upper()
 
-            # 🔥 FLEXIBLE COLUMN DETECTION
-            possible_cols = ["NAME", "COMPANY", "STOCK", "SECURITY", "SYMBOL"]
+            # possible name columns (VERY IMPORTANT FIX)
+            possible_cols = ["NAME", "COMPANY", "SECURITY", "SYMBOL", "STOCK", "ISSUER"]
 
             name_col = None
             for col in temp.columns:
@@ -45,19 +42,22 @@ def companies():
             if name_col is None:
                 continue
 
-            extracted = temp[name_col].dropna().astype(str).str.upper().str.strip()
+            names.extend(
+                temp[name_col]
+                .dropna()
+                .astype(str)
+                .str.upper()
+                .str.strip()
+                .tolist()
+            )
 
-            names.extend(extracted.tolist())
+        except Exception:
+            continue
 
-        except Exception as e:
-            continue  # skip broken file silently
+    if not names:
+        return "No valid company names found"
 
-    if len(names) == 0:
-        return "No valid company names found in CSV files"
-
-    companies = sorted(set(names))
-
-    return "<br>".join(companies)
+    return "<br>".join(sorted(set(names)))
 # =========================================================
 # 🔐 CONFIG
 # =========================================================
@@ -132,7 +132,14 @@ def load_data():
 
     for file in files:
         try:
-            temp = pd.read_csv(file, usecols=["Code", "Date", "Previous"])
+temp = pd.read_csv(file)
+
+temp.columns = temp.columns.astype(str).str.strip().str.upper()
+
+# only keep safe columns if they exist
+keep = [c for c in ["CODE", "DATE", "PREVIOUS"] if c in temp.columns]
+
+temp = temp[keep]
             df_local = pd.concat([df_local, temp], ignore_index=True)
         except:
             continue
