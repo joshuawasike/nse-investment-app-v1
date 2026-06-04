@@ -249,6 +249,13 @@ def ai_portfolio_advisor(weights, sim, assets):
         "score": round(score, 2),
         "risk": round(risk, 2)
     }
+MODEL_UNIVERSES = {
+    "dividend": [0,1,2,3,4,5,6],   # safe banks + blue chips
+    "growth":   [7,5,6,1,2,3,4],   # includes KQ aggressively
+    "banking":  [0,1,2,6,3],       # only banks + safaricom
+    "value":    [5,6,7,4],         # cyclical + recovery stocks
+    "income":   [3,4,1,0,2]        # dividend-heavy names
+}
 # =========================================================
 # 📊 SIMULATION ENGINE (UPDATED WITH SMART ALLOCATION)
 # =========================================================
@@ -284,8 +291,20 @@ def simulate(monthly, years, mode, model="dividend"):
     # =========================================================
     # 🧠 SMART ALLOCATION (HYBRID ENGINE)
     # =========================================================
-    weights = optimize_weights(R, mode)
-    weights = apply_model_bias(weights, model)
+base_weights = optimize_weights(R, mode)
+base_weights = apply_model_bias(base_weights, model)
+
+# select model universe
+idxs = MODEL_UNIVERSES.get(model, list(range(N)))
+
+# expand weights only to selected universe
+weights = np.zeros(N)
+
+subset = base_weights[idxs]
+subset = subset / np.sum(subset)
+
+for i, idx in enumerate(idxs):
+    weights[idx] = subset[i]
 
     months = years * 12
     invested = monthly * months
@@ -443,24 +462,21 @@ def index():
     goal_result = None
 
     try:
-
         if request.method == "POST":
 
             # =========================================================
-            # 📥 INPUTS
+            # INPUTS
             # =========================================================
             monthly = float(request.form.get("monthly") or 0)
             years = int(request.form.get("years") or 1)
 
-            model = request.form.get("model", "dividend")  # 🔥 IMPORTANT FIX
-
+            model = request.form.get("model", "dividend")
             target_amount = float(request.form.get("target_amount") or 0)
 
             # =========================================================
-            # 🎯 GOAL PLANNER
+            # GOAL PLANNER
             # =========================================================
             if target_amount > 0:
-
                 goal_result = {
                     "target": target_amount,
                     "current_monthly": monthly,
@@ -471,7 +487,7 @@ def index():
                 }
 
             # =========================================================
-            # 🔐 USER CHECK
+            # USER CHECK
             # =========================================================
             code = request.form.get("transaction_code", "").strip().upper()
             phone = request.form.get("phone", "").strip()
@@ -481,15 +497,20 @@ def index():
                     is_premium = True
 
             # =========================================================
-            # 📊 SIMULATION (FIXED)
+            # SIMULATION (MODEL IS NOW CORE DRIVER)
             # =========================================================
+
+            # scenario affects market
             normal = simulate(monthly, years, "normal", model)
 
             if is_premium:
+                bull = simulate(monthly, years, "bull", model)
+                bear = simulate(monthly, years, "bear", model)
+
                 data = {
                     "normal": normal,
-                    "bull": simulate(monthly, years, "bull", model),
-                    "bear": simulate(monthly, years, "bear", model)
+                    "bull": bull,
+                    "bear": bear
                 }
             else:
                 data = {
@@ -499,20 +520,20 @@ def index():
                 }
 
             # =========================================================
-            # 👤 STORE USER
+            # STORE USER
             # =========================================================
             if code and not any(u.get("code") == code for u in users):
                 users.append({
                     "code": code,
                     "phone": phone,
                     "status": "pending",
-                    "plan": "",
+                    "plan": model,   # 🔥 IMPORTANT: store model
                     "expiry": ""
                 })
                 save_users(users)
 
         # =========================================================
-        # 🎨 RENDER
+        # RENDER
         # =========================================================
         return render_template(
             "index.html",
