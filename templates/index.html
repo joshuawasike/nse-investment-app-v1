@@ -338,22 +338,22 @@ KES 18,000/year
 
 <p>
 <b>Invested:</b><br>
-KES {{ "{:,.0f}".format(result.summary.invested) }}
+KES {{ "{:,.0f}".format(result["summary"]["invested"]) }}
 </p>
 
 <p>
 <b>Portfolio Value:</b><br>
-KES {{ "{:,.0f}".format(result.summary.value) }}
+KES {{ "{:,.0f}".format(result["summary"]["value"]) }}
 </p>
 
 <p>
 <b>Dividends:</b><br>
-KES {{ "{:,.0f}".format(result.summary.dividends) }}
+KES {{ "{:,.0f}".format(result["summary"]["dividends"]) }}
 </p>
 
 <p>
 <b>Risk Score:</b>
-{{ result.ai.risk }}
+{{ result["ai"]["risk"] }}
 </p>
 
 <h4>Allocation</h4>
@@ -364,10 +364,10 @@ KES {{ "{:,.0f}".format(result.summary.dividends) }}
 <th>%</th>
 </tr>
 
-{% for p in result.plan %}
+{% for p in result["plan"] %}
 <tr>
-<td>{{ p.name }}</td>
-<td>{{ p.percent }}</td>
+<td>{{ p["name"] }}</td>
+<td>{{ p["percent"] }}</td>
 </tr>
 {% endfor %}
 </table>
