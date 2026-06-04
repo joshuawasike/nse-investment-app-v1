@@ -18,16 +18,15 @@ def companies():
     import pandas as pd
     import glob
 
-    files = glob.glob("NSE_data_all_stock_*.csv")
+    # =========================================================
+# 📊 LOAD NSE DATA (ALL YEARS)
+# =========================================================
+files = glob.glob("NSE_data_all_stock_*.csv")
 
-    df = pd.concat(
-        [pd.read_csv(f) for f in files],
-        ignore_index=True
-    )
+df = pd.concat([pd.read_csv(f) for f in files])
 
-    companies = sorted(
-        df["NAME"].dropna().unique()
-    )
+# IMPORTANT: normalize company names
+df["NAME"] = df["NAME"].str.upper().str.strip()
 
     return "<br>".join(companies)
 app.secret_key = "jobura_secure_secure_v3"
@@ -124,7 +123,29 @@ def get_df():
     if df is None:
         df = load_data()
     return df
+# =========================================================
+# 🧠 MODEL → REAL COMPANY MAPPING (STEP 4A GOES HERE)
+# =========================================================
+def get_model_assets(model):
+    df = get_df()
 
+    model_map = {
+        "dividend": ["SAFARICOM", "KCB", "EQUITY", "CO-OP", "NCBA", "EABL", "KENGEN", "BAT"],
+        "growth": ["KENYA AIRWAYS", "CARBACID", "CIC", "JUBILEE", "STANBIC", "DIAMOND TRUST", "I&M", "ABSA"],
+        "banking": ["EQUITY", "KCB", "NCBA", "I&M", "STANBIC", "DIAMOND TRUST", "ABSA", "CO-OP"],
+        "value": ["BAMBURI", "KENYA RE", "NMG", "CIC", "TPS SERENA", "KENYA POWER", "CENTUM", "LONGHORN"],
+        "income": ["BAT", "EABL", "SAFARICOM", "KENGEN", "STANBIC", "NCBA", "CO-OP", "KCB"]
+    }
+
+    selected = model_map.get(model, [])
+
+    assets = []
+    for name in selected:
+        row = df[df["NAME"].str.contains(name, na=False)]
+        if not row.empty:
+            assets.append((name.title(), name[:5], 0.07))
+
+    return assets if assets else ASSETS
 # =========================================================
 # 📊 ASSETS
 # =========================================================
@@ -141,14 +162,64 @@ ASSETS = [
 
 N = len(ASSETS)
 # =========================================================
-# 🧠 MODEL UNIVERSES (CORE STRATEGY ENGINE)
+# 🧠 MODEL COMPANIES (REAL CSV-BASED FILTERING)
 # =========================================================
-MODEL_UNIVERSES = {
-    "dividend": [3, 0, 1, 2, 4, 6, 5],   # Safaricom, banks, EABL
-    "growth":   [7, 6, 5, 1, 2, 6, 4],   # Kenya Airways, NCBA, Stanbic
-    "banking":  [0, 1, 2, 6],            # Equity, KCB, Co-op, NCBA
-    "value":    [5, 7, 4, 6],            # KenGen, KQ, EABL, NCBA
-    "income":   [3, 4, 1, 0, 2]          # Safaricom + dividend stocks
+
+MODEL_COMPANIES = {
+    "dividend": [
+        "SAFARICOM",
+        "KCB GROUP",
+        "EQUITY BANK",
+        "CO-OP BANK",
+        "NCBA BANK",
+        "EABL",
+        "KENGEN",
+        "BAT"
+    ],
+
+    "growth": [
+        "KENYA AIRWAYS",
+        "CARBACID",
+        "CIC INSURANCE",
+        "JUBILEE HOLDINGS",
+        "STANBIC",
+        "DIAMOND TRUST BANK",
+        "I&M BANK",
+        "ABSA BANK"
+    ],
+
+    "banking": [
+        "EQUITY BANK",
+        "KCB GROUP",
+        "NCBA BANK",
+        "I&M BANK",
+        "STANBIC",
+        "DIAMOND TRUST BANK",
+        "ABSA BANK",
+        "CO-OP BANK"
+    ],
+
+    "value": [
+        "BAMBURI CEMENT",
+        "KENYA RE",
+        "NATION MEDIA GROUP",
+        "CIC INSURANCE",
+        "TPS SERENA",
+        "KENYA POWER",
+        "CENTUM",
+        "LONGHORN"
+    ],
+
+    "income": [
+        "BAT",
+        "EABL",
+        "SAFARICOM",
+        "KENGEN",
+        "STANBIC",
+        "NCBA BANK",
+        "CO-OP BANK",
+        "KCB GROUP"
+    ]
 }
 # =========================================================
 # 🧠 AI ENGINE
@@ -284,11 +355,25 @@ MODEL_UNIVERSES = {
     "income":   [3,4,1,0,2]        # dividend-heavy names
 }
 # =========================================================
-# 📊 SIMULATION ENGINE (UPDATED WITH SMART ALLOCATION)
+# 📊 SIMULATION ENGINE (FIXED + MODEL-SPECIFIC UNIVERSES)
 # =========================================================
 def simulate(monthly, years, mode, model="dividend"):
 
-    base = np.random.randn(N, 300)
+    # =========================================================
+    # 🧠 GET MODEL ASSETS (FROM CSV FILTER)
+    # =========================================================
+    assets = get_model_assets(model)
+    N_local = len(assets)
+
+    # fallback safety
+    if N_local == 0:
+        assets = ASSETS
+        N_local = len(assets)
+
+    # =========================================================
+    # 🌪️ RETURN GENERATION
+    # =========================================================
+    base = np.random.randn(N_local, 300)
 
     if mode == "normal":
         drift = 0.0005
@@ -305,22 +390,17 @@ def simulate(monthly, years, mode, model="dividend"):
 
     R = base * vol + drift
 
-    shock = np.random.standard_t(4, size=(N, 300)) * vol * 0.5
+    # fat-tail shocks
+    shock = np.random.standard_t(4, size=(N_local, 300)) * vol * 0.5
     R += shock
 
-    # MUST BE INSIDE FUNCTION (same indentation)
+    # =========================================================
+    # 🧠 SMART WEIGHTS
+    # =========================================================
     base_weights = optimize_weights(R, mode)
     base_weights = apply_model_bias(base_weights, model)
 
-    idxs = MODEL_UNIVERSES.get(model, list(range(N)))
-
-    weights = np.zeros(N)
-
-    subset = base_weights[idxs]
-    subset = subset / np.sum(subset)
-
-    for i, idx in enumerate(idxs):
-        weights[idx] = subset[i]
+    weights = base_weights.copy()
 
     # =========================================================
     # 📊 SIMULATION LOOP
@@ -344,41 +424,47 @@ def simulate(monthly, years, mode, model="dividend"):
         curve.append(nav)
 
     # =========================================================
-    # 💰 ASSETS
+    # 💰 ASSET BREAKDOWN
     # =========================================================
     asset_investment = invested * weights
 
-    yields = np.array([a[2] for a in ASSETS])
+    yields = np.array([a[2] for a in assets])
     dividends = asset_investment * yields
 
     asset_values = asset_investment * (1 + np.array(
-        [0.08, 0.07, 0.075, 0.06, 0.055, 0.065, 0.05, 0.0]
+        [0.08, 0.07, 0.075, 0.06, 0.055, 0.065, 0.05, 0.0][:N_local]
     )) ** years
 
+    # =========================================================
+    # 📦 RESULT OUTPUT
+    # =========================================================
     return {
         "summary": {
             "invested": invested,
             "value": nav,
             "dividends": float(np.sum(dividends))
         },
+
         "plan": [
             {
-                "name": ASSETS[i][0],
+                "name": assets[i][0],
                 "percent": round(weights[i] * 100, 2),
                 "kes": round(asset_investment[i], 2)
             }
-            for i in range(N)
+            for i in range(N_local)
         ],
+
         "returns": [
             {
-                "name": ASSETS[i][0],
+                "name": assets[i][0],
                 "dividends": round(dividends[i], 2),
                 "value": round(asset_values[i], 2)
             }
-            for i in range(N)
+            for i in range(N_local)
         ],
+
         "curve": curve,
-        "ai": ai_portfolio_advisor(weights, R, ASSETS)
+        "ai": ai_portfolio_advisor(weights, R, assets)
     }
 # =========================================================
 # 📊 CHART
