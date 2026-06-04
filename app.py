@@ -558,6 +558,7 @@ def monthly_for_goal(target, years, annual_return=0.10):
 # =========================================================
 @app.route("/", methods=["GET", "POST"])
 def index():
+
     users = load_users()
     is_premium = False
     data = {}
@@ -566,17 +567,13 @@ def index():
     try:
         if request.method == "POST":
 
-            # =========================================================
             # INPUTS
-            # =========================================================
             monthly = float(request.form.get("monthly") or 0)
             years = int(request.form.get("years") or 1)
-            model = request.form.get("model", "dividend")  # default, we will loop for all
+            model = request.form.get("model", "dividend")
             target_amount = float(request.form.get("target_amount") or 0)
 
-            # =========================================================
-            # GOAL PLANNER
-            # =========================================================
+            # GOAL
             if target_amount > 0:
                 goal_result = {
                     "target": target_amount,
@@ -587,9 +584,7 @@ def index():
                     "monthly_15": monthly_for_goal(target_amount, 15)
                 }
 
-            # =========================================================
             # USER CHECK
-            # =========================================================
             code = request.form.get("transaction_code", "").strip().upper()
             phone = request.form.get("phone", "").strip()
 
@@ -597,48 +592,39 @@ def index():
                 if u.get("code") == code and is_active(u):
                     is_premium = True
 
-            # =========================================================
-            # RUN ALL MODELS
-            # =========================================================
+            # RUN MODELS
             models = ["dividend", "growth", "banking", "value", "income"]
+
             for m in models:
-                # Run simulation for each scenario (normal, bull, bear)
-                normal = simulate(monthly, years, "normal", model=m)
+                normal = simulate(monthly, years, "normal", m)
+
                 if is_premium:
-                    bull = simulate(monthly, years, "bull", model=m)
-                    bear = simulate(monthly, years, "bear", model=m)
-                    data[m] = {
-                        "normal": normal,
-                        "bull": bull,
-                        "bear": bear
-                    }
+                    bull = simulate(monthly, years, "bull", m)
+                    bear = simulate(monthly, years, "bear", m)
                 else:
-                    data[m] = {
-                        "normal": normal,
-                        "bull": None,
-                        "bear": None
-                    }
+                    bull = None
+                    bear = None
 
-# =========================================================
-# STORE USER (if new code)
-# =========================================================
-if code and not any(u.get("code") == code for u in users):
+                data[m] = {
+                    "normal": normal,
+                    "bull": bull,
+                    "bear": bear
+                }
 
-    users.append({
-        "code": code,
-        "phone": phone,
-        "status": "pending",
-        "plan": "all_models",
-        "expiry": ""
-    })
+            # STORE USER
+            if code and not any(u.get("code") == code for u in users):
+                users.append({
+                    "code": code,
+                    "phone": phone,
+                    "status": "pending",
+                    "plan": "all_models",
+                    "expiry": ""
+                })
+                save_users(users)
 
-    save_users(users)
-        # =========================================================
-        # RENDER (PASS ALL MODELS FOR COMPARISON)
-        # =========================================================
         return render_template(
             "index.html",
-            data=data,  # All models stored here
+            data=data,
             goal_result=goal_result,
             is_premium=is_premium,
             payment=PAYMENT_INFO
