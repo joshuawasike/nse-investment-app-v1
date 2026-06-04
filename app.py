@@ -270,9 +270,6 @@ MODEL_UNIVERSES = {
 # =========================================================
 def simulate(monthly, years, mode, model="dividend"):
 
-    # =========================================================
-    # 🌪️ REGIME-BASED RETURN GENERATION
-    # =========================================================
     base = np.random.randn(N, 300)
 
     if mode == "normal":
@@ -288,35 +285,12 @@ def simulate(monthly, years, mode, model="dividend"):
         drift = 0.0005
         vol = 0.010
 
-    # =========================================================
-# 🌍 MODEL-SPECIFIC MARKET REGIME (CRITICAL FIX)
-# =========================================================
-if model == "dividend":
-    drift_bias = np.array([0.001,0.001,0.001,0.002,0.001,0.001,0.001,0.0])
+    R = base * vol + drift
 
-elif model == "growth":
-    drift_bias = np.array([0.0005,0.001,0.001,0.003,0.001,0.002,0.002,0.005])
+    shock = np.random.standard_t(4, size=(N, 300)) * vol * 0.5
+    R += shock
 
-elif model == "banking":
-    drift_bias = np.array([0.003,0.003,0.003,0.001,0.002,0.004,0.003,0.0])
-
-elif model == "value":
-    drift_bias = np.array([-0.001,0.001,0.0,0.002,0.003,0.004,0.002,0.003])
-
-elif model == "income":
-    drift_bias = np.array([0.002,0.002,0.002,0.004,0.003,0.002,0.001,0.0])
-
-else:
-    drift_bias = np.zeros(N)
-
-R = base * vol + drift + drift_bias
-
-shock = np.random.standard_t(4, size=(N, 300)) * vol * 0.5
-R += shock
-
-    # =========================================================
-    # 🧠 SMART ALLOCATION (FIXED + MODEL-AWARE)
-    # =========================================================
+    # MUST BE INSIDE FUNCTION (same indentation)
     base_weights = optimize_weights(R, mode)
     base_weights = apply_model_bias(base_weights, model)
 
