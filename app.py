@@ -148,9 +148,35 @@ def ai_portfolio_advisor(weights, sim, assets):
         "score": round(score, 2),
         "risk": round(risk, 2)
     }
+def optimize_weights(sim):
+    mean = np.mean(sim, axis=1)
+    vol = np.std(sim, axis=1) + 1e-9
+    downside = np.mean(np.minimum(sim, 0), axis=1)
 
+    # risk-adjusted score (core idea from OLD engine)
+    score = (mean / vol) - (1.1 * np.abs(downside))
+
+    # structural biases (same as OLD but cleaner)
+    score[3] *= 1.3   # Safaricom boost
+    score[7] *= 0.01  # Kenya Airways suppression
+
+    # non-linear shaping (prevents clustering)
+    score = np.tanh(score * 2.0)
+
+    # softmax allocation (key improvement over uniform)
+    weights = np.exp(score - np.max(score))
+    weights = weights / np.sum(weights)
+
+    # hard constraints (VERY important for realism)
+    MIN = np.array([0.03,0.03,0.03,0.10,0.03,0.03,0.03,0.00])
+    MAX = np.array([0.25,0.25,0.25,0.40,0.20,0.20,0.20,0.05])
+
+    weights = np.clip(weights, MIN, MAX)
+    weights = weights / np.sum(weights)
+
+    return weights
 # =========================================================
-# 📊 SIMULATION ENGINE
+# 📊 SIMULATION ENGINE (UPDATED WITH SMART ALLOCATION)
 # =========================================================
 def simulate(monthly, years, mode):
 
@@ -166,7 +192,8 @@ def simulate(monthly, years, mode):
     else:
         R = np.random.randn(N, 300) * 0.01
 
-    weights = np.ones(N) / N
+    # 🔥 SMART ALLOCATION (FIXED)
+    weights = optimize_weights(R)
 
     months = years * 12
     invested = monthly * months
@@ -176,6 +203,11 @@ def simulate(monthly, years, mode):
 
     for t in range(months):
         idx = t % 300
+
+        # 🔁 periodic re-optimization (like OLD engine behavior)
+        if t % 6 == 0:
+            weights = optimize_weights(R)
+
         port_ret = np.dot(weights, R[:, idx])
 
         nav = nav * (1 + port_ret) + monthly
@@ -187,7 +219,7 @@ def simulate(monthly, years, mode):
     dividends = asset_investment * yields
 
     asset_values = asset_investment * (1 + np.array(
-        [0.08,0.07,0.075,0.06,0.055,0.065,0.05,0.0]
+        [0.08, 0.07, 0.075, 0.06, 0.055, 0.065, 0.05, 0.0]
     )) ** years
 
     return {
