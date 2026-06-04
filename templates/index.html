@@ -301,9 +301,9 @@ KES 18,000/year
     {% for model, result in data.items() %}
         <div class="card">
             <h4>{{ model|capitalize }} Model</h4>
-            <p><b>Invested:</b> KES {{ "{:,.0f}".format(result.summary.invested) }}</p>
-            <p><b>Value:</b> KES {{ "{:,.0f}".format(result.summary.value) }}</p>
-            <p><b>Dividends:</b> KES {{ "{:,.0f}".format(result.summary.dividends) }}</p>
+            <p><b>Invested:</b> KES {{ "{:,.0f}".format(result["summary"]["invested"]) }}</p>
+            <p><b>Value:</b> KES {{ "{:,.0f}".format(result["summary"]["value"]) }}</p>
+            <p><b>Dividends:</b> KES {{ "{:,.0f}".format(result["summary"]["dividends"]) }}</p>
             <p><b>Risk Score:</b> {{ result.ai.risk }}</p>
             <h5>Allocation</h5>
             <ul>
