@@ -295,7 +295,35 @@ KES 18,000/year
 </form>
 
 </div>
+<h3>Model Comparison</h3>
 
+<div class="grid">
+    {% for model, result in data.items() %}
+        <div class="card">
+            <h4>{{ model|capitalize }} Model</h4>
+            <p><b>Invested:</b> KES {{ "{:,.0f}".format(result.summary.invested) }}</p>
+            <p><b>Value:</b> KES {{ "{:,.0f}".format(result.summary.value) }}</p>
+            <p><b>Dividends:</b> KES {{ "{:,.0f}".format(result.summary.dividends) }}</p>
+            <p><b>Risk Score:</b> {{ result.ai.risk }}</p>
+            <h5>Allocation</h5>
+            <ul>
+                {% for p in result.plan %}
+                    <li>{{ p.name }}: {{ p.percent }}% (KES {{ p.kes }})</li>
+                {% endfor %}
+            </ul>
+
+            <h5>Returns</h5>
+            <ul>
+                {% for r in result.returns %}
+                    <li>{{ r.name }}: Value KES {{ r.value }}, Dividends KES {{ r.dividends }}</li>
+                {% endfor %}
+            </ul>
+
+            <h5>Chart</h5>
+            <img src="data:image/png;base64,{{ chart_normal if model == 'dividend' else chart_bull if model == 'growth' else chart_bear if model == 'banking' else chart_bear if model == 'value' else chart_bear }}" alt="Chart">
+        </div>
+    {% endfor %}
+</div>
 <!-- ================= NORMAL ================= -->
 {% if data and data.normal %}
 <div class="card">
