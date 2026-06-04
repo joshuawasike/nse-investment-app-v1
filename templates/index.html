@@ -213,17 +213,48 @@ KES 18,000/year
 <div class="card">
 <h3>🧾 Investment Input Terminal</h3>
 
-<form method="POST">
+<form method="POST" class="form-box">
 
-<label>Investment Model</label>
-<select name="model">
-    <option value="dividend">Model 1 - Dividend Blue Chip</option>
-    <option value="growth">Model 2 - Aggressive Growth</option>
-    <option value="banking">Model 3 - Banking Dominance</option>
-    <option value="value">Model 4 - Value Investing</option>
-    <option value="income">Model 5 - High Dividend Income</option>
-</select>
+<!-- ================= MODELS ================= -->
+<h3 style="margin-bottom:10px;">🧠 Investment Models</h3>
 
+<div class="model-grid">
+
+    <label class="model-card model1">
+        <input type="radio" name="model" value="dividend" checked>
+        <b>Model 1</b><br>
+        Dividend Blue Chip
+    </label>
+
+    <label class="model-card model2">
+        <input type="radio" name="model" value="growth">
+        <b>Model 2</b><br>
+        Aggressive Growth
+    </label>
+
+    <label class="model-card model3">
+        <input type="radio" name="model" value="banking">
+        <b>Model 3</b><br>
+        Banking Dominance
+    </label>
+
+    <label class="model-card model4">
+        <input type="radio" name="model" value="value">
+        <b>Model 4</b><br>
+        Value Investing
+    </label>
+
+    <label class="model-card model5">
+        <input type="radio" name="model" value="income">
+        <b>Model 5</b><br>
+        High Dividend Income
+    </label>
+
+</div>
+
+<br>
+
+<!-- ================= INPUTS ================= -->
 <input type="number" name="target_amount" placeholder="Target Amount (KES)">
 <input name="monthly" placeholder="Monthly Investment (KES)" required>
 <input name="years" placeholder="Years" required>
@@ -232,14 +263,6 @@ KES 18,000/year
 
 <button type="submit">🚀 Run Engine</button>
 
-</form>
-<input type="number" name="target_amount" placeholder="Target Amount (KES)">
-<input name="monthly" placeholder="Monthly Investment (KES)" required>
-<input name="years" placeholder="Years" required>
-<input name="transaction_code" placeholder="Transaction Code" required>
-<input name="phone" placeholder="Phone" required>
-<button type="submit">🚀 Run Engine</button>
-</form>
 </div>
 
 <!-- ================= NORMAL ================= -->
