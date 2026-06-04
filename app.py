@@ -19,16 +19,19 @@ def companies():
     import glob
 
     # =========================================================
-# 📊 LOAD NSE DATA (ALL YEARS)
-# =========================================================
-files = glob.glob("NSE_data_all_stock_*.csv")
+    # 📊 LOAD NSE DATA (ALL YEARS)
+    # =========================================================
+    files = glob.glob("NSE_data_all_stock_*.csv")
 
-df = pd.concat([pd.read_csv(f) for f in files])
+    df = pd.concat([pd.read_csv(f) for f in files])
 
-# IMPORTANT: normalize company names
-df["NAME"] = df["NAME"].str.upper().str.strip()
+    # normalize names
+    df["NAME"] = df["NAME"].str.upper().str.strip()
 
-    return "<br>".join(companies)
+    # get unique companies
+    companies = df["NAME"].dropna().unique()
+
+    return "<br>".join(sorted(companies))
 app.secret_key = "jobura_secure_secure_v3"
 
 # =========================================================
