@@ -122,7 +122,16 @@ ASSETS = [
 ]
 
 N = len(ASSETS)
-
+# =========================================================
+# 🧠 MODEL UNIVERSES (CORE STRATEGY ENGINE)
+# =========================================================
+MODEL_UNIVERSES = {
+    "dividend": [3, 0, 1, 2, 4, 6, 5],   # Safaricom, banks, EABL
+    "growth":   [7, 6, 5, 1, 2, 6, 4],   # Kenya Airways, NCBA, Stanbic
+    "banking":  [0, 1, 2, 6],            # Equity, KCB, Co-op, NCBA
+    "value":    [5, 7, 4, 6],            # KenGen, KQ, EABL, NCBA
+    "income":   [3, 4, 1, 0, 2]          # Safaricom + dividend stocks
+}
 # =========================================================
 # 🧠 AI ENGINE
 # =========================================================
@@ -291,8 +300,24 @@ def simulate(monthly, years, mode, model="dividend"):
     # =========================================================
     # 🧠 SMART ALLOCATION (HYBRID ENGINE)
     # =========================================================
-    base_weights = optimize_weights(R, mode)
-    base_weights = apply_model_bias(base_weights, model)
+    # choose model universe FIRST
+idxs = MODEL_UNIVERSES.get(model, list(range(N)))
+
+# build reduced return matrix (ONLY selected stocks)
+R_model = R[idxs, :]
+
+# run optimizer ONLY on model universe
+base_weights = optimize_weights(R_model, mode)
+base_weights = apply_model_bias(base_weights, model)
+
+# expand back to full vector
+weights = np.zeros(N)
+
+subset = base_weights
+subset = subset / np.sum(subset)
+
+for i, idx in enumerate(idxs):
+    weights[idx] = subset[i]
 
     # select model universe
     idxs = MODEL_UNIVERSES.get(model, list(range(N)))
