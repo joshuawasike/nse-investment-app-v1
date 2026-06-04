@@ -148,33 +148,57 @@ def ai_portfolio_advisor(weights, sim, assets):
         "score": round(score, 2),
         "risk": round(risk, 2)
     }
-def optimize_weights(sim):
+def optimize_weights(sim, mode="normal"):
+    # =========================================================
+    # 1. RISK + RETURN STATISTICS
+    # =========================================================
     mean = np.mean(sim, axis=1)
     vol = np.std(sim, axis=1) + 1e-9
     downside = np.mean(np.minimum(sim, 0), axis=1)
 
-    # risk-adjusted score (core idea from OLD engine)
+    # =========================================================
+    # 2. RISK-PARITY BASE (inverse volatility weighting)
+    # =========================================================
+    inv_vol = 1.0 / vol
+    rp_weights = inv_vol / np.sum(inv_vol)
+
+    # =========================================================
+    # 3. RETURN-DRIVEN ALPHA SIGNAL (your old engine logic)
+    # =========================================================
     score = (mean / vol) - (1.1 * np.abs(downside))
 
-    # structural biases (same as OLD but cleaner)
-    score[3] *= 1.3   # Safaricom boost
-    score[7] *= 0.01  # Kenya Airways suppression
+    score[3] *= 1.2   # Safaricom bias
+    score[7] *= 0.05  # Kenya Airways suppression
 
-    # non-linear shaping (prevents clustering)
-    score = np.tanh(score * 2.0)
+    alpha = np.tanh(score * 2.0)
+    alpha_weights = np.exp(alpha - np.max(alpha))
+    alpha_weights = alpha_weights / np.sum(alpha_weights)
 
-    # softmax allocation (key improvement over uniform)
-    weights = np.exp(score - np.max(score))
-    weights = weights / np.sum(weights)
+    # =========================================================
+    # 4. HYBRID BLEND (KEY INNOVATION)
+    # =========================================================
+    w = 0.55 * rp_weights + 0.45 * alpha_weights
 
-    # hard constraints (VERY important for realism)
+    # =========================================================
+    # 5. REGIME TILT (IMPORTANT FOR BULL/BEAR DIFFERENCE)
+    # =========================================================
+    if mode == "bull":
+        w[3] *= 1.15  # Safaricom momentum
+        w[1] *= 1.05  # KCB
+    elif mode == "bear":
+        w[7] *= 0.3   # cut risky exposure
+        w[4] *= 0.85  # EABL defensive tilt
+
+    # =========================================================
+    # 6. CONSTRAINTS (REALISM LAYER)
+    # =========================================================
     MIN = np.array([0.03,0.03,0.03,0.10,0.03,0.03,0.03,0.00])
     MAX = np.array([0.25,0.25,0.25,0.40,0.20,0.20,0.20,0.05])
 
-    weights = np.clip(weights, MIN, MAX)
-    weights = weights / np.sum(weights)
+    w = np.clip(w, MIN, MAX)
+    w = w / np.sum(w)
 
-    return weights
+    return w
 # =========================================================
 # 📊 SIMULATION ENGINE (UPDATED WITH SMART ALLOCATION)
 # =========================================================
