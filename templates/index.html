@@ -214,6 +214,25 @@ KES 18,000/year
 <h3>🧾 Investment Input Terminal</h3>
 
 <form method="POST">
+
+<label>Investment Model</label>
+<select name="model">
+    <option value="dividend">Model 1 - Dividend Blue Chip</option>
+    <option value="growth">Model 2 - Aggressive Growth</option>
+    <option value="banking">Model 3 - Banking Dominance</option>
+    <option value="value">Model 4 - Value Investing</option>
+    <option value="income">Model 5 - High Dividend Income</option>
+</select>
+
+<input type="number" name="target_amount" placeholder="Target Amount (KES)">
+<input name="monthly" placeholder="Monthly Investment (KES)" required>
+<input name="years" placeholder="Years" required>
+<input name="transaction_code" placeholder="Transaction Code" required>
+<input name="phone" placeholder="Phone" required>
+
+<button type="submit">🚀 Run Engine</button>
+
+</form>
 <input type="number" name="target_amount" placeholder="Target Amount (KES)">
 <input name="monthly" placeholder="Monthly Investment (KES)" required>
 <input name="years" placeholder="Years" required>
