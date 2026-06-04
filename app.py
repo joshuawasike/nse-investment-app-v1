@@ -18,20 +18,34 @@ def companies():
     import pandas as pd
     import glob
 
-    # =========================================================
-    # 📊 LOAD NSE DATA (ALL YEARS)
-    # =========================================================
     files = glob.glob("NSE_data_all_stock_*.csv")
 
-    df = pd.concat([pd.read_csv(f) for f in files])
+    if not files:
+        return "No CSV files found"
 
-    # normalize names
-    df["NAME"] = df["NAME"].str.upper().str.strip()
+    df_list = []
 
-    # get unique companies
-    companies = df["NAME"].dropna().unique()
+    for f in files:
+        temp = pd.read_csv(f)
 
-    return "<br>".join(sorted(companies))
+        temp.columns = temp.columns.str.strip().str.upper()
+        df_list.append(temp)
+
+    if len(df_list) == 0:
+        return "No valid CSV data found"
+
+    df = pd.concat(df_list, ignore_index=True)
+
+    df.columns = df.columns.str.strip().str.upper()
+
+    if "NAME" not in df.columns:
+        return f"Missing NAME column. Available columns: {df.columns.tolist()}"
+
+    df["NAME"] = df["NAME"].astype(str).str.upper().str.strip()
+
+    companies = sorted(df["NAME"].dropna().unique())
+
+    return "<br>".join(companies)
 app.secret_key = "jobura_secure_secure_v3"
 
 # =========================================================
