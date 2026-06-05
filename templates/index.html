@@ -297,36 +297,7 @@ KES 18,000/year
 </div>
 <h3>Model Comparison</h3>
 
-<div class="grid">
-    {% for model, result in data.items() %}
-        <div class="card">
-            <h4>{{ model|capitalize }} Model</h4>
-            <p><b>Invested:</b> KES {{ "{:,.0f}".format(result["summary"]["invested"]) }}</p>
-            <p><b>Value:</b> KES {{ "{:,.0f}".format(result["summary"]["value"]) }}</p>
-            <p><b>Dividends:</b> KES {{ "{:,.0f}".format(result["summary"]["dividends"]) }}</p>
-            <p><b>Risk Score:</b> {{ result["ai"]["risk"] }}</p>
-            <h5>Allocation</h5>
-            <ul>
-                {% for p in result.plan %}
-                    <li>{{ p.name }}: {{ p.percent }}% (KES {{ p.kes }})</li>
-                {% endfor %}
-            </ul>
-
-            <h5>Returns</h5>
-            <ul>
-                {% for r in result.returns %}
-                    <li>{{ r.name }}: Value KES {{ r.value }}, Dividends KES {{ r.dividends }}</li>
-                {% endfor %}
-            </ul>
-
-            <h5>Chart</h5>
-            <img src="data:image/png;base64,{{ chart_normal if model == 'dividend' else chart_bull if model == 'growth' else chart_bear if model == 'banking' else chart_bear if model == 'value' else chart_bear }}" alt="Chart">
-        </div>
-    {% endfor %}
-</div>
 {% if data %}
-
-<h2>📊 Model Comparison Dashboard</h2>
 
 <div class="grid">
 
@@ -334,25 +305,26 @@ KES 18,000/year
 
 <div class="card">
 
-<h3>{{ model|upper }}</h3>
+<h4>{{ model|capitalize }} Model</h4>
 
 <p>
 <b>Invested:</b><br>
-KES {{ "{:,.0f}".format(result["summary"]["invested"]) }}
+KES {{ "{:,.0f}".format(result["normal"]["summary"]["invested"]) }}
 </p>
 
 <p>
 <b>Portfolio Value:</b><br>
-KES {{ "{:,.0f}".format(result["summary"]["value"]) }}
+KES {{ "{:,.0f}".format(result["normal"]["summary"]["value"]) }}
 </p>
 
 <p>
 <b>Dividends:</b><br>
-KES {{ "{:,.0f}".format(result["summary"]["dividends"]) }}
+KES {{ "{:,.0f}".format(result["normal"]["summary"]["dividends"]) }}
 </p>
+
 <p>
 <b>Risk Score:</b>
-{{ result["ai"]["risk"] }}
+{{ result["normal"]["ai"]["risk"] }}
 </p>
 
 <h4>Allocation</h4>
@@ -363,12 +335,32 @@ KES {{ "{:,.0f}".format(result["summary"]["dividends"]) }}
 <th>%</th>
 </tr>
 
-{% for p in result["plan"] %}
+{% for p in result["normal"]["plan"] %}
 <tr>
 <td>{{ p["name"] }}</td>
 <td>{{ p["percent"] }}</td>
 </tr>
 {% endfor %}
+
+</table>
+
+<h4>Returns</h4>
+
+<table>
+<tr>
+<th>Asset</th>
+<th>Value</th>
+<th>Dividends</th>
+</tr>
+
+{% for r in result["normal"]["returns"] %}
+<tr>
+<td>{{ r["name"] }}</td>
+<td>KES {{ "{:,.0f}".format(r["value"]) }}</td>
+<td>KES {{ "{:,.0f}".format(r["dividends"]) }}</td>
+</tr>
+{% endfor %}
+
 </table>
 
 </div>
@@ -378,7 +370,6 @@ KES {{ "{:,.0f}".format(result["summary"]["dividends"]) }}
 </div>
 
 {% endif %}
-
 </div>
 </body>
 </html>
