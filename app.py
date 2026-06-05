@@ -416,6 +416,8 @@ def simulate(monthly, years, mode, model="dividend"):
     # 🧠 GET MODEL ASSETS (FROM CSV FILTER)
     # =========================================================
     assets = get_model_assets(model)
+    print("MODEL =", model)
+    print("ASSETS =", assets)
     N_local = len(assets)
 
     # fallback safety
