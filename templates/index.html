@@ -307,41 +307,49 @@ KES 18,000/year
 
 <h4>{{ model|capitalize }} Model</h4>
 
-<p>
-<b>Invested:</b><br>
-KES {{ "{:,.0f}".format(result["normal"]["summary"]["invested"]) }}
-</p>
+{% for scenario_name, scenario in result.items() %}
 
-<p>
-<b>Portfolio Value:</b><br>
-KES {{ "{:,.0f}".format(result["normal"]["summary"]["value"]) }}
-</p>
+<div class="card" style="margin-top:10px; border-left:4px solid #60a5fa;">
+    <h5>{{ scenario_name|upper }} SCENARIO</h5>
 
-<p>
-<b>Dividends:</b><br>
-KES {{ "{:,.0f}".format(result["normal"]["summary"]["dividends"]) }}
-</p>
+    <p>
+        <b>Invested:</b><br>
+        KES {{ "{:,.0f}".format(scenario["summary"]["invested"]) }}
+    </p>
 
-<p>
-<b>Risk Score:</b>
-{{ result["normal"]["ai"]["risk"] }}
-</p>
+    <p>
+        <b>Portfolio Value:</b><br>
+        KES {{ "{:,.0f}".format(scenario["summary"]["value"]) }}
+    </p>
 
-<h4>Allocation</h4>
+    <p>
+        <b>Dividends:</b><br>
+        KES {{ "{:,.0f}".format(scenario["summary"]["dividends"]) }}
+    </p>
 
-<table>
-<tr>
-<th>Asset</th>
-<th>%</th>
-</tr>
+    <p>
+        <b>Risk Score:</b>
+        {{ scenario["ai"]["risk"] }}
+    </p>
 
-{% for p in result["normal"]["plan"] %}
-<tr>
-<td>{{ p["name"] }}</td>
-<td>{{ p["percent"] }}</td>
-</tr>
+    <h4>Allocation</h4>
+    <table>
+        <tr>
+            <th>Asset</th>
+            <th>%</th>
+        </tr>
+
+        {% for p in scenario["plan"] %}
+        <tr>
+            <td>{{ p["name"] }}</td>
+            <td>{{ p["percent"] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+</div>
+
 {% endfor %}
-
 </table>
 
 <h4>Returns</h4>
