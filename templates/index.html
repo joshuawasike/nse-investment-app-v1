@@ -307,45 +307,67 @@ KES 18,000/year
 
 <h4>{{ model|capitalize }} Model</h4>
 
-{% for scenario_name, scenario in result.items() %}
+{% for model, result in data.items() %}
 
-<div class="card" style="margin-top:10px; border-left:4px solid #60a5fa;">
-    <h5>{{ scenario_name|upper }} SCENARIO</h5>
+<div class="card">
 
-    <p>
-        <b>Invested:</b><br>
-        KES {{ "{:,.0f}".format(scenario["summary"]["invested"]) }}
-    </p>
+    <h4>{{ model|capitalize }} Model</h4>
 
-    <p>
-        <b>Portfolio Value:</b><br>
-        KES {{ "{:,.0f}".format(scenario["summary"]["value"]) }}
-    </p>
+    {% for scenario_name, scenario in result.items() %}
 
-    <p>
-        <b>Dividends:</b><br>
-        KES {{ "{:,.0f}".format(scenario["summary"]["dividends"]) }}
-    </p>
+        {% if scenario %}
 
-    <p>
-        <b>Risk Score:</b>
-        {{ scenario["ai"]["risk"] }}
-    </p>
+        <div class="card" style="margin-top:10px; border-left:4px solid #60a5fa;">
 
-    <h4>Allocation</h4>
-    <table>
-        <tr>
-            <th>Asset</th>
-            <th>%</th>
-        </tr>
+            <h5>{{ scenario_name|upper }} SCENARIO</h5>
 
-        {% for p in scenario["plan"] %}
-        <tr>
-            <td>{{ p["name"] }}</td>
-            <td>{{ p["percent"] }}</td>
-        </tr>
-        {% endfor %}
-    </table>
+            <p>
+                <b>Invested:</b><br>
+                KES {{ "{:,.0f}".format(scenario["summary"]["invested"]) }}
+            </p>
+
+            <p>
+                <b>Portfolio Value:</b><br>
+                KES {{ "{:,.0f}".format(scenario["summary"]["value"]) }}
+            </p>
+
+            <p>
+                <b>Dividends:</b><br>
+                KES {{ "{:,.0f}".format(scenario["summary"]["dividends"]) }}
+            </p>
+
+            <p>
+                <b>Risk Score:</b>
+                {{ scenario["ai"]["risk"] }}
+            </p>
+
+            <h4>Allocation</h4>
+
+            <table>
+                <tr>
+                    <th>Asset</th>
+                    <th>%</th>
+                </tr>
+
+                {% for p in scenario["plan"] %}
+                <tr>
+                    <td>{{ p["name"] }}</td>
+                    <td>{{ p["percent"] }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+
+        </div>
+
+        {% endif %}
+
+    {% endfor %}
+
+</div>
+
+{% endfor %}  
+
+</table>
 
 </div>
 
