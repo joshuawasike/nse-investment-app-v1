@@ -356,34 +356,97 @@ def optimize_weights(sim, mode="normal"):
     return w
 def apply_model_bias(weights, model):
 
-    w = weights.copy()
-    n = len(w)
+    w = np.array(weights, dtype=float)
 
-    def safe(i, factor):
-        if i < n:
-            w[i] *= factor
+    if len(w) < 8:
+        return w / np.sum(w)
 
+    # =====================================================
+    # DIVIDEND MODEL
+    # =====================================================
     if model == "dividend":
-        for i, f in enumerate([1.1, 1.1, 1.1, 1.2, 1.15]):
-            safe(i, f)
 
+        target = np.array([
+            0.20,  # EQTY
+            0.18,  # KCB
+            0.15,  # COOP
+            0.10,  # SCOM
+            0.15,  # EABL
+            0.12,  # KEGN
+            0.08,  # NCBA
+            0.02   # KQ
+        ])
+
+    # =====================================================
+    # GROWTH MODEL
+    # =====================================================
     elif model == "growth":
-        for i, f in enumerate([2.0, 1.2, 1.2, 1.1, 1.1]):
-            safe(i, f)
 
+        target = np.array([
+            0.08,
+            0.08,
+            0.08,
+            0.25,
+            0.08,
+            0.08,
+            0.10,
+            0.25
+        ])
+
+    # =====================================================
+    # BANKING MODEL
+    # =====================================================
     elif model == "banking":
-        for i, f in enumerate([1.3, 1.3, 1.2, 1.2]):
-            safe(i, f)
 
+        target = np.array([
+            0.25,
+            0.22,
+            0.20,
+            0.05,
+            0.05,
+            0.05,
+            0.15,
+            0.03
+        ])
+
+    # =====================================================
+    # VALUE MODEL
+    # =====================================================
     elif model == "value":
-        for i, f in enumerate([1.2, 1.2, 1.3, 1.1]):
-            safe(i, f)
 
+        target = np.array([
+            0.08,
+            0.08,
+            0.08,
+            0.05,
+            0.12,
+            0.20,
+            0.12,
+            0.27
+        ])
+
+    # =====================================================
+    # INCOME MODEL
+    # =====================================================
     elif model == "income":
-        for i, f in enumerate([1.2, 1.2, 1.1, 1.1]):
-            safe(i, f)
 
-    w = np.maximum(w, 1e-6)
+        target = np.array([
+            0.10,
+            0.15,
+            0.15,
+            0.10,
+            0.25,
+            0.15,
+            0.08,
+            0.02
+        ])
+
+    else:
+        target = np.ones(len(w))
+
+    # blend optimizer with model identity
+    w = (0.30 * w) + (0.70 * target)
+
     w = w / np.sum(w)
 
     return w
@@ -536,7 +599,23 @@ def simulate(monthly, years, mode, model="dividend"):
     yields = np.array([a[2] for a in assets])
     dividends = asset_investment * yields
 
-    base_returns = np.linspace(0.04, 0.08, N_local)
+    if model == "dividend":
+    base_returns = np.linspace(0.08, 0.14, N_local)
+
+elif model == "growth":
+    base_returns = np.linspace(0.15, 0.35, N_local)
+
+elif model == "banking":
+    base_returns = np.linspace(0.09, 0.16, N_local)
+
+elif model == "value":
+    base_returns = np.linspace(0.12, 0.22, N_local)
+
+elif model == "income":
+    base_returns = np.linspace(0.07, 0.13, N_local)
+
+else:
+    base_returns = np.linspace(0.05, 0.10, N_local)
     asset_values = asset_investment * (1 + base_returns) ** years
 
     # =========================================================
