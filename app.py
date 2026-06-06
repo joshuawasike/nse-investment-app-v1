@@ -295,48 +295,54 @@ def optimize_weights(sim, mode="normal"):
 def apply_model_bias(weights, model):
 
     w = weights.copy()
+    n = len(w)
 
+    def safe(i, factor):
+        if i < n:
+            w[i] *= factor
+
+    # =========================================================
     # DIVIDEND BLUE CHIP
+    # =========================================================
     if model == "dividend":
-        w[3] *= 1.2
-        w[0] *= 1.1
-        w[1] *= 1.1
-        w[2] *= 1.1
-        w[4] *= 1.15
+        for i, f in enumerate([1.1, 1.1, 1.1, 1.2, 1.15]):
+            safe(i, f)
 
+    # =========================================================
     # GROWTH
+    # =========================================================
     elif model == "growth":
-        w[7] *= 2.0
-        w[5] *= 1.2
-        w[6] *= 1.2
+        for i, f in enumerate([2.0, 1.2, 1.2, 1.1, 1.1]):
+            safe(i, f)
 
+    # =========================================================
     # BANKING
+    # =========================================================
     elif model == "banking":
-        w[0] *= 1.3
-        w[1] *= 1.3
-        w[2] *= 1.2
-        w[6] *= 1.2
+        for i, f in enumerate([1.3, 1.3, 1.2, 1.2]):
+            safe(i, f)
 
+    # =========================================================
     # VALUE
+    # =========================================================
     elif model == "value":
-        w[5] *= 1.2
-        w[6] *= 1.2
-        w[7] *= 1.3
-        w[4] *= 1.1
+        for i, f in enumerate([1.2, 1.2, 1.3, 1.1]):
+            safe(i, f)
 
+    # =========================================================
     # INCOME
+    # =========================================================
     elif model == "income":
-        w[3] *= 1.2
-        w[4] *= 1.2
-        w[1] *= 1.1
-        w[0] *= 1.1
+        for i, f in enumerate([1.2, 1.2, 1.1, 1.1]):
+            safe(i, f)
 
+    # =========================================================
     # FINAL NORMALIZATION SAFETY
+    # =========================================================
     w = np.maximum(w, 1e-6)
     w = w / np.sum(w)
 
-    return w
-def ai_portfolio_advisor(weights, sim, assets):
+    return wdef ai_portfolio_advisor(weights, sim, assets):
     insights = []
 
     mean = np.mean(sim, axis=1)
