@@ -173,51 +173,65 @@ def get_model_assets(model):
     df = get_df()
 
     if df is None or df.empty or "CODE" not in df.columns:
-        return ASSETS[:4]  # small fallback only
+        return ASSETS[:8]
 
+    df = df.copy()
     df["CODE"] = df["CODE"].astype(str).str.upper().str.strip()
 
     # =========================================================
-    # 🧠 SECTOR-BASED MARKET UNIVERSES (NO MORE MODEL CLONING)
+    # 📊 AGGREGATE PERFORMANCE PER COMPANY
     # =========================================================
-    sector_map = {
+    grouped = df.groupby("CODE")["PREVIOUS"].agg(["mean", "std"]).reset_index()
+    grouped = grouped.dropna()
 
-        "banking": ["EQTY", "KCB", "COOP", "NCBA", "DTB", "SBIC", "IM", "ABSA"],
+    grouped["return_score"] = grouped["mean"]
+    grouped["risk_score"] = grouped["std"] + 1e-9
+    grouped["sharpe_like"] = grouped["return_score"] / grouped["risk_score"]
 
-        "telecom": ["SCOM"],
+    # =========================================================
+    # 🎯 MODEL BIAS (THIS IS KEY DIFFERENCE)
+    # =========================================================
+    def model_bias(code):
+        code = str(code)
 
-        "growth": ["KQ", "CIC", "ARM", "BAMB", "TPSE"],
+        if model == "dividend":
+            return 1.2 if code in ["EABL","KCB","EQTY","COOP","KEGN"] else 1.0
 
-        "dividend": ["BAT", "EABL", "KEGN", "KPLC", "TOTL"],
+        elif model == "growth":
+            return 1.3 if code in ["KQ","NCBA","SCOM","ARM"] else 1.0
 
-        "value": ["NMG", "CTUM", "LKL", "OCH", "SCAN"]
-    }
+        elif model == "banking":
+            return 1.4 if code in ["KCB","EQTY","COOP","NCBA","DTB"] else 0.9
 
-    selected_codes = sector_map.get(model, sector_map["dividend"])
+        elif model == "value":
+            return 1.2 if code in ["NMG","KPLC","KEGN"] else 1.0
+
+        elif model == "income":
+            return 1.3 if code in ["EABL","BAT","KPLC"] else 1.0
+
+        return 1.0
+
+    grouped["bias"] = grouped["CODE"].apply(model_bias)
+
+    # =========================================================
+    # 🧠 FINAL SCORE
+    # =========================================================
+    grouped["score"] = grouped["sharpe_like"] * grouped["bias"]
+
+    # =========================================================
+    # 🏆 SELECT TOP 8
+    # =========================================================
+    top = grouped.sort_values("score", ascending=False).head(8)
 
     assets = []
-
-    for code in selected_codes:
-
-        match = df[df["CODE"].str.contains(code, na=False)]
-
-        if not match.empty:
-
-            row = match.iloc[0]
-
-            assets.append(
-                (
-                    row["CODE"],
-                    code,
-                    np.random.uniform(0.04, 0.12)
-                )
+    for _, row in top.iterrows():
+        assets.append(
+            (
+                row["CODE"],      # name placeholder
+                row["CODE"],      # symbol
+                np.random.uniform(0.04, 0.12)
             )
-
-    # =========================================================
-    # 🔥 HARD GUARANTEE: NO FULL FALLBACK CLONING
-    # =========================================================
-    if len(assets) < 3:
-        return assets + ASSETS[:2]
+        )
 
     return assets
 # =========================================================
