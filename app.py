@@ -190,7 +190,7 @@ def get_model_assets(model):
 
     selected = model_map.get(model, [])
 
-    assets = []
+assets = []
 
 for code in selected:
 
@@ -209,7 +209,8 @@ for code in selected:
                 np.random.uniform(0.05, 0.12)
             )
         )
-    return assets if assets else ASSETS
+
+return assets if assets else ASSETS
 # =========================================================
 # 📊 ASSETS
 # =========================================================
