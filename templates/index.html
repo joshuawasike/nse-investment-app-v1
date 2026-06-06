@@ -305,12 +305,6 @@ KES 18,000/year
 
 <div class="card">
 
-<h4>{{ model|capitalize }} Model</h4>
-
-{% for model, result in data.items() %}
-
-<div class="card">
-
     <h4>{{ model|capitalize }} Model</h4>
 
     {% for scenario_name, scenario in result.items() %}
@@ -355,6 +349,17 @@ KES 18,000/year
                     <td>{{ p["percent"] }}</td>
                 </tr>
                 {% endfor %}
+            </table>
+
+        </div>
+
+        {% endif %}
+
+    {% endfor %}
+
+</div>
+
+{% endfor %}
             </table>
 
         </div>
