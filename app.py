@@ -166,60 +166,80 @@ def get_df():
         df = load_data()
     return df
 # =========================================================
-# 🧠 MODEL → REAL COMPANY MAPPING
+# 🧠 MODEL → REAL COMPANY MAPPING (IMPROVED VERSION)
 # =========================================================
 def get_model_assets(model):
 
     df = get_df()
 
-    if df is None or df.empty:
+    if df is None or df.empty or "CODE" not in df.columns:
         return ASSETS
 
-    df.columns = [c.upper().strip() for c in df.columns]
+    df["CODE"] = df["CODE"].astype(str).str.upper().str.strip()
 
-    # safer column detection
-    code_col = None
-    for col in ["CODE", "SYMBOL", "TICKER"]:
-        if col in df.columns:
-            code_col = col
-            break
-
-    if code_col is None:
-        return ASSETS
-
-    df[code_col] = df[code_col].astype(str).str.upper().str.strip()
-
+    # =========================================================
+    # 📊 STRICT MODEL UNIVERSES (LESS OVERLAP = MORE REALISM)
+    # =========================================================
     model_map = {
-        "dividend": ["SCOM", "KCB", "EQTY", "COOP", "NCBA", "EABL", "KEGN", "BAT"],
-        "growth": ["KQ", "CIC", "JUB", "SBIC", "DTB", "IM", "ABSA", "CARB"],
-        "banking": ["EQTY", "KCB", "NCBA", "IM", "SBIC", "DTB", "ABSA", "COOP"],
-        "value": ["BAMB", "KR", "NMG", "CIC", "TPS", "KPLC", "CTUM", "LNGH"],
-        "income": ["BAT", "EABL", "SCOM", "KEGN", "SBIC", "NCBA", "COOP", "KCB"]
+        "dividend": ["SCOM", "EABL", "KEGN", "BAT", "KCB", "COOP"],
+        
+        "growth": ["KQ", "ABSA", "DTB", "IM", "NCBA", "CIC"],
+        
+        "banking": ["EQTY", "KCB", "COOP", "NCBA", "DTB", "IM", "ABSA"],
+        
+        "value": ["BAMB", "KPLC", "CTUM", "NMG", "LKL", "TPSE"],
+        
+        "income": ["SCOM", "EABL", "BAT", "KEGN", "KCB", "NCBA"]
     }
 
-    selected = model_map.get(model, [])
+    selected_codes = model_map.get(model, model_map["dividend"])
 
     assets = []
 
-    for code in selected:
+    # =========================================================
+    # 📈 BUILD MODEL-SPECIFIC ASSETS
+    # =========================================================
+    for code in selected_codes:
 
-        match = df[df[code_col].str.contains(code, na=False)]
+        match = df[df["CODE"].str.contains(code, na=False)]
 
         if not match.empty:
 
             row = match.iloc[0]
 
-            assets.append((
-                str(row[code_col]),
-                code,
-                np.random.uniform(0.04, 0.10)
-            ))
+            company_name = row["CODE"]
 
-    # 🔥 IMPORTANT DEBUG
-    print("MODEL ASSETS USED:", model, assets)
+            # =========================================================
+            # 🧠 MODEL-DRIVEN DIVIDEND YIELD (IMPORTANT FIX)
+            # =========================================================
+            if model == "dividend":
+                yield_range = (0.08, 0.14)
+            elif model == "income":
+                yield_range = (0.07, 0.13)
+            elif model == "banking":
+                yield_range = (0.05, 0.10)
+            elif model == "growth":
+                yield_range = (0.02, 0.06)
+            else:  # value
+                yield_range = (0.04, 0.09)
 
-    return assets if len(assets) > 0 else ASSETS
+            dividend_yield = np.random.uniform(*yield_range)
 
+            assets.append(
+                (
+                    company_name,
+                    code,
+                    dividend_yield
+                )
+            )
+
+    # =========================================================
+    # 🔁 SAFETY FALLBACK (ONLY IF EMPTY)
+    # =========================================================
+    if len(assets) == 0:
+        return ASSETS
+
+    return assets
 # =========================================================
 # 📊 ASSETS
 # =========================================================
