@@ -192,12 +192,23 @@ def get_model_assets(model):
 
     assets = []
 
-    for code in selected:
-        match = df[df["CODE"].str.contains(code, na=False)]
+for code in selected:
 
-        if not match.empty:
-            assets.append((code, code, 0.07))
+    match = df[df["CODE"].str.contains(code, na=False)]
 
+    if not match.empty:
+
+        row = match.iloc[0]
+
+        company_name = row["CODE"]
+
+        assets.append(
+            (
+                company_name,
+                code,
+                np.random.uniform(0.05, 0.12)
+            )
+        )
     return assets if assets else ASSETS
 # =========================================================
 # 📊 ASSETS
@@ -214,66 +225,7 @@ ASSETS = [
 ]
 
 N = len(ASSETS)
-# =========================================================
-# 🧠 MODEL COMPANIES (REAL CSV-BASED FILTERING)
-# =========================================================
 
-MODEL_COMPANIES = {
-    "dividend": [
-        "SAFARICOM",
-        "KCB GROUP",
-        "EQUITY BANK",
-        "CO-OP BANK",
-        "NCBA BANK",
-        "EABL",
-        "KENGEN",
-        "BAT"
-    ],
-
-    "growth": [
-        "KENYA AIRWAYS",
-        "CARBACID",
-        "CIC INSURANCE",
-        "JUBILEE HOLDINGS",
-        "STANBIC",
-        "DIAMOND TRUST BANK",
-        "I&M BANK",
-        "ABSA BANK"
-    ],
-
-    "banking": [
-        "EQUITY BANK",
-        "KCB GROUP",
-        "NCBA BANK",
-        "I&M BANK",
-        "STANBIC",
-        "DIAMOND TRUST BANK",
-        "ABSA BANK",
-        "CO-OP BANK"
-    ],
-
-    "value": [
-        "BAMBURI CEMENT",
-        "KENYA RE",
-        "NATION MEDIA GROUP",
-        "CIC INSURANCE",
-        "TPS SERENA",
-        "KENYA POWER",
-        "CENTUM",
-        "LONGHORN"
-    ],
-
-    "income": [
-        "BAT",
-        "EABL",
-        "SAFARICOM",
-        "KENGEN",
-        "STANBIC",
-        "NCBA BANK",
-        "CO-OP BANK",
-        "KCB GROUP"
-    ]
-}
 # =========================================================
 # 🧠 AI ENGINE
 # =========================================================
