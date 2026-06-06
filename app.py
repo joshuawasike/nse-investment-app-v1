@@ -166,7 +166,7 @@ def get_df():
         df = load_data()
     return df
 # =========================================================
-# 🧠 MODEL → REAL COMPANY MAPPING (STEP 4A GOES HERE)
+# 🧠 MODEL → REAL COMPANY MAPPING
 # =========================================================
 def get_model_assets(model):
 
@@ -190,27 +190,29 @@ def get_model_assets(model):
 
     selected = model_map.get(model, [])
 
-assets = []
+    assets = []
 
-for code in selected:
+    for code in selected:
 
-    match = df[df["CODE"].str.contains(code, na=False)]
+        match = df[df["CODE"].str.contains(code, na=False)]
 
-    if not match.empty:
+        if not match.empty:
 
-        row = match.iloc[0]
+            row = match.iloc[0]
 
-        company_name = row["CODE"]
+            company_name = row["CODE"]
 
-        assets.append(
-            (
-                company_name,
-                code,
-                np.random.uniform(0.05, 0.12)
+            assets.append(
+                (
+                    company_name,
+                    code,
+                    np.random.uniform(0.05, 0.12)
+                )
             )
-        )
 
-return assets if assets else ASSETS
+    return assets if assets else ASSETS
+
+
 # =========================================================
 # 📊 ASSETS
 # =========================================================
@@ -226,7 +228,6 @@ ASSETS = [
 ]
 
 N = len(ASSETS)
-
 # =========================================================
 # 🧠 AI ENGINE
 # =========================================================
