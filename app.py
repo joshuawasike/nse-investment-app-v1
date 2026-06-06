@@ -342,7 +342,9 @@ def apply_model_bias(weights, model):
     w = np.maximum(w, 1e-6)
     w = w / np.sum(w)
 
-    return wdef ai_portfolio_advisor(weights, sim, assets):
+    return w
+    
+def ai_portfolio_advisor(weights, sim, assets):
     insights = []
 
     mean = np.mean(sim, axis=1)
