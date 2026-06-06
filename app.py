@@ -175,14 +175,23 @@ def get_model_assets(model):
     if df is None or df.empty:
         return ASSETS
 
-    if "CODE" not in df.columns:
+    df.columns = [c.upper().strip() for c in df.columns]
+
+    # safer column detection
+    code_col = None
+    for col in ["CODE", "SYMBOL", "TICKER"]:
+        if col in df.columns:
+            code_col = col
+            break
+
+    if code_col is None:
         return ASSETS
 
-    df["CODE"] = df["CODE"].astype(str).str.upper().str.strip()
+    df[code_col] = df[code_col].astype(str).str.upper().str.strip()
 
     model_map = {
         "dividend": ["SCOM", "KCB", "EQTY", "COOP", "NCBA", "EABL", "KEGN", "BAT"],
-        "growth": ["KQ", "CARB", "CIC", "JUB", "SBIC", "DTB", "IM", "ABSA"],
+        "growth": ["KQ", "CIC", "JUB", "SBIC", "DTB", "IM", "ABSA", "CARB"],
         "banking": ["EQTY", "KCB", "NCBA", "IM", "SBIC", "DTB", "ABSA", "COOP"],
         "value": ["BAMB", "KR", "NMG", "CIC", "TPS", "KPLC", "CTUM", "LNGH"],
         "income": ["BAT", "EABL", "SCOM", "KEGN", "SBIC", "NCBA", "COOP", "KCB"]
@@ -194,24 +203,22 @@ def get_model_assets(model):
 
     for code in selected:
 
-        match = df[df["CODE"].str.contains(code, na=False)]
+        match = df[df[code_col].str.contains(code, na=False)]
 
         if not match.empty:
 
             row = match.iloc[0]
 
-            company_name = row["CODE"]
+            assets.append((
+                str(row[code_col]),
+                code,
+                np.random.uniform(0.04, 0.10)
+            ))
 
-            assets.append(
-                (
-                    company_name,
-                    code,
-                    np.random.uniform(0.05, 0.12)
-                )
-            )
+    # 🔥 IMPORTANT DEBUG
+    print("MODEL ASSETS USED:", model, assets)
 
-    return assets if assets else ASSETS
-
+    return assets if len(assets) > 0 else ASSETS
 
 # =========================================================
 # 📊 ASSETS
