@@ -173,32 +173,30 @@ def get_model_assets(model):
     df = get_df()
 
     if df is None or df.empty or "CODE" not in df.columns:
-        return ASSETS
+        return ASSETS[:4]  # small fallback only
 
     df["CODE"] = df["CODE"].astype(str).str.upper().str.strip()
 
     # =========================================================
-    # 📊 STRICT MODEL UNIVERSES (LESS OVERLAP = MORE REALISM)
+    # 🧠 SECTOR-BASED MARKET UNIVERSES (NO MORE MODEL CLONING)
     # =========================================================
-    model_map = {
-        "dividend": ["SCOM", "EABL", "KEGN", "BAT", "KCB", "COOP"],
-        
-        "growth": ["KQ", "ABSA", "DTB", "IM", "NCBA", "CIC"],
-        
-        "banking": ["EQTY", "KCB", "COOP", "NCBA", "DTB", "IM", "ABSA"],
-        
-        "value": ["BAMB", "KPLC", "CTUM", "NMG", "LKL", "TPSE"],
-        
-        "income": ["SCOM", "EABL", "BAT", "KEGN", "KCB", "NCBA"]
+    sector_map = {
+
+        "banking": ["EQTY", "KCB", "COOP", "NCBA", "DTB", "SBIC", "IM", "ABSA"],
+
+        "telecom": ["SCOM"],
+
+        "growth": ["KQ", "CIC", "ARM", "BAMB", "TPSE"],
+
+        "dividend": ["BAT", "EABL", "KEGN", "KPLC", "TOTL"],
+
+        "value": ["NMG", "CTUM", "LKL", "OCH", "SCAN"]
     }
 
-    selected_codes = model_map.get(model, model_map["dividend"])
+    selected_codes = sector_map.get(model, sector_map["dividend"])
 
     assets = []
 
-    # =========================================================
-    # 📈 BUILD MODEL-SPECIFIC ASSETS
-    # =========================================================
     for code in selected_codes:
 
         match = df[df["CODE"].str.contains(code, na=False)]
@@ -207,37 +205,19 @@ def get_model_assets(model):
 
             row = match.iloc[0]
 
-            company_name = row["CODE"]
-
-            # =========================================================
-            # 🧠 MODEL-DRIVEN DIVIDEND YIELD (IMPORTANT FIX)
-            # =========================================================
-            if model == "dividend":
-                yield_range = (0.08, 0.14)
-            elif model == "income":
-                yield_range = (0.07, 0.13)
-            elif model == "banking":
-                yield_range = (0.05, 0.10)
-            elif model == "growth":
-                yield_range = (0.02, 0.06)
-            else:  # value
-                yield_range = (0.04, 0.09)
-
-            dividend_yield = np.random.uniform(*yield_range)
-
             assets.append(
                 (
-                    company_name,
+                    row["CODE"],
                     code,
-                    dividend_yield
+                    np.random.uniform(0.04, 0.12)
                 )
             )
 
     # =========================================================
-    # 🔁 SAFETY FALLBACK (ONLY IF EMPTY)
+    # 🔥 HARD GUARANTEE: NO FULL FALLBACK CLONING
     # =========================================================
-    if len(assets) == 0:
-        return ASSETS
+    if len(assets) < 3:
+        return assets + ASSETS[:2]
 
     return assets
 # =========================================================
