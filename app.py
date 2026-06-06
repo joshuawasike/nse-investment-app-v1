@@ -379,11 +379,12 @@ def simulate(monthly, years, mode, model="dividend"):
     assets = get_model_assets(model)
     print("MODEL =", model)
     print("ASSETS =", assets)
+
     N_local = len(assets)
 
     # fallback safety
     if N_local == 0:
-        assets = ASSETS
+        assets = ASSETS[:4]
         N_local = len(assets)
 
     # =========================================================
@@ -405,6 +406,19 @@ def simulate(monthly, years, mode, model="dividend"):
         vol = 0.010
 
     R = base * vol + drift
+
+    # =========================================================
+    # 🧠 MODEL DIFFERENTIATION BOOST (FIXED POSITION)
+    # =========================================================
+    model_factor = {
+        "dividend": 0.9,
+        "growth": 1.4,
+        "banking": 1.0,
+        "value": 0.8,
+        "bear": 0.7
+    }.get(model, 1.0)
+
+    R = R * model_factor
 
     # fat-tail shocks
     shock = np.random.standard_t(4, size=(N_local, 300)) * vol * 0.5
@@ -447,9 +461,8 @@ def simulate(monthly, years, mode, model="dividend"):
     yields = np.array([a[2] for a in assets])
     dividends = asset_investment * yields
 
-    asset_values = asset_investment * (1 + np.array(
-        [0.08, 0.07, 0.075, 0.06, 0.055, 0.065, 0.05, 0.0][:N_local]
-    )) ** years
+    base_returns = np.linspace(0.05, 0.09, N_local)
+    asset_values = asset_investment * (1 + base_returns) ** years
 
     # =========================================================
     # 📦 RESULT OUTPUT
