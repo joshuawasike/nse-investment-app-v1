@@ -417,7 +417,7 @@ MODEL_UNIVERSES = {
     "income":   [3,4,1,0,2]        # dividend-heavy names
 }
 # =========================================================
-# 📊 SIMULATION ENGINE (STABLE + REALISTIC MARKET FIX)
+# 📊 SIMULATION ENGINE (PROFESSIONAL STABLE MARKET MODEL)
 # =========================================================
 def simulate(monthly, years, mode, model="dividend"):
 
@@ -432,14 +432,14 @@ def simulate(monthly, years, mode, model="dividend"):
         N_local = len(assets)
 
     # =========================================================
-    # 🧠 MODEL MARKET PERSONALITY
+    # 🧠 MODEL PARAMETERS (REALISTIC MARKET BEHAVIOR)
     # =========================================================
     model_params = {
-        "dividend": (0.0010, 0.008, 0.6),
-        "growth":   (0.0030, 0.018, 1.2),
-        "banking":  (0.0015, 0.010, 0.8),
-        "value":    (0.0010, 0.012, 0.7),
-        "income":   (0.0012, 0.009, 0.5),
+        "dividend": (0.0008, 0.006, 0.5),
+        "growth":   (0.0025, 0.015, 1.0),
+        "banking":  (0.0012, 0.009, 0.7),
+        "value":    (0.0009, 0.010, 0.6),
+        "income":   (0.0010, 0.007, 0.5),
     }
 
     drift_base, vol_base, momentum = model_params.get(model, (0.001, 0.01, 0.6))
@@ -449,41 +449,44 @@ def simulate(monthly, years, mode, model="dividend"):
     # =========================================================
     regime_multiplier = {
         "normal": 1.0,
-        "bull": 1.15,
-        "bear": 0.85
+        "bull": 1.10,
+        "bear": 0.90
     }.get(mode, 1.0)
 
     drift = drift_base * regime_multiplier
     vol = vol_base * regime_multiplier
 
     # =========================================================
-    # 📊 MARKET GENERATION (STABLE + BOUNDED)
+    # 📊 MARKET GENERATION (CONTROLLED RANDOM WALK)
     # =========================================================
     base = np.random.randn(N_local, 300)
 
-    # controlled trend (IMPORTANT FIX)
-    trend = np.cumsum(base * 0.3, axis=1) * (vol * momentum)
+    # mild trend (IMPORTANT FIX)
+    trend = base * vol * momentum
 
-    # fat-tail shocks (CAPPED)
-    shock = np.random.standard_t(5, size=(N_local, 300)) * vol * 0.25
+    # mean reversion component (CRITICAL STABILITY FIX)
+    mean_reversion = -0.01 * np.cumsum(trend, axis=1)
 
-    R = drift + trend + shock
+    # fat tail shocks (LIMITED)
+    shock = np.random.standard_t(6, size=(N_local, 300)) * vol * 0.15
 
-    # =========================================================
-    # 🚨 HARD SAFETY CLAMP (CRITICAL FIX)
-    # prevents trillion/quadrillion explosions
-    # =========================================================
-    R = np.clip(R, -0.08, 0.08)
+    # final returns
+    R = drift + trend + mean_reversion + shock
 
     # =========================================================
-    # 🧠 MODEL BOOST (SMOOTHED)
+    # 🚨 HARD RETURN SAFETY CLAMP (CRITICAL)
+    # =========================================================
+    R = np.clip(R, -0.04, 0.05)
+
+    # =========================================================
+    # 🧠 MODEL BOOST (SOFT)
     # =========================================================
     model_boost = {
-        "dividend": 0.95,
-        "growth": 1.25,
+        "dividend": 0.98,
+        "growth": 1.15,
         "banking": 1.05,
-        "value": 0.90,
-        "income": 0.92
+        "value": 0.95,
+        "income": 0.97
     }.get(model, 1.0)
 
     R *= model_boost
@@ -495,7 +498,7 @@ def simulate(monthly, years, mode, model="dividend"):
     weights = apply_model_bias(weights, model)
 
     # =========================================================
-    # 📊 SIMULATION LOOP (STABLE COMPOUNDING FIX)
+    # 📊 SIMULATION LOOP (REALISTIC COMPOUNDING FIX)
     # =========================================================
     months = years * 12
     invested = monthly * months
@@ -514,14 +517,14 @@ def simulate(monthly, years, mode, model="dividend"):
 
         port_ret = np.dot(weights, R[:, idx])
 
-        # 🚨 HARD RETURN LIMIT (CRITICAL FIX)
-        port_ret = np.clip(port_ret, -0.05, 0.06)
+        # safe bounds (VERY IMPORTANT)
+        port_ret = np.clip(port_ret, -0.03, 0.04)
 
-        # safer compounding
+        # realistic compounding
         nav = nav * (1 + port_ret)
 
-        # add contribution AFTER growth
-        nav += monthly
+        # contributions smooth (not explosive)
+        nav += monthly * 0.98
 
         curve.append(nav)
 
@@ -533,7 +536,7 @@ def simulate(monthly, years, mode, model="dividend"):
     yields = np.array([a[2] for a in assets])
     dividends = asset_investment * yields
 
-    base_returns = np.linspace(0.05, 0.09, N_local)
+    base_returns = np.linspace(0.04, 0.08, N_local)
     asset_values = asset_investment * (1 + base_returns) ** years
 
     # =========================================================
@@ -542,7 +545,7 @@ def simulate(monthly, years, mode, model="dividend"):
     return {
         "summary": {
             "invested": invested,
-            "value": float(np.clip(nav, 0, 1e12)),  # FINAL SAFETY CAP
+            "value": float(np.clip(nav, 0, 5e10)),  # safe cap
             "dividends": float(np.sum(dividends))
         },
 
