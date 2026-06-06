@@ -179,7 +179,7 @@ def get_model_assets(model):
     df["CODE"] = df["CODE"].astype(str).str.upper().str.strip()
 
     # =========================================================
-    # 📊 AGGREGATE PERFORMANCE PER COMPANY
+    # 📊 BASIC PERFORMANCE ENGINE
     # =========================================================
     grouped = df.groupby("CODE")["PREVIOUS"].agg(["mean", "std"]).reset_index()
     grouped = grouped.dropna()
@@ -189,49 +189,97 @@ def get_model_assets(model):
     grouped["sharpe_like"] = grouped["return_score"] / grouped["risk_score"]
 
     # =========================================================
-    # 🎯 MODEL BIAS (THIS IS KEY DIFFERENCE)
+    # 🧠 MODEL UNIVERSES (HARD SEGMENTATION - KEY FIX)
+    # =========================================================
+    model_universe = {
+        "dividend": ["EABL","KCB","EQTY","COOP","KEGN","SCOM","KPLC","BAT"],
+        "growth":   ["NCBA","SCOM","KQ","ARM","KCB","EQTY","COOP"],
+        "banking":  ["KCB","EQTY","COOP","NCBA","DTB","SBM"],
+        "value":    ["NMG","KPLC","KEGN","EABL","COOP","KCB"],
+        "income":   ["EABL","BAT","KPLC","SCOM","COOP","KCB"]
+    }
+
+    allowed = model_universe.get(model, None)
+
+    # =========================================================
+    # 🧠 FILTER UNIVERSE (VERY IMPORTANT FIX)
+    # =========================================================
+    if allowed is not None:
+        grouped = grouped[grouped["CODE"].isin(allowed)]
+
+    # fallback safety
+    if grouped.empty:
+        grouped = df.groupby("CODE")["PREVIOUS"].agg(["mean","std"]).reset_index()
+        grouped["return_score"] = grouped["mean"]
+        grouped["risk_score"] = grouped["std"] + 1e-9
+        grouped["sharpe_like"] = grouped["return_score"] / grouped["risk_score"]
+
+    # =========================================================
+    # 🎯 STRONG MODEL BIAS (NOW STRUCTURALLY MEANINGFUL)
     # =========================================================
     def model_bias(code):
+
         code = str(code)
 
         if model == "dividend":
-            return 1.2 if code in ["EABL","KCB","EQTY","COOP","KEGN"] else 1.0
+            return 1.6 if code in ["EABL","KCB","COOP","KEGN"] else 1.1
 
         elif model == "growth":
-            return 1.3 if code in ["KQ","NCBA","SCOM","ARM"] else 1.0
+            return 1.7 if code in ["NCBA","SCOM","KQ"] else 1.0
 
         elif model == "banking":
-            return 1.4 if code in ["KCB","EQTY","COOP","NCBA","DTB"] else 0.9
+            return 1.8 if code in ["KCB","EQTY","COOP","NCBA"] else 0.7
 
         elif model == "value":
-            return 1.2 if code in ["NMG","KPLC","KEGN"] else 1.0
+            return 1.5 if code in ["NMG","KPLC","KEGN"] else 0.9
 
         elif model == "income":
-            return 1.3 if code in ["EABL","BAT","KPLC"] else 1.0
+            return 1.6 if code in ["EABL","BAT","KPLC"] else 1.0
 
         return 1.0
 
     grouped["bias"] = grouped["CODE"].apply(model_bias)
 
     # =========================================================
-    # 🧠 FINAL SCORE
+    # 🧠 FINAL SCORE (NOW MEANINGFULLY DIFFERENT PER MODEL)
     # =========================================================
-    grouped["score"] = grouped["sharpe_like"] * grouped["bias"]
+    grouped["score"] = (
+        grouped["sharpe_like"] * grouped["bias"]
+    )
 
     # =========================================================
-    # 🏆 SELECT TOP 8
+    # 🏆 TOP PICKS WITH DIVERSITY CONTROL
     # =========================================================
-    top = grouped.sort_values("score", ascending=False).head(8)
+    grouped = grouped.sort_values("score", ascending=False)
 
-    assets = []
-    for _, row in top.iterrows():
-        assets.append(
-            (
-                row["CODE"],      # name placeholder
-                row["CODE"],      # symbol
-                np.random.uniform(0.04, 0.12)
-            )
+    selected = []
+    used = set()
+
+    for _, row in grouped.iterrows():
+
+        code = row["CODE"]
+
+        # prevent duplicates inside same run
+        if code in used:
+            continue
+
+        selected.append(row)
+        used.add(code)
+
+        if len(selected) == 8:
+            break
+
+    # =========================================================
+    # 📦 OUTPUT FORMAT (UNCHANGED INTERFACE)
+    # =========================================================
+    assets = [
+        (
+            r["CODE"],   # name
+            r["CODE"],   # symbol
+            np.random.uniform(0.04, 0.12)
         )
+        for r in selected
+    ]
 
     return assets
 # =========================================================
@@ -369,7 +417,7 @@ MODEL_UNIVERSES = {
     "income":   [3,4,1,0,2]        # dividend-heavy names
 }
 # =========================================================
-# 📊 SIMULATION ENGINE (MODEL-DRIVEN MARKET GENERATOR FIX)
+# 📊 SIMULATION ENGINE (FULL MODEL-SEPARATED VERSION)
 # =========================================================
 def simulate(monthly, years, mode, model="dividend"):
 
@@ -388,72 +436,78 @@ def simulate(monthly, years, mode, model="dividend"):
         N_local = len(assets)
 
     # =========================================================
-    # 🧠 MODEL MARKET PERSONALITY (KEY FIX)
+    # 🧠 MODEL MARKET PERSONALITY (STRONG DIFFERENTIATION FIX)
     # =========================================================
-    if model == "dividend":
-        drift_base = 0.0012
-        vol_base = 0.008
-        momentum = 0.3
+    model_profiles = {
+        "dividend": {"drift": 0.0012, "vol": 0.008, "momentum": 0.4},
+        "growth":   {"drift": 0.0038, "vol": 0.022, "momentum": 1.6},
+        "banking":  {"drift": 0.0016, "vol": 0.011, "momentum": 0.8},
+        "value":    {"drift": 0.0009, "vol": 0.013, "momentum": 0.6},
+        "income":   {"drift": 0.0011, "vol": 0.009, "momentum": 0.5},
+    }
 
-    elif model == "growth":
-        drift_base = 0.0038
-        vol_base = 0.020
-        momentum = 1.4
+    profile = model_profiles.get(model, model_profiles["dividend"])
 
-    elif model == "banking":
-        drift_base = 0.0016
-        vol_base = 0.011
-        momentum = 0.7
-
-    elif model == "value":
-        drift_base = 0.0009
-        vol_base = 0.013
-        momentum = 0.5
-
-    elif model == "income":
-        drift_base = 0.0011
-        vol_base = 0.009
-        momentum = 0.4
-
-    else:
-        drift_base = 0.001
-        vol_base = 0.010
-        momentum = 0.5
+    drift_base = profile["drift"]
+    vol_base = profile["vol"]
+    momentum = profile["momentum"]
 
     # =========================================================
-    # 🌪️ REGIME ADJUSTMENT (bull/bear/normal)
+    # 🌪️ REGIME ADJUSTMENT (NORMAL / BULL / BEAR)
     # =========================================================
     regime_multiplier = {
         "normal": 1.0,
-        "bull": 1.25,
-        "bear": 0.75
+        "bull": 1.35,
+        "bear": 0.70
     }.get(mode, 1.0)
 
     drift = drift_base * regime_multiplier
     vol = vol_base * regime_multiplier
 
     # =========================================================
-    # 📊 RETURN GENERATION (NOW MEANINGFULLY DIFFERENT PER MODEL)
+    # 📊 MODEL-SHAPED MARKET GENERATION (FIXED DIVERGENCE CORE)
     # =========================================================
     base = np.random.randn(N_local, 300)
 
-    # trend component (key difference maker)
-    trend = np.cumsum(base, axis=1) * (vol * momentum)
+    # structural separation per model (THIS IS KEY FIX)
+    if model == "dividend":
+        trend = np.cumsum(base * 0.6, axis=1)
 
-    # fat-tail shocks
-    shock = np.random.standard_t(
-        4, size=(N_local, 300)
-    ) * vol * 0.5
+    elif model == "growth":
+        trend = np.cumsum(base * 1.5, axis=1)
 
-    # combine
-    R = trend + shock + drift
+    elif model == "banking":
+        trend = np.cumsum(base * 0.9, axis=1)
+
+    elif model == "value":
+        trend = np.cumsum(base * 0.75, axis=1)
+
+    elif model == "income":
+        trend = np.cumsum(base * 0.5, axis=1)
+
+    else:
+        trend = np.cumsum(base, axis=1)
+
+    # noise scales differ per model (IMPORTANT)
+    noise_scale = {
+        "dividend": vol * 0.7,
+        "growth":   vol * 1.7,
+        "banking":  vol * 0.9,
+        "value":    vol * 1.1,
+        "income":   vol * 0.8,
+    }.get(model, vol)
+
+    shock = np.random.standard_t(4, size=(N_local, 300)) * noise_scale
+
+    # FINAL RETURN MATRIX
+    R = drift + trend + shock
 
     # =========================================================
-    # 🧠 MODEL DIFFERENTIATION BOOST (keeps your logic but stronger)
+    # 🧠 MODEL BOOST (STABILITY + PRODUCT DIFFERENTIATION)
     # =========================================================
     model_boost = {
         "dividend": 0.95,
-        "growth": 1.45,
+        "growth": 1.55,
         "banking": 1.05,
         "value": 0.85,
         "income": 0.90
@@ -462,9 +516,18 @@ def simulate(monthly, years, mode, model="dividend"):
     R = R * model_boost
 
     # =========================================================
-    # 🧠 SMART WEIGHTS (UNCHANGED BUT NOW WITH BETTER SIGNALS)
+    # 🧠 SMART WEIGHTS (WITH PRE-BIAS SIGNAL STRENGTHENING)
     # =========================================================
-    base_weights = optimize_weights(R, mode)
+    R_signal = R.copy()
+
+    if model == "growth":
+        R_signal *= 1.15
+    elif model == "value":
+        R_signal *= 0.95
+    elif model == "income":
+        R_signal *= 0.98
+
+    base_weights = optimize_weights(R_signal, mode)
     base_weights = apply_model_bias(base_weights, model)
 
     weights = base_weights.copy()
@@ -483,7 +546,7 @@ def simulate(monthly, years, mode, model="dividend"):
 
         # rebalance every 6 months
         if t % 6 == 0:
-            w = optimize_weights(R, mode)
+            w = optimize_weights(R_signal, mode)
             w = apply_model_bias(w, model)
             weights = w
 
