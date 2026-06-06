@@ -369,7 +369,7 @@ MODEL_UNIVERSES = {
     "income":   [3,4,1,0,2]        # dividend-heavy names
 }
 # =========================================================
-# 📊 SIMULATION ENGINE (FIXED + MODEL-SPECIFIC UNIVERSES)
+# 📊 SIMULATION ENGINE (MODEL-DRIVEN MARKET GENERATOR FIX)
 # =========================================================
 def simulate(monthly, years, mode, model="dividend"):
 
@@ -388,44 +388,81 @@ def simulate(monthly, years, mode, model="dividend"):
         N_local = len(assets)
 
     # =========================================================
-    # 🌪️ RETURN GENERATION
+    # 🧠 MODEL MARKET PERSONALITY (KEY FIX)
+    # =========================================================
+    if model == "dividend":
+        drift_base = 0.0012
+        vol_base = 0.008
+        momentum = 0.3
+
+    elif model == "growth":
+        drift_base = 0.0038
+        vol_base = 0.020
+        momentum = 1.4
+
+    elif model == "banking":
+        drift_base = 0.0016
+        vol_base = 0.011
+        momentum = 0.7
+
+    elif model == "value":
+        drift_base = 0.0009
+        vol_base = 0.013
+        momentum = 0.5
+
+    elif model == "income":
+        drift_base = 0.0011
+        vol_base = 0.009
+        momentum = 0.4
+
+    else:
+        drift_base = 0.001
+        vol_base = 0.010
+        momentum = 0.5
+
+    # =========================================================
+    # 🌪️ REGIME ADJUSTMENT (bull/bear/normal)
+    # =========================================================
+    regime_multiplier = {
+        "normal": 1.0,
+        "bull": 1.25,
+        "bear": 0.75
+    }.get(mode, 1.0)
+
+    drift = drift_base * regime_multiplier
+    vol = vol_base * regime_multiplier
+
+    # =========================================================
+    # 📊 RETURN GENERATION (NOW MEANINGFULLY DIFFERENT PER MODEL)
     # =========================================================
     base = np.random.randn(N_local, 300)
 
-    if mode == "normal":
-        drift = 0.0005
-        vol = 0.010
-    elif mode == "bull":
-        drift = 0.0035
-        vol = 0.014
-    elif mode == "bear":
-        drift = -0.0035
-        vol = 0.020
-    else:
-        drift = 0.0005
-        vol = 0.010
-
-    R = base * vol + drift
-
-    # =========================================================
-    # 🧠 MODEL DIFFERENTIATION BOOST (FIXED POSITION)
-    # =========================================================
-    model_factor = {
-        "dividend": 0.9,
-        "growth": 1.4,
-        "banking": 1.0,
-        "value": 0.8,
-        "bear": 0.7
-    }.get(model, 1.0)
-
-    R = R * model_factor
+    # trend component (key difference maker)
+    trend = np.cumsum(base, axis=1) * (vol * momentum)
 
     # fat-tail shocks
-    shock = np.random.standard_t(4, size=(N_local, 300)) * vol * 0.5
-    R += shock
+    shock = np.random.standard_t(
+        4, size=(N_local, 300)
+    ) * vol * 0.5
+
+    # combine
+    R = trend + shock + drift
 
     # =========================================================
-    # 🧠 SMART WEIGHTS
+    # 🧠 MODEL DIFFERENTIATION BOOST (keeps your logic but stronger)
+    # =========================================================
+    model_boost = {
+        "dividend": 0.95,
+        "growth": 1.45,
+        "banking": 1.05,
+        "value": 0.85,
+        "income": 0.90
+    }.get(model, 1.0)
+
+    R = R * model_boost
+
+    # =========================================================
+    # 🧠 SMART WEIGHTS (UNCHANGED BUT NOW WITH BETTER SIGNALS)
     # =========================================================
     base_weights = optimize_weights(R, mode)
     base_weights = apply_model_bias(base_weights, model)
@@ -444,12 +481,14 @@ def simulate(monthly, years, mode, model="dividend"):
     for t in range(months):
         idx = t % 300
 
+        # rebalance every 6 months
         if t % 6 == 0:
             w = optimize_weights(R, mode)
             w = apply_model_bias(w, model)
             weights = w
 
         port_ret = np.dot(weights, R[:, idx])
+
         nav = nav * (1 + port_ret) + monthly
         curve.append(nav)
 
@@ -461,11 +500,11 @@ def simulate(monthly, years, mode, model="dividend"):
     yields = np.array([a[2] for a in assets])
     dividends = asset_investment * yields
 
-    base_returns = np.linspace(0.05, 0.09, N_local)
+    base_returns = np.linspace(0.05, 0.10, N_local)
     asset_values = asset_investment * (1 + base_returns) ** years
 
     # =========================================================
-    # 📦 RESULT OUTPUT
+    # 📦 OUTPUT
     # =========================================================
     return {
         "summary": {
