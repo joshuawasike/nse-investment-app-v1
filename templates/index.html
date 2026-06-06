@@ -305,15 +305,15 @@ KES 18,000/year
 
 <div class="card">
 
-    <h4>{{ model|capitalize }} Model</h4>
+    <h3>{{ model|upper }}</h3>
 
     {% for scenario_name, scenario in result.items() %}
 
         {% if scenario %}
 
-        <div class="card" style="margin-top:10px; border-left:4px solid #60a5fa;">
+        <div class="card" style="margin-top:10px;border-left:4px solid #60a5fa;">
 
-            <h5>{{ scenario_name|upper }} SCENARIO</h5>
+            <h4>{{ scenario_name|upper }} SCENARIO</h4>
 
             <p>
                 <b>Invested:</b><br>
@@ -351,15 +351,22 @@ KES 18,000/year
                 {% endfor %}
             </table>
 
-        </div>
+            <h4>Returns</h4>
 
-        {% endif %}
+            <table>
+                <tr>
+                    <th>Asset</th>
+                    <th>Value</th>
+                    <th>Dividends</th>
+                </tr>
 
-    {% endfor %}
-
-</div>
-
-{% endfor %}
+                {% for r in scenario["returns"] %}
+                <tr>
+                    <td>{{ r["name"] }}</td>
+                    <td>KES {{ "{:,.0f}".format(r["value"]) }}</td>
+                    <td>KES {{ "{:,.0f}".format(r["dividends"]) }}</td>
+                </tr>
+                {% endfor %}
             </table>
 
         </div>
@@ -370,41 +377,12 @@ KES 18,000/year
 
 </div>
 
-{% endfor %}  
-
-</table>
-
-</div>
-
-{% endfor %}
-</table>
-
-<h4>Returns</h4>
-
-<table>
-<tr>
-<th>Asset</th>
-<th>Value</th>
-<th>Dividends</th>
-</tr>
-
-{% for r in result["normal"]["returns"] %}
-<tr>
-<td>{{ r["name"] }}</td>
-<td>KES {{ "{:,.0f}".format(r["value"]) }}</td>
-<td>KES {{ "{:,.0f}".format(r["dividends"]) }}</td>
-</tr>
-{% endfor %}
-
-</table>
-
-</div>
-
 {% endfor %}
 
 </div>
 
 {% endif %}
+
 </div>
 </body>
 </html>
