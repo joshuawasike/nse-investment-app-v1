@@ -483,6 +483,9 @@ def simulate(monthly, years, mode, model="dividend"):
 
     drift_base, vol_base, momentum = model_params.get(model, (0.001, 0.01, 0.6))
 
+    # =========================================================
+    # 🌪️ REGIME ADJUSTMENT
+    # =========================================================
     regime_adjustment = {
         "normal": (1.00, 1.00),
         "bull":   (1.80, 0.75),
@@ -493,37 +496,35 @@ def simulate(monthly, years, mode, model="dividend"):
 
     drift = drift_base * drift_mult
     vol = vol_base * vol_mult
-# =========================================================
-# 📊 MARKET GENERATION (FIXED REGIME SEPARATION)
-# =========================================================
-base = np.random.randn(N_local, 300)
-
-trend = base * vol * momentum
-mean_reversion = -0.002 * np.cumsum(base, axis=1)
-shock = np.random.standard_t(6, size=(N_local, 300)) * vol * 0.15
-
-R = drift + trend + mean_reversion + shock
-
-# =========================================================
-# 🌪️ STRONG REGIME EFFECT (IMPORTANT FIX)
-# =========================================================
-regime_factor = drift_mult * vol_mult
-
-# amplify differences (THIS IS KEY)
-if mode == "bull":
-    regime_factor *= 1.25
-elif mode == "bear":
-    regime_factor *= 0.85
-else:
-    regime_factor *= 1.0
-
-R = R * regime_factor
-
-# NOW clip AFTER regime effect
-R = np.clip(R, -0.12, 0.18)
 
     # =========================================================
-    # 🔥 MODEL BOOST (FIXED ORDER)
+    # 📊 MARKET GENERATION
+    # =========================================================
+    base = np.random.randn(N_local, 300)
+
+    trend = base * vol * momentum
+    mean_reversion = -0.002 * np.cumsum(base, axis=1)
+    shock = np.random.standard_t(6, size=(N_local, 300)) * vol * 0.15
+
+    R = drift + trend + mean_reversion + shock
+
+    # =========================================================
+    # 🌪️ REGIME STRENGTH (FIXED)
+    # =========================================================
+    regime_factor = drift_mult * vol_mult
+
+    if mode == "bull":
+        regime_factor *= 1.25
+    elif mode == "bear":
+        regime_factor *= 0.85
+
+    R *= regime_factor
+
+    # clip AFTER regime
+    R = np.clip(R, -0.12, 0.18)
+
+    # =========================================================
+    # 🔥 MODEL BOOST (FIXED)
     # =========================================================
     model_boost = {
         "dividend": 0.98,
@@ -533,12 +534,6 @@ R = np.clip(R, -0.12, 0.18)
         "income": 0.97
     }.get(model, 1.0)
 
-    R *= drift_mult * vol_mult * model_boost
-    # =========================================================
-    # 🔥 REGIME + MODEL SCALING (CORE FIX)
-    # =========================================================
-    R *= drift_mult
-    R *= vol_mult
     R *= model_boost
 
     # =========================================================
