@@ -462,88 +462,86 @@ MODEL_UNIVERSES = {
     "income":   [3,4,1,0,2]        # dividend-heavy names
 }
 # =========================================================
-# 📊 SIMULATION ENGINE (CLEAN FIXED VERSION)
+# 📊 SIMULATION ENGINE V2 (STRONG REGIME SEPARATION FIX)
 # =========================================================
 def simulate(monthly, years, mode, model="dividend"):
 
     assets = get_model_assets(model)
-    N_local = len(assets)
-
-    if N_local == 0:
+    if not assets:
         assets = ASSETS[:4]
-        N_local = len(assets)
+
+    N = len(assets)
 
     # =========================================================
-    # 📈 MODEL PARAMETERS
+    # 🧠 MODEL PARAMETERS
     # =========================================================
     model_params = {
-        "dividend": (0.0008, 0.006, 0.5),
-        "growth":   (0.0025, 0.015, 1.0),
-        "banking":  (0.0012, 0.009, 0.7),
-        "value":    (0.0009, 0.010, 0.6),
-        "income":   (0.0010, 0.007, 0.5),
+        "dividend": (0.0008, 0.006, 0.55),
+        "growth":   (0.0028, 0.018, 1.10),
+        "banking":  (0.0013, 0.010, 0.75),
+        "value":    (0.0010, 0.012, 0.65),
+        "income":   (0.0011, 0.008, 0.60),
     }
 
     drift_base, vol_base, momentum = model_params.get(model, (0.001, 0.01, 0.6))
 
-    regime_adjustment = {
-        "normal": (1.00, 1.00),
-        "bull":   (1.80, 0.75),
-        "bear":   (0.60, 1.35)
-    }
+    # =========================================================
+    # 🌍 REGIME STRENGTH MATRIX (IMPORTANT FIX)
+    # =========================================================
+    regime = {
+        "normal": {"drift": 1.00, "vol": 1.00, "shock": 1.00},
+        "bull":   {"drift": 1.90, "vol": 0.70, "shock": 0.80},
+        "bear":   {"drift": 0.55, "vol": 1.50, "shock": 1.35}
+    }.get(mode, {"drift": 1.0, "vol": 1.0, "shock": 1.0})
 
-    drift_mult, vol_mult = regime_adjustment.get(mode, (1.0, 1.0))
-
-    drift = drift_base * drift_mult
-    vol = vol_base * vol_mult
+    drift = drift_base * regime["drift"]
+    vol = vol_base * regime["vol"]
 
     # =========================================================
-    # 📊 MARKET GENERATION
+    # 📊 SYNTHETIC MARKET GENERATION (REALISTIC STRUCTURE)
     # =========================================================
-    base = np.random.randn(N_local, 300)
+    base = np.random.randn(N, 300)
 
-    trend = base * vol * momentum
-    mean_reversion = -0.002 * np.cumsum(base, axis=1)
-    shock = np.random.standard_t(6, size=(N_local, 300)) * vol * 0.15
+    trend = drift + (base * vol * momentum)
+    mean_reversion = -0.003 * np.cumsum(base, axis=1)
+    shock = np.random.standard_t(5, size=(N, 300)) * vol * 0.20 * regime["shock"]
 
-    R = drift + trend + mean_reversion + shock
+    R = trend + mean_reversion + shock
 
     # =========================================================
-    # 🌪 REGIME EFFECT (FIXED SEPARATION)
+    # 🌪 REGIME AMPLIFICATION (KEY FIX FOR SEPARATION)
     # =========================================================
-    regime_factor = drift_mult * vol_mult
-
     if mode == "bull":
-        regime_factor *= 1.25
+        R *= 1.35
     elif mode == "bear":
-        regime_factor *= 0.85
+        R *= 0.75
+    else:
+        R *= 1.0
 
-    R = R * regime_factor
-
-    # clip AFTER regime effect
-    R = np.clip(R, -0.12, 0.18)
+    # safety clipping AFTER regime effect
+    R = np.clip(R, -0.18, 0.25)
 
     # =========================================================
-    # 🔥 MODEL BOOST (CLEAN - SINGLE APPLICATION)
+    # 🔥 MODEL BOOST (SINGLE CLEAN APPLICATION)
     # =========================================================
     model_boost = {
-        "dividend": 0.98,
-        "growth": 1.15,
-        "banking": 1.05,
-        "value": 0.95,
-        "income": 0.97
+        "dividend": 0.97,
+        "growth": 1.20,
+        "banking": 1.07,
+        "value": 0.96,
+        "income": 0.98
     }.get(model, 1.0)
 
     R *= model_boost
 
     # =========================================================
-    # 🧠 WEIGHTS
+    # 🧠 WEIGHT OPTIMIZATION
     # =========================================================
     weights = optimize_weights(R, mode)
     weights = apply_model_bias(weights, model)
 
     # =========================================================
-    # 📊 SIMULATION LOOP
+    # 📊 MONTE CARLO PORTFOLIO PATH
     # =========================================================
     months = years * 12
     invested = monthly * months
@@ -560,7 +558,14 @@ def simulate(monthly, years, mode, model="dividend"):
             weights = apply_model_bias(w, model)
 
         port_ret = np.dot(weights, R[:, idx])
-        port_ret = np.clip(port_ret, -0.03, 0.04)
+
+        # regime-sensitive return limits (IMPORTANT FIX)
+        if mode == "bull":
+            port_ret = np.clip(port_ret, -0.02, 0.06)
+        elif mode == "bear":
+            port_ret = np.clip(port_ret, -0.05, 0.02)
+        else:
+            port_ret = np.clip(port_ret, -0.03, 0.04)
 
         nav = max(nav * (1 + port_ret), 0)
         nav += monthly * 0.98
@@ -575,31 +580,29 @@ def simulate(monthly, years, mode, model="dividend"):
     dividends = asset_investment * yields
 
     # =========================================================
-    # 📈 LONG-TERM RETURNS
+    # 📈 LONG-TERM RETURN MODEL
     # =========================================================
-    if model == "dividend":
-        base_returns = np.linspace(0.08, 0.14, N_local)
-    elif model == "growth":
-        base_returns = np.linspace(0.15, 0.35, N_local)
-    elif model == "banking":
-        base_returns = np.linspace(0.09, 0.16, N_local)
-    elif model == "value":
-        base_returns = np.linspace(0.12, 0.22, N_local)
-    elif model == "income":
-        base_returns = np.linspace(0.07, 0.13, N_local)
-    else:
-        base_returns = np.linspace(0.05, 0.10, N_local)
+    return_map = {
+        "dividend": (0.08, 0.14),
+        "growth":   (0.15, 0.38),
+        "banking":  (0.10, 0.18),
+        "value":    (0.11, 0.25),
+        "income":   (0.07, 0.13)
+    }
+
+    low, high = return_map.get(model, (0.06, 0.12))
+    base_returns = np.linspace(low, high, N)
 
     asset_values = asset_investment * ((1 + base_returns) ** years)
-    portfolio_value = np.sum(asset_values)
+    portfolio_value = float(np.sum(asset_values))
 
     # =========================================================
-    # 📦 OUTPUT (FIXED RETURN INSIDE FUNCTION)
+    # 📦 OUTPUT
     # =========================================================
     return {
         "summary": {
-            "invested": invested,
-            "value": float(portfolio_value),
+            "invested": float(invested),
+            "value": portfolio_value,
             "dividends": float(np.sum(dividends))
         },
 
@@ -609,16 +612,16 @@ def simulate(monthly, years, mode, model="dividend"):
                 "percent": round(weights[i] * 100, 2),
                 "kes": round(asset_investment[i], 2)
             }
-            for i in range(N_local)
+            for i in range(N)
         ],
 
         "returns": [
             {
                 "name": assets[i][0],
-                "dividends": round(dividends[i], 2),
-                "value": round(asset_values[i], 2)
+                "value": round(asset_values[i], 2),
+                "dividends": round(dividends[i], 2)
             }
-            for i in range(N_local)
+            for i in range(N)
         ],
 
         "curve": curve,
