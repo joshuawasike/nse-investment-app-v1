@@ -515,6 +515,9 @@ def simulate(monthly, years, mode, model="dividend"):
     R = drift + trend + mean_reversion + shock
     R = np.clip(R, -0.04, 0.05)
 
+    # =========================================================
+    # 🧠 MODEL BOOST
+    # =========================================================
     model_boost = {
         "dividend": 0.98,
         "growth": 1.15,
@@ -566,7 +569,7 @@ def simulate(monthly, years, mode, model="dividend"):
     dividends = asset_investment * yields
 
     # =========================================================
-    # 📈 RETURNS MODEL
+    # 📈 RETURNS
     # =========================================================
     if model == "dividend":
         base_returns = np.linspace(0.08, 0.14, N_local)
@@ -582,7 +585,7 @@ def simulate(monthly, years, mode, model="dividend"):
         base_returns = np.linspace(0.05, 0.10, N_local)
 
     asset_values = asset_investment * ((1 + base_returns) ** years)
-    portfolio_value = np.sum(asset_values)
+    portfolio_value = float(np.sum(asset_values))
 
     # =========================================================
     # 📦 OUTPUT
@@ -590,7 +593,7 @@ def simulate(monthly, years, mode, model="dividend"):
     return {
         "summary": {
             "invested": invested,
-            "value": float(portfolio_value),
+            "value": portfolio_value,
             "dividends": float(np.sum(dividends))
         },
 
