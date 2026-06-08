@@ -489,61 +489,53 @@ def simulate(monthly, years, mode, model="dividend"):
 
     drift_base, vol_base, momentum = model_params.get(model, (0.001, 0.01, 0.6))
 
- # =========================================================
-# 🌪️ REGIME ADJUSTMENT (FIXED: STRONGER SEPARATION)
-# =========================================================
-regime_adjustment = {
-    "normal": (1.00, 1.00, 0.00),
-    "bull":   (2.20, 0.70, 0.03),   # strong drift + momentum
-    "bear":   (0.50, 1.80, -0.04)    # negative drift + high vol
-}
+    # =========================================================
+    # 🌪️ REGIME ADJUSTMENT (FIXED INDENTATION)
+    # =========================================================
+    regime_adjustment = {
+        "normal": (1.00, 1.00, 0.00),
+        "bull":   (2.20, 0.70, 0.03),
+        "bear":   (0.50, 1.80, -0.04)
+    }
 
-drift_mult, vol_mult, regime_bias = regime_adjustment.get(mode, (1.0, 1.0, 0.0))
+    drift_mult, vol_mult, regime_bias = regime_adjustment.get(mode, (1.0, 1.0, 0.0))
 
     drift = drift_base * drift_mult
     vol = vol_base * vol_mult
 
-# =========================================================
-# 📊 MARKET GENERATION (REGIME-SENSITIVE FIX)
-# =========================================================
+    # =========================================================
+    # 📊 MARKET GENERATION
+    # =========================================================
+    steps = 300
+    base_noise = np.random.randn(N_local, steps)
 
-steps = 300
+    market_trend = np.zeros((N_local, steps))
+    for i in range(N_local):
+        for t in range(steps):
+            market_trend[i, t] = regime_bias * (t / steps)
 
-base_noise = np.random.randn(N_local, steps)
+    trend = base_noise * vol * momentum + market_trend
 
-# regime momentum effect (this is what was missing)
-market_trend = np.zeros((N_local, steps))
+    shock_scale = vol * (0.25 if mode != "bear" else 0.55)
+    shock = np.random.standard_t(4, size=(N_local, steps)) * shock_scale
 
-for i in range(N_local):
-    for t in range(steps):
-        market_trend[i, t] = regime_bias * (t / steps)
+    mean_reversion = -0.0008 * np.cumsum(base_noise, axis=1)
 
-trend = base_noise * vol * momentum + market_trend
-
-# fat-tail shocks (stronger bear behavior)
-shock_scale = vol * (0.25 if mode != "bear" else 0.55)
-shock = np.random.standard_t(4, size=(N_local, steps)) * shock_scale
-
-# mild mean reversion (reduced impact)
-mean_reversion = -0.0008 * np.cumsum(base_noise, axis=1)
-
-R = drift + trend + mean_reversion + shock
-
-# IMPORTANT: less destructive clipping
-R = np.clip(R, -0.15, 0.20)
+    R = drift + trend + mean_reversion + shock
+    R = np.clip(R, -0.15, 0.20)
 
     # =========================================================
-    # 🧠 MODEL BOOST (DEFINE BEFORE USE)
+    # 🔥 MODEL BOOST (FIXED ORDER)
     # =========================================================
-model_boost = {
-    "dividend": 0.98,
-    "growth": 1.15,
-    "banking": 1.05,
-    "value": 0.95,
-    "income": 0.97
-}.get(model, 1.0)
+    model_boost = {
+        "dividend": 0.98,
+        "growth": 1.15,
+        "banking": 1.05,
+        "value": 0.95,
+        "income": 0.97
+    }.get(model, 1.0)
 
-R *= drift_mult * vol_mult * model_boost
+    R *= drift_mult * vol_mult * model_boost
     # =========================================================
     # 🔥 REGIME + MODEL SCALING (CORE FIX)
     # =========================================================
