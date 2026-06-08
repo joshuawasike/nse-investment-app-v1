@@ -520,8 +520,7 @@ R = np.clip(R, -0.08, 0.10)
 # =========================================================
 # 🔥 ADD THIS HERE (CRITICAL FIX)
 # =========================================================
-R *= drift_mult
-R *= vol_mult
+R *= (drift_mult * vol_mult * model_boost)
 
     model_boost = {
         "dividend": 0.98,
