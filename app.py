@@ -492,11 +492,12 @@ def simulate(monthly, years, mode, model="dividend"):
     # =========================================================
     # 🌪️ REGIME ADJUSTMENT
     # =========================================================
-regime_adjustment = {
-    "normal": (1.00, 1.00),
-    "bull":   (1.80, 0.75),
-    "bear":   (0.60, 1.35)
-}
+    regime_adjustment = {
+        "normal": (1.00, 1.00),
+        "bull":   (1.80, 0.75),
+        "bear":   (0.60, 1.35)
+    }
+
     drift_mult, vol_mult = regime_adjustment.get(mode, (1.0, 1.0))
 
     drift = drift_base * drift_mult
@@ -511,17 +512,15 @@ regime_adjustment = {
     mean_reversion = -0.002 * np.cumsum(base, axis=1)
     shock = np.random.standard_t(6, size=(N_local, 300)) * vol * 0.15
 
-# final returns
-R = drift + trend + mean_reversion + shock
+    # final returns
+    R = drift + trend + mean_reversion + shock
 
-# safety clamp
-R = np.clip(R, -0.08, 0.10)
+    # safety clamp (important but not too tight)
+    R = np.clip(R, -0.08, 0.10)
 
-# =========================================================
-# 🔥 ADD THIS HERE (CRITICAL FIX)
-# =========================================================
-R *= (drift_mult * vol_mult * model_boost)
-
+    # =========================================================
+    # 🧠 MODEL BOOST (DEFINE BEFORE USE)
+    # =========================================================
     model_boost = {
         "dividend": 0.98,
         "growth": 1.15,
@@ -530,6 +529,11 @@ R *= (drift_mult * vol_mult * model_boost)
         "income": 0.97
     }.get(model, 1.0)
 
+    # =========================================================
+    # 🔥 REGIME + MODEL SCALING (CORE FIX)
+    # =========================================================
+    R *= drift_mult
+    R *= vol_mult
     R *= model_boost
 
     # =========================================================
@@ -553,16 +557,14 @@ R *= (drift_mult * vol_mult * model_boost)
 
         if t % 6 == 0:
             w = optimize_weights(R, mode)
-            w = apply_model_bias(w, model)
-            weights = w
+            weights = apply_model_bias(w, model)
 
         port_ret = np.dot(weights, R[:, idx])
         port_ret = np.clip(port_ret, -0.03, 0.04)
 
-        # FIXED INDENTATION (IMPORTANT)
         nav = max(nav * (1 + port_ret), 0)
-
         nav += monthly * 0.98
+
         curve.append(nav)
 
     # =========================================================
