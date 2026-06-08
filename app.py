@@ -489,46 +489,61 @@ def simulate(monthly, years, mode, model="dividend"):
 
     drift_base, vol_base, momentum = model_params.get(model, (0.001, 0.01, 0.6))
 
-    # =========================================================
-    # 🌪️ REGIME ADJUSTMENT
-    # =========================================================
-    regime_adjustment = {
-        "normal": (1.00, 1.00),
-        "bull":   (1.80, 0.75),
-        "bear":   (0.60, 1.35)
-    }
+ # =========================================================
+# 🌪️ REGIME ADJUSTMENT (FIXED: STRONGER SEPARATION)
+# =========================================================
+regime_adjustment = {
+    "normal": (1.00, 1.00, 0.00),
+    "bull":   (2.20, 0.70, 0.03),   # strong drift + momentum
+    "bear":   (0.50, 1.80, -0.04)    # negative drift + high vol
+}
 
-    drift_mult, vol_mult = regime_adjustment.get(mode, (1.0, 1.0))
+drift_mult, vol_mult, regime_bias = regime_adjustment.get(mode, (1.0, 1.0, 0.0))
 
     drift = drift_base * drift_mult
     vol = vol_base * vol_mult
 
-    # =========================================================
-    # 📊 MARKET GENERATION
-    # =========================================================
-    base = np.random.randn(N_local, 300)
+# =========================================================
+# 📊 MARKET GENERATION (REGIME-SENSITIVE FIX)
+# =========================================================
 
-    trend = base * vol * momentum
-    mean_reversion = -0.002 * np.cumsum(base, axis=1)
-    shock = np.random.standard_t(6, size=(N_local, 300)) * vol * 0.15
+steps = 300
 
-    # final returns
-    R = drift + trend + mean_reversion + shock
+base_noise = np.random.randn(N_local, steps)
 
-    # safety clamp (important but not too tight)
-    R = np.clip(R, -0.08, 0.10)
+# regime momentum effect (this is what was missing)
+market_trend = np.zeros((N_local, steps))
+
+for i in range(N_local):
+    for t in range(steps):
+        market_trend[i, t] = regime_bias * (t / steps)
+
+trend = base_noise * vol * momentum + market_trend
+
+# fat-tail shocks (stronger bear behavior)
+shock_scale = vol * (0.25 if mode != "bear" else 0.55)
+shock = np.random.standard_t(4, size=(N_local, steps)) * shock_scale
+
+# mild mean reversion (reduced impact)
+mean_reversion = -0.0008 * np.cumsum(base_noise, axis=1)
+
+R = drift + trend + mean_reversion + shock
+
+# IMPORTANT: less destructive clipping
+R = np.clip(R, -0.15, 0.20)
 
     # =========================================================
     # 🧠 MODEL BOOST (DEFINE BEFORE USE)
     # =========================================================
-    model_boost = {
-        "dividend": 0.98,
-        "growth": 1.15,
-        "banking": 1.05,
-        "value": 0.95,
-        "income": 0.97
-    }.get(model, 1.0)
+model_boost = {
+    "dividend": 0.98,
+    "growth": 1.15,
+    "banking": 1.05,
+    "value": 0.95,
+    "income": 0.97
+}.get(model, 1.0)
 
+R *= drift_mult * vol_mult * model_boost
     # =========================================================
     # 🔥 REGIME + MODEL SCALING (CORE FIX)
     # =========================================================
