@@ -500,11 +500,18 @@ def simulate(monthly, years, mode, model="dividend"):
     drift = drift_base * drift_mult
     vol = vol_base * vol_mult
 
-    # =========================================================
-    # 📊 MARKET GENERATION (FIXED DIVERGENCE)
-    # =========================================================
-    base = np.random.randn(N_local, 300)
+# =========================================================
+# 🌍 REGIME-SPECIFIC MARKET GENERATION (CRITICAL FIX)
+# =========================================================
 
+rng = np.random.default_rng()
+
+if mode == "bull":
+    base = rng.normal(0.0015, 0.018, (N_local, 300))  # upward bias
+elif mode == "bear":
+    base = rng.normal(-0.0010, 0.025, (N_local, 300))  # downward bias + high vol
+else:
+    base = rng.normal(0.0003, 0.012, (N_local, 300))  # neutral drift
     # volatility clustering (REALISM FIX)
     vol_cluster = np.cumsum(base, axis=1) / 50.0
 
