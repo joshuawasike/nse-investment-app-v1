@@ -191,18 +191,32 @@ def get_model_assets(model):
     # =========================================================
     # 🧠 MODEL UNIVERSES
     # =========================================================
-    model_universe = {
-        "dividend": ["EABL","KCB","EQTY","COOP","KEGN","SCOM","KPLC","BAT"],
-        "growth":   ["NCBA","SCOM","KQ","ARM","KCB","EQTY","COOP"],
-        "banking":  ["KCB","EQTY","COOP","NCBA","DTB","SBM"],
-        "value":    ["NMG","KPLC","KEGN","EABL","COOP","KCB"],
-        "income":   ["EABL","BAT","KPLC","SCOM","COOP","KCB"]
+model_universe = {
+    "dividend": {
+        "core": ["EABL", "KCB", "COOP"],
+        "optional": ["KPLC", "BAT", "KEGN"]
+    },
+
+    "growth": {
+        "core": ["SCOM", "NCBA"],
+        "optional": ["KQ", "ARM"]
+    },
+
+    "banking": {
+        "core": ["KCB", "EQTY", "COOP"],
+        "optional": ["NCBA", "DTB", "SBM"]
+    },
+
+    "value": {
+        "core": ["KEGN", "NMG"],
+        "optional": ["EABL", "ARM"]
+    },
+
+    "income": {
+        "core": ["EABL", "COOP"],
+        "optional": ["KCB", "BAT"]
     }
-
-    allowed = model_universe.get(model)
-
-    if allowed:
-        grouped = grouped[grouped["CODE"].isin(allowed)]
+}
 
     # =========================================================
     # FALLBACK
