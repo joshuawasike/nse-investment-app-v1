@@ -477,7 +477,7 @@ def simulate(monthly, years, mode, model="dividend"):
         N_local = len(assets)
 
     # =========================================================
-    # 🧠 MODEL PARAMETERS (REALISTIC MARKET BEHAVIOR)
+    # 🧠 MODEL PARAMETERS
     # =========================================================
     model_params = {
         "dividend": (0.0008, 0.006, 0.5),
@@ -492,45 +492,29 @@ def simulate(monthly, years, mode, model="dividend"):
     # =========================================================
     # 🌪️ REGIME ADJUSTMENT
     # =========================================================
-
     regime_adjustment = {
         "normal": (1.00, 1.00),
         "bull":   (1.30, 0.85),
         "bear":   (0.70, 1.20)
     }
 
-    drift_mult, vol_mult = regime_adjustment.get(
-        mode,
-        (1.0, 1.0)
-    )
+    drift_mult, vol_mult = regime_adjustment.get(mode, (1.0, 1.0))
 
     drift = drift_base * drift_mult
     vol = vol_base * vol_mult
+
     # =========================================================
-    # 📊 MARKET GENERATION (CONTROLLED RANDOM WALK)
+    # 📊 MARKET GENERATION
     # =========================================================
     base = np.random.randn(N_local, 300)
 
-    # mild trend (IMPORTANT FIX)
     trend = base * vol * momentum
-
-    # mean reversion component (CRITICAL STABILITY FIX)
     mean_reversion = -0.01 * np.cumsum(trend, axis=1)
-
-    # fat tail shocks (LIMITED)
     shock = np.random.standard_t(6, size=(N_local, 300)) * vol * 0.15
 
-    # final returns
     R = drift + trend + mean_reversion + shock
-
-    # =========================================================
-    # 🚨 HARD RETURN SAFETY CLAMP (CRITICAL)
-    # =========================================================
     R = np.clip(R, -0.04, 0.05)
 
-    # =========================================================
-    # 🧠 MODEL BOOST (SOFT)
-    # =========================================================
     model_boost = {
         "dividend": 0.98,
         "growth": 1.15,
@@ -548,7 +532,7 @@ def simulate(monthly, years, mode, model="dividend"):
     weights = apply_model_bias(weights, model)
 
     # =========================================================
-    # 📊 SIMULATION LOOP (REALISTIC COMPOUNDING FIX)
+    # 📊 SIMULATION LOOP
     # =========================================================
     months = years * 12
     invested = monthly * months
@@ -566,14 +550,9 @@ def simulate(monthly, years, mode, model="dividend"):
             weights = w
 
         port_ret = np.dot(weights, R[:, idx])
-
-        # safe bounds (VERY IMPORTANT)
         port_ret = np.clip(port_ret, -0.03, 0.04)
 
-        # realistic compounding
-       nav = max(nav * (1 + port_ret), 0)
-
-        # contributions smooth (not explosive)
+        nav = max(nav * (1 + port_ret), 0)
         nav += monthly * 0.98
 
         curve.append(nav)
@@ -587,29 +566,23 @@ def simulate(monthly, years, mode, model="dividend"):
     dividends = asset_investment * yields
 
     # =========================================================
-    # 📈 MODEL-SPECIFIC RETURN ASSUMPTIONS
+    # 📈 RETURNS MODEL
     # =========================================================
     if model == "dividend":
         base_returns = np.linspace(0.08, 0.14, N_local)
-
     elif model == "growth":
         base_returns = np.linspace(0.15, 0.35, N_local)
-
     elif model == "banking":
         base_returns = np.linspace(0.09, 0.16, N_local)
-
     elif model == "value":
         base_returns = np.linspace(0.12, 0.22, N_local)
-
     elif model == "income":
         base_returns = np.linspace(0.07, 0.13, N_local)
-
     else:
         base_returns = np.linspace(0.05, 0.10, N_local)
 
-asset_values = asset_investment * ((1 + base_returns) ** years)
-
-portfolio_value = np.sum(asset_values)
+    asset_values = asset_investment * ((1 + base_returns) ** years)
+    portfolio_value = np.sum(asset_values)
 
     # =========================================================
     # 📦 OUTPUT
@@ -617,7 +590,7 @@ portfolio_value = np.sum(asset_values)
     return {
         "summary": {
             "invested": invested,
-            "value": float(portfolio_value)
+            "value": float(portfolio_value),
             "dividends": float(np.sum(dividends))
         },
 
