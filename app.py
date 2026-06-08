@@ -166,10 +166,56 @@ def get_df():
         df = load_data()
     return df
 # =========================================================
-# 🧠 MODEL → REAL COMPANY MAPPING (IMPROVED VERSION)
+# 🧠 MODEL → REAL COMPANY MAPPING
 # =========================================================
+def get_model_assets(model):
+
+    df = get_df()
+
+    if df is None or df.empty or "CODE" not in df.columns:
+        return ASSETS[:8]
+
+    df = df.copy()
+    df["CODE"] = df["CODE"].astype(str).str.upper().str.strip()
+
     # =========================================================
-    # 🎯 STRONG MODEL BIAS
+    # 📊 PERFORMANCE ENGINE
+    # =========================================================
+    grouped = df.groupby("CODE")["PREVIOUS"].agg(["mean", "std"]).reset_index()
+    grouped = grouped.dropna()
+
+    grouped["return_score"] = grouped["mean"]
+    grouped["risk_score"] = grouped["std"] + 1e-9
+    grouped["sharpe_like"] = grouped["return_score"] / grouped["risk_score"]
+
+    # =========================================================
+    # 🧠 MODEL UNIVERSES
+    # =========================================================
+    model_universe = {
+        "dividend": ["EABL","KCB","EQTY","COOP","KEGN","SCOM","KPLC","BAT"],
+        "growth":   ["NCBA","SCOM","KQ","ARM","KCB","EQTY","COOP"],
+        "banking":  ["KCB","EQTY","COOP","NCBA","DTB","SBM"],
+        "value":    ["NMG","KPLC","KEGN","EABL","COOP","KCB"],
+        "income":   ["EABL","BAT","KPLC","SCOM","COOP","KCB"]
+    }
+
+    allowed = model_universe.get(model)
+
+    if allowed:
+        grouped = grouped[grouped["CODE"].isin(allowed)]
+
+    # =========================================================
+    # FALLBACK
+    # =========================================================
+    if grouped.empty:
+        grouped = df.groupby("CODE")["PREVIOUS"].agg(["mean", "std"]).reset_index()
+
+        grouped["return_score"] = grouped["mean"]
+        grouped["risk_score"] = grouped["std"] + 1e-9
+        grouped["sharpe_like"] = grouped["return_score"] / grouped["risk_score"]
+
+    # =========================================================
+    # 🎯 MODEL BIAS
     # =========================================================
     def model_bias(code):
 
@@ -195,57 +241,27 @@ def get_df():
     grouped["bias"] = grouped["CODE"].apply(model_bias)
 
     # =========================================================
-    # 🧠 FINAL SCORE
+    # FINAL SCORE
     # =========================================================
     grouped["score"] = grouped["sharpe_like"] * grouped["bias"]
 
     # =========================================================
-    # 🏆 TOP PICKS
+    # TOP PICKS
     # =========================================================
     grouped = grouped.sort_values("score", ascending=False)
 
-    selected = []
-    used = set()
-
-    for _, row in grouped.iterrows():
-
-        code = row["CODE"]
-
-        if code in used:
-            continue
-
-        selected.append(row)
-        used.add(code)
-
-        if len(selected) == 8:
-            break
-
-    top = pd.DataFrame(selected)
+    top = grouped.head(8)
 
     assets = []
 
     for _, row in top.iterrows():
-
         assets.append(
             (
-                row["CODE"],
-                row["CODE"],
+                row["CODE"],      # Name
+                row["CODE"],      # Symbol
                 np.random.uniform(0.04, 0.12)
             )
         )
-
-    return assets
-    # =========================================================
-    # 📦 OUTPUT FORMAT (UNCHANGED INTERFACE)
-    # =========================================================
-    assets = [
-        (
-            r["CODE"],   # name
-            r["CODE"],   # symbol
-            np.random.uniform(0.04, 0.12)
-        )
-        for r in selected
-    ]
 
     return assets
 # =========================================================
@@ -476,11 +492,16 @@ def simulate(monthly, years, mode, model="dividend"):
     # =========================================================
     # 🌪️ REGIME ADJUSTMENT
     # =========================================================
-    regime_multiplier = {
-        "normal": 1.0,
-        "bull": 1.10,
-        "bear": 0.90
-    }.get(mode, 1.0)
+regime_adjustment = {
+    "normal": (1.00, 1.00),
+    "bull":   (1.30, 0.85),
+    "bear":   (0.70, 1.20)
+}
+
+drift_mult, vol_mult = regime_adjustment.get(mode, (1.0, 1.0))
+
+drift = drift_base * drift_mult
+vol = vol_base * vol_mult
 
     drift = drift_base * regime_multiplier
     vol = vol_base * regime_multiplier
@@ -550,7 +571,7 @@ def simulate(monthly, years, mode, model="dividend"):
         port_ret = np.clip(port_ret, -0.03, 0.04)
 
         # realistic compounding
-        nav = nav * (1 + port_ret)
+       nav = max(nav * (1 + port_ret), 0)
 
         # contributions smooth (not explosive)
         nav += monthly * 0.98
@@ -586,7 +607,9 @@ def simulate(monthly, years, mode, model="dividend"):
     else:
         base_returns = np.linspace(0.05, 0.10, N_local)
 
-    asset_values = asset_investment * ((1 + base_returns) ** years)
+asset_values = asset_investment * ((1 + base_returns) ** years)
+
+portfolio_value = np.sum(asset_values)
 
     # =========================================================
     # 📦 OUTPUT
@@ -594,7 +617,7 @@ def simulate(monthly, years, mode, model="dividend"):
     return {
         "summary": {
             "invested": invested,
-            "value": float(np.clip(nav, 0, 5e10)),  # safe cap
+            "value": float(portfolio_value)
             "dividends": float(np.sum(dividends))
         },
 
