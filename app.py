@@ -492,20 +492,20 @@ def simulate(monthly, years, mode, model="dividend"):
     # =========================================================
     # 🌪️ REGIME ADJUSTMENT
     # =========================================================
-regime_adjustment = {
-    "normal": (1.00, 1.00),
-    "bull":   (1.30, 0.85),
-    "bear":   (0.70, 1.20)
-}
 
-drift_mult, vol_mult = regime_adjustment.get(mode, (1.0, 1.0))
+    regime_adjustment = {
+        "normal": (1.00, 1.00),
+        "bull":   (1.30, 0.85),
+        "bear":   (0.70, 1.20)
+    }
 
-drift = drift_base * drift_mult
-vol = vol_base * vol_mult
+    drift_mult, vol_mult = regime_adjustment.get(
+        mode,
+        (1.0, 1.0)
+    )
 
-    drift = drift_base * regime_multiplier
-    vol = vol_base * regime_multiplier
-
+    drift = drift_base * drift_mult
+    vol = vol_base * vol_mult
     # =========================================================
     # 📊 MARKET GENERATION (CONTROLLED RANDOM WALK)
     # =========================================================
