@@ -492,12 +492,11 @@ def simulate(monthly, years, mode, model="dividend"):
     # =========================================================
     # 🌪️ REGIME ADJUSTMENT
     # =========================================================
-    regime_adjustment = {
-        "normal": (1.00, 1.00),
-        "bull":   (1.30, 0.85),
-        "bear":   (0.70, 1.20)
-    }
-
+regime_adjustment = {
+    "normal": (1.00, 1.00),
+    "bull":   (1.80, 0.75),
+    "bear":   (0.60, 1.35)
+}
     drift_mult, vol_mult = regime_adjustment.get(mode, (1.0, 1.0))
 
     drift = drift_base * drift_mult
@@ -509,11 +508,20 @@ def simulate(monthly, years, mode, model="dividend"):
     base = np.random.randn(N_local, 300)
 
     trend = base * vol * momentum
-    mean_reversion = -0.01 * np.cumsum(trend, axis=1)
+    mean_reversion = -0.002 * np.cumsum(base, axis=1)
     shock = np.random.standard_t(6, size=(N_local, 300)) * vol * 0.15
 
-    R = drift + trend + mean_reversion + shock
-    R = np.clip(R, -0.04, 0.05)
+# final returns
+R = drift + trend + mean_reversion + shock
+
+# safety clamp
+R = np.clip(R, -0.08, 0.10)
+
+# =========================================================
+# 🔥 ADD THIS HERE (CRITICAL FIX)
+# =========================================================
+R *= drift_mult
+R *= vol_mult
 
     model_boost = {
         "dividend": 0.98,
