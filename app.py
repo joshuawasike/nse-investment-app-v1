@@ -462,7 +462,7 @@ MODEL_UNIVERSES = {
     "income":   [3,4,1,0,2]        # dividend-heavy names
 }
 # =========================================================
-# 📊 SIMULATION ENGINE (PROFESSIONAL STABLE MARKET MODEL FIXED)
+# 📊 SIMULATION ENGINE (CLEAN FIXED VERSION)
 # =========================================================
 def simulate(monthly, years, mode, model="dividend"):
 
@@ -474,83 +474,67 @@ def simulate(monthly, years, mode, model="dividend"):
         N_local = len(assets)
 
     # =========================================================
-    # 🧠 MODEL PARAMETERS
+    # 📈 MODEL PARAMETERS
     # =========================================================
     model_params = {
-        "dividend": (0.0008, 0.006, 0.55),
-        "growth":   (0.0025, 0.015, 1.10),
-        "banking":  (0.0012, 0.009, 0.75),
-        "value":    (0.0009, 0.010, 0.65),
-        "income":   (0.0010, 0.007, 0.60),
+        "dividend": (0.0008, 0.006, 0.5),
+        "growth":   (0.0025, 0.015, 1.0),
+        "banking":  (0.0012, 0.009, 0.7),
+        "value":    (0.0009, 0.010, 0.6),
+        "income":   (0.0010, 0.007, 0.5),
     }
 
     drift_base, vol_base, momentum = model_params.get(model, (0.001, 0.01, 0.6))
 
-    # =========================================================
-    # 🌍 REGIME SEPARATION (IMPORTANT FIX)
-    # =========================================================
-    regime = {
+    regime_adjustment = {
         "normal": (1.00, 1.00),
-        "bull":   (1.65, 0.80),
-        "bear":   (0.55, 1.45)
+        "bull":   (1.80, 0.75),
+        "bear":   (0.60, 1.35)
     }
 
-    drift_mult, vol_mult = regime.get(mode, (1.0, 1.0))
+    drift_mult, vol_mult = regime_adjustment.get(mode, (1.0, 1.0))
 
     drift = drift_base * drift_mult
     vol = vol_base * vol_mult
 
-# =========================================================
-# 🌍 REGIME-SPECIFIC MARKET GENERATION (CRITICAL FIX)
-# =========================================================
-
-rng = np.random.default_rng()
-
-if mode == "bull":
-    base = rng.normal(0.0015, 0.018, (N_local, 300))  # upward bias
-elif mode == "bear":
-    base = rng.normal(-0.0010, 0.025, (N_local, 300))  # downward bias + high vol
-else:
-    base = rng.normal(0.0003, 0.012, (N_local, 300))  # neutral drift
-    # volatility clustering (REALISM FIX)
-    vol_cluster = np.cumsum(base, axis=1) / 50.0
+    # =========================================================
+    # 📊 MARKET GENERATION
+    # =========================================================
+    base = np.random.randn(N_local, 300)
 
     trend = base * vol * momentum
-    mean_reversion = -0.0015 * vol_cluster
-    shock = np.random.standard_t(5, size=(N_local, 300)) * vol * 0.20
+    mean_reversion = -0.002 * np.cumsum(base, axis=1)
+    shock = np.random.standard_t(6, size=(N_local, 300)) * vol * 0.15
 
     R = drift + trend + mean_reversion + shock
 
     # =========================================================
-    # 🌪️ REGIME STRENGTH (FIXED SEPARATION BOOST)
+    # 🌪 REGIME EFFECT (FIXED SEPARATION)
     # =========================================================
+    regime_factor = drift_mult * vol_mult
+
     if mode == "bull":
-        regime_factor = 1.35
+        regime_factor *= 1.25
     elif mode == "bear":
-        regime_factor = 0.75
-    else:
-        regime_factor = 1.0
+        regime_factor *= 0.85
 
     R = R * regime_factor
 
+    # clip AFTER regime effect
+    R = np.clip(R, -0.12, 0.18)
+
     # =========================================================
-    # 🔥 MODEL BOOST (FIXED)
+    # 🔥 MODEL BOOST (CLEAN - SINGLE APPLICATION)
     # =========================================================
     model_boost = {
         "dividend": 0.98,
-        "growth": 1.18,
-        "banking": 1.08,
+        "growth": 1.15,
+        "banking": 1.05,
         "value": 0.95,
         "income": 0.97
     }.get(model, 1.0)
 
-    # APPLY ONCE ONLY (BUG FIX)
-    R = R * model_boost
-
-    # =========================================================
-    # 🚫 REALISTIC LIMITS (LESS OVER-SMOOTHING)
-    # =========================================================
-    R = np.clip(R, -0.18, 0.25)
+    R *= model_boost
 
     # =========================================================
     # 🧠 WEIGHTS
@@ -571,54 +555,46 @@ else:
 
         idx = t % 300
 
-        # periodic rebalancing (less frequent = more realistic)
-        if t % 9 == 0:
+        if t % 6 == 0:
             w = optimize_weights(R, mode)
             weights = apply_model_bias(w, model)
 
         port_ret = np.dot(weights, R[:, idx])
-
-        # realistic portfolio volatility band
-        port_ret = np.clip(port_ret, -0.05, 0.06)
+        port_ret = np.clip(port_ret, -0.03, 0.04)
 
         nav = max(nav * (1 + port_ret), 0)
-        nav += monthly * 0.97
+        nav += monthly * 0.98
 
         curve.append(nav)
 
     # =========================================================
-    # 💰 ASSET BREAKDOWN
+    # 💰 DIVIDENDS
     # =========================================================
     asset_investment = invested * weights
-
     yields = np.array([a[2] for a in assets])
     dividends = asset_investment * yields
 
     # =========================================================
-    # 📈 LONG TERM RETURNS (FIXED SPREAD)
+    # 📈 LONG-TERM RETURNS
     # =========================================================
-    base_returns_map = {
-        "dividend": (0.08, 0.14),
-        "growth": (0.15, 0.35),
-        "banking": (0.09, 0.16),
-        "value": (0.10, 0.22),
-        "income": (0.07, 0.13),
-    }
-
-    low, high = base_returns_map.get(model, (0.06, 0.12))
-    base_returns = np.linspace(low, high, N_local)
-
-    # regime amplification (KEY FIX FOR DIFFERENCE)
-    if mode == "bull":
-        base_returns *= 1.25
-    elif mode == "bear":
-        base_returns *= 0.75
+    if model == "dividend":
+        base_returns = np.linspace(0.08, 0.14, N_local)
+    elif model == "growth":
+        base_returns = np.linspace(0.15, 0.35, N_local)
+    elif model == "banking":
+        base_returns = np.linspace(0.09, 0.16, N_local)
+    elif model == "value":
+        base_returns = np.linspace(0.12, 0.22, N_local)
+    elif model == "income":
+        base_returns = np.linspace(0.07, 0.13, N_local)
+    else:
+        base_returns = np.linspace(0.05, 0.10, N_local)
 
     asset_values = asset_investment * ((1 + base_returns) ** years)
     portfolio_value = np.sum(asset_values)
 
     # =========================================================
-    # 📦 OUTPUT
+    # 📦 OUTPUT (FIXED RETURN INSIDE FUNCTION)
     # =========================================================
     return {
         "summary": {
