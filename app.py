@@ -214,31 +214,31 @@ def get_model_assets(model):
         grouped["risk_score"] = grouped["std"] + 1e-9
         grouped["sharpe_like"] = grouped["return_score"] / grouped["risk_score"]
 
-    # =========================================================
-    # 🎯 STRONG MODEL BIAS (NOW STRUCTURALLY MEANINGFUL)
-    # =========================================================
-    def model_bias(code):
+# =========================================================
+# 🎯 STRONG MODEL BIAS (NOW STRUCTURALLY MEANINGFUL)
+# =========================================================
+def model_bias(code):
 
-        code = str(code)
+    code = str(code)
 
-        if model == "dividend":
-            return 1.6 if code in ["EABL","KCB","COOP","KEGN"] else 1.1
+    if model == "dividend":
+        return 1.8 if code in ["EABL", "KCB", "COOP", "KEGN"] else 1.0
 
-        elif model == "growth":
-            return 1.7 if code in ["NCBA","SCOM","KQ"] else 1.0
+    elif model == "growth":
+        return 2.0 if code in ["KQ", "SCOM", "NCBA"] else 0.9
 
-        elif model == "banking":
-            return 1.8 if code in ["KCB","EQTY","COOP","NCBA"] else 0.7
+    elif model == "banking":
+        return 2.2 if code in ["EQTY", "KCB", "COOP", "NCBA"] else 0.7
 
-        elif model == "value":
-            return 1.5 if code in ["NMG","KPLC","KEGN"] else 0.9
+    elif model == "value":
+        return 1.8 if code in ["KEGN", "EABL", "KQ"] else 0.9
 
-        elif model == "income":
-            return 1.6 if code in ["EABL","BAT","KPLC"] else 1.0
+    elif model == "income":
+        return 2.0 if code in ["EABL", "KCB", "COOP"] else 0.9
 
-        return 1.0
+    return 1.0
 
-    grouped["bias"] = grouped["CODE"].apply(model_bias)
+grouped["bias"] = grouped["CODE"].apply(model_bias)
 
     # =========================================================
     # 🧠 FINAL SCORE (NOW MEANINGFULLY DIFFERENT PER MODEL)
@@ -599,24 +599,28 @@ def simulate(monthly, years, mode, model="dividend"):
     yields = np.array([a[2] for a in assets])
     dividends = asset_investment * yields
 
+    # =========================================================
+    # 📈 MODEL-SPECIFIC RETURN ASSUMPTIONS
+    # =========================================================
     if model == "dividend":
-    base_returns = np.linspace(0.08, 0.14, N_local)
+        base_returns = np.linspace(0.08, 0.14, N_local)
 
-elif model == "growth":
-    base_returns = np.linspace(0.15, 0.35, N_local)
+    elif model == "growth":
+        base_returns = np.linspace(0.15, 0.35, N_local)
 
-elif model == "banking":
-    base_returns = np.linspace(0.09, 0.16, N_local)
+    elif model == "banking":
+        base_returns = np.linspace(0.09, 0.16, N_local)
 
-elif model == "value":
-    base_returns = np.linspace(0.12, 0.22, N_local)
+    elif model == "value":
+        base_returns = np.linspace(0.12, 0.22, N_local)
 
-elif model == "income":
-    base_returns = np.linspace(0.07, 0.13, N_local)
+    elif model == "income":
+        base_returns = np.linspace(0.07, 0.13, N_local)
 
-else:
-    base_returns = np.linspace(0.05, 0.10, N_local)
-    asset_values = asset_investment * (1 + base_returns) ** years
+    else:
+        base_returns = np.linspace(0.05, 0.10, N_local)
+
+    asset_values = asset_investment * ((1 + base_returns) ** years)
 
     # =========================================================
     # 📦 OUTPUT
