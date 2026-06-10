@@ -188,34 +188,27 @@ def get_model_assets(model):
     grouped["risk_score"] = grouped["std"] + 1e-9
     grouped["sharpe_like"] = grouped["return_score"] / grouped["risk_score"]
 
-# =========================================================
-# 🧠 MODEL UNIVERSES
-# =========================================================
-model_universe = {
-    "dividend": ["EABL","KCB","EQTY","COOP","KEGN","SCOM","KPLC","BAT"],
-    "growth":   ["NCBA","SCOM","KQ","ARM","KCB","EQTY","COOP"],
-    "banking":  ["KCB","EQTY","COOP","NCBA","DTB","SBM"],
-    "value":    ["NMG","KPLC","KEGN","EABL","COOP","KCB"],
-    "income":   ["EABL","BAT","KPLC","SCOM","COOP","KCB"]
-}
+    # =========================================================
+    # 🧠 MODEL UNIVERSES
+    # =========================================================
+    model_universe = {
+        "dividend": ["EABL","KCB","EQTY","COOP","KEGN","SCOM","KPLC","BAT"],
+        "growth":   ["NCBA","SCOM","KQ","ARM","KCB","EQTY","COOP","KEGN"],
+        "banking":  ["KCB","EQTY","COOP","NCBA","DTB","SBM","ABSA","HFCK"],
+        "value":    ["NMG","KPLC","KEGN","EABL","COOP","KCB","BAT","SCOM"],
+        "income":   ["EABL","BAT","KPLC","SCOM","COOP","KCB","KEGN","NCBA"]
+    }
 
-allowed = model_universe.get(model, [])
+    allowed = model_universe.get(model, [])
 
-if allowed:
-    grouped = grouped[grouped["CODE"].isin(allowed)]
+    if allowed:
+        grouped = grouped[grouped["CODE"].isin(allowed)]
 
-# =========================================================
-# FALLBACK
-# =========================================================
-if grouped.empty:
-    grouped = df.groupby("CODE")["PREVIOUS"].agg(["mean", "std"]).reset_index()
-
-    grouped["return_score"] = grouped["mean"]
-    grouped["risk_score"] = grouped["std"] + 1e-9
-    grouped["sharpe_like"] = grouped["return_score"] / grouped["risk_score"]====================================
+    # =========================================================
     # FALLBACK
     # =========================================================
     if grouped.empty:
+
         grouped = df.groupby("CODE")["PREVIOUS"].agg(["mean", "std"]).reset_index()
 
         grouped["return_score"] = grouped["mean"]
@@ -227,22 +220,22 @@ if grouped.empty:
     # =========================================================
     def model_bias(code):
 
-        code = str(code)
+        code = str(code).upper()
 
         if model == "dividend":
-            return 1.8 if code in ["EABL", "KCB", "COOP", "KEGN"] else 1.0
+            return 2.0 if code in ["EABL","BAT","KCB","COOP","KEGN"] else 1.0
 
         elif model == "growth":
-            return 2.0 if code in ["KQ", "SCOM", "NCBA"] else 0.9
+            return 2.5 if code in ["KQ","SCOM","NCBA","ARM"] else 0.8
 
         elif model == "banking":
-            return 2.2 if code in ["EQTY", "KCB", "COOP", "NCBA"] else 0.7
+            return 2.5 if code in ["EQTY","KCB","COOP","NCBA","ABSA"] else 0.7
 
         elif model == "value":
-            return 1.8 if code in ["KEGN", "EABL", "KQ"] else 0.9
+            return 2.0 if code in ["KEGN","KPLC","NMG","BAT"] else 0.9
 
         elif model == "income":
-            return 2.0 if code in ["EABL", "KCB", "COOP"] else 0.9
+            return 2.2 if code in ["EABL","BAT","KCB","COOP","KEGN"] else 0.9
 
         return 1.0
 
@@ -263,10 +256,11 @@ if grouped.empty:
     assets = []
 
     for _, row in top.iterrows():
+
         assets.append(
             (
-                row["CODE"],      # Name
-                row["CODE"],      # Symbol
+                row["CODE"],
+                row["CODE"],
                 np.random.uniform(0.04, 0.12)
             )
         )
