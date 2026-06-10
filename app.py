@@ -492,7 +492,6 @@ def generate_market(mode, N, drift, vol, momentum):
 def simulate(monthly, years, mode, model="dividend"):
 
     assets = get_model_assets(model)
-
     if not assets:
         assets = ASSETS[:4]
 
@@ -605,12 +604,12 @@ def simulate(monthly, years, mode, model="dividend"):
     portfolio_value = float(np.sum(asset_values))
 
     # =========================================================
-    # 📦 OUTPUT (FIXED INDENTATION)
+    # 📦 OUTPUT
     # =========================================================
     return {
         "summary": {
             "invested": float(invested),
-            "value": portfolio_value,
+            "value": float(portfolio_value),
             "dividends": float(np.sum(dividends))
         },
 
