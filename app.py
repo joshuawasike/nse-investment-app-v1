@@ -652,10 +652,11 @@ portfolio_value *= (
     # =========================================================
     # 📦 OUTPUT
     # =========================================================
+
     return {
         "summary": {
             "invested": float(invested),
-            "value": portfolio_value,
+            "value": float(portfolio_value),
             "dividends": float(np.sum(dividends))
         },
 
