@@ -492,6 +492,7 @@ def generate_market(mode, N, drift, vol, momentum):
 def simulate(monthly, years, mode, model="dividend"):
 
     assets = get_model_assets(model)
+
     if not assets:
         assets = ASSETS[:4]
 
@@ -584,52 +585,32 @@ def simulate(monthly, years, mode, model="dividend"):
     # =========================================================
     asset_investment = invested * weights
     yields = np.array([a[2] for a in assets])
-
-    if mode == "bull":
-        dividend_factor = 1.2
-    elif mode == "bear":
-        dividend_factor = 0.75
-    else:
-        dividend_factor = 1.0
-
-    dividends = asset_investment * yields * dividend_factor
+    dividends = asset_investment * yields
 
     # =========================================================
-    # 📈 LONG TERM VALUE MODEL (FIXED)
+    # 📈 LONG TERM VALUE MODEL
     # =========================================================
     return_map = {
         "dividend": (0.08, 0.14),
-        "growth":   (0.18, 0.45),
-        "banking":  (0.10, 0.20),
-        "value":    (0.12, 0.28),
-        "income":   (0.07, 0.14)
+        "growth":   (0.15, 0.38),
+        "banking":  (0.10, 0.18),
+        "value":    (0.11, 0.25),
+        "income":   (0.07, 0.13)
     }
 
     low, high = return_map.get(model, (0.06, 0.12))
-
-    if mode == "bull":
-        low *= 1.6
-        high *= 1.8
-    elif mode == "bear":
-        low *= 0.4
-        high *= 0.6
-
-    base_returns = np.random.uniform(low, high, len(assets))
+    base_returns = np.linspace(low, high, N)
 
     asset_values = asset_investment * ((1 + base_returns) ** years)
-
-    sim_boost = np.mean(R)
-
     portfolio_value = float(np.sum(asset_values))
-    portfolio_value *= (1 + np.clip(sim_boost * years * 2, -0.4, 1.2))
 
     # =========================================================
-    # 📦 OUTPUT
+    # 📦 OUTPUT (FIXED INDENTATION)
     # =========================================================
     return {
         "summary": {
             "invested": float(invested),
-            "value": float(portfolio_value),
+            "value": portfolio_value,
             "dividends": float(np.sum(dividends))
         },
 
@@ -639,7 +620,7 @@ def simulate(monthly, years, mode, model="dividend"):
                 "percent": round(weights[i] * 100, 2),
                 "kes": round(asset_investment[i], 2)
             }
-            for i in range(len(assets))
+            for i in range(N)
         ],
 
         "returns": [
@@ -648,12 +629,13 @@ def simulate(monthly, years, mode, model="dividend"):
                 "value": round(asset_values[i], 2),
                 "dividends": round(dividends[i], 2)
             }
-            for i in range(len(assets))
+            for i in range(N)
         ],
 
         "curve": curve,
         "ai": ai_portfolio_advisor(weights, R, assets)
-    }# =========================================================
+    }
+# =========================================================
 # 📊 CHART
 # =========================================================
 def chart(curve):
