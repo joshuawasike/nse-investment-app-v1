@@ -191,13 +191,13 @@ def get_model_assets(model):
     # =========================================================
     # 🧠 MODEL UNIVERSES
     # =========================================================
-    model_universe = {
-        "dividend": ["EABL","KCB","EQTY","COOP","KEGN","SCOM","KPLC","BAT"],
-        "growth":   ["NCBA","SCOM","KQ","ARM","KCB","EQTY","COOP"],
-        "banking":  ["KCB","EQTY","COOP","NCBA","DTB","SBM"],
-        "value":    ["NMG","KPLC","KEGN","EABL","COOP","KCB"],
-        "income":   ["EABL","BAT","KPLC","SCOM","COOP","KCB"]
-    }
+MODEL_UNIVERSES = {
+    "dividend": ["Equity Bank", "KCB Group", "Co-op Bank", "EABL"],
+    "growth":   ["Safaricom", "Kenya Airways", "NCBA", "KenGen"],
+    "banking":  ["Equity Bank", "KCB Group", "Co-op Bank", "NCBA"],
+    "value":    ["EABL", "KenGen", "Equity Bank", "Safaricom"],
+    "income":   ["EABL", "Co-op Bank", "KCB Group", "Safaricom"]
+}
 
     allowed = model_universe.get(model, [])
 
@@ -485,13 +485,43 @@ def generate_market(mode, N, drift, vol, momentum):
 
     return np.clip(R, -0.20, 0.30)
 
+# =========================================================
+# 🧠 AI PORTFOLIO ADVISOR (ADD HERE)
+# =========================================================
+def ai_portfolio_advisor(weights, R, assets):
 
+    avg_returns = np.mean(R, axis=1)
+    risk = np.std(avg_returns)
+
+    top_idx = int(np.argmax(weights))
+    top_asset = assets[top_idx][0]
+
+    if risk < 0.01:
+        comment = "Low risk environment. Defensive portfolio."
+    elif risk < 0.02:
+        comment = "Moderate risk. Balanced exposure."
+    else:
+        comment = "High volatility. Consider reducing risk."
+
+    return {
+        "top_asset": top_asset,
+        "risk_level": float(risk),
+        "commentary": comment
+    }
 # =========================================================
 # 📊 SIMULATION ENGINE V2 (CLEAN + FIXED FINAL)
 # =========================================================
 def simulate(monthly, years, mode, model="dividend"):
 
     assets = get_model_assets(model)
+
+# override with strict model universe (IMPORTANT FIX)
+if model in MODEL_UNIVERSES:
+    allowed = MODEL_UNIVERSES[model]
+    assets = [a for a in assets if a[0] in allowed]
+
+if not assets:
+    assets = ASSETS[:4]
     if not assets:
         assets = ASSETS[:4]
 
