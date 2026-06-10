@@ -166,7 +166,7 @@ def get_df():
         df = load_data()
     return df
 # =========================================================
-# 🧠 MODEL → REAL COMPANY MAPPING
+# 🧠 MODEL → REAL COMPANY MAPPING (FIXED)
 # =========================================================
 def get_model_assets(model):
 
@@ -193,10 +193,10 @@ def get_model_assets(model):
     # =========================================================
     model_universe = {
         "dividend": ["EABL","KCB","EQTY","COOP","KEGN","SCOM","KPLC","BAT"],
-        "growth":   ["NCBA","SCOM","KQ","ARM","KCB","EQTY","COOP","KEGN"],
-        "banking":  ["KCB","EQTY","COOP","NCBA","DTB","SBM","ABSA","HFCK"],
-        "value":    ["NMG","KPLC","KEGN","EABL","COOP","KCB","BAT","SCOM"],
-        "income":   ["EABL","BAT","KPLC","SCOM","COOP","KCB","KEGN","NCBA"]
+        "growth":   ["NCBA","SCOM","KQ","ARM","KCB","EQTY","COOP"],
+        "banking":  ["KCB","EQTY","COOP","NCBA","DTB","SBM"],
+        "value":    ["NMG","KPLC","KEGN","EABL","COOP","KCB"],
+        "income":   ["EABL","BAT","KPLC","SCOM","COOP","KCB"]
     }
 
     allowed = model_universe.get(model, [])
@@ -205,10 +205,9 @@ def get_model_assets(model):
         grouped = grouped[grouped["CODE"].isin(allowed)]
 
     # =========================================================
-    # FALLBACK
+    # FALLBACK (FIXED)
     # =========================================================
     if grouped.empty:
-
         grouped = df.groupby("CODE")["PREVIOUS"].agg(["mean", "std"]).reset_index()
 
         grouped["return_score"] = grouped["mean"]
@@ -220,22 +219,22 @@ def get_model_assets(model):
     # =========================================================
     def model_bias(code):
 
-        code = str(code).upper()
+        code = str(code)
 
         if model == "dividend":
-            return 2.0 if code in ["EABL","BAT","KCB","COOP","KEGN"] else 1.0
+            return 1.8 if code in ["EABL", "KCB", "COOP", "KEGN"] else 1.0
 
         elif model == "growth":
-            return 2.5 if code in ["KQ","SCOM","NCBA","ARM"] else 0.8
+            return 2.0 if code in ["KQ", "SCOM", "NCBA"] else 0.9
 
         elif model == "banking":
-            return 2.5 if code in ["EQTY","KCB","COOP","NCBA","ABSA"] else 0.7
+            return 2.2 if code in ["EQTY", "KCB", "COOP", "NCBA"] else 0.7
 
         elif model == "value":
-            return 2.0 if code in ["KEGN","KPLC","NMG","BAT"] else 0.9
+            return 1.8 if code in ["KEGN", "EABL", "KQ"] else 0.9
 
         elif model == "income":
-            return 2.2 if code in ["EABL","BAT","KCB","COOP","KEGN"] else 0.9
+            return 2.0 if code in ["EABL", "KCB", "COOP"] else 0.9
 
         return 1.0
 
@@ -246,9 +245,6 @@ def get_model_assets(model):
     # =========================================================
     grouped["score"] = grouped["sharpe_like"] * grouped["bias"]
 
-    # =========================================================
-    # TOP PICKS
-    # =========================================================
     grouped = grouped.sort_values("score", ascending=False)
 
     top = grouped.head(8)
@@ -256,17 +252,15 @@ def get_model_assets(model):
     assets = []
 
     for _, row in top.iterrows():
-
         assets.append(
             (
                 row["CODE"],
                 row["CODE"],
-                np.random.uniform(0.04, 0.12)
+                float(np.random.uniform(0.04, 0.12))
             )
         )
 
-    return assets
-# =========================================================
+    return assets# =========================================================
 # 📊 ASSETS
 # =========================================================
 ASSETS = [
