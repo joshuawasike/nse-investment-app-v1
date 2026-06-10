@@ -293,7 +293,67 @@ KES 18,000/year
 <button type="submit">🚀 Run Engine</button>
 
 </form>
+{% if goal_result %}
+<div class="card">
+<h3>🎯 Goal Advisory</h3>
 
+<p>Target: KES {{ "{:,.0f}".format(goal_result.target) }}</p>
+
+<p>Years needed: {{ goal_result.years_needed }}</p>
+
+<p>Monthly for 5 years: {{ goal_result.monthly_5 }}</p>
+<p>Monthly for 10 years: {{ goal_result.monthly_10 }}</p>
+<p>Monthly for 15 years: {{ goal_result.monthly_15 }}</p>
+</div>
+{% endif %}
+<div class="card">
+<h3>📊 Cross-Model Portfolio Comparison</h3>
+
+<table>
+<tr>
+    <th>Model</th>
+    <th>Normal Value</th>
+    <th>Bull Value</th>
+    <th>Bear Value</th>
+</tr>
+
+{% for model, result in data.items() %}
+
+<tr>
+    <td>{{ model }}</td>
+    <td>{{ "{:,.0f}".format(result["normal"]["summary"]["value"]) }}</td>
+    <td>
+        {% if result["bull"] %}
+            {{ "{:,.0f}".format(result["bull"]["summary"]["value"]) }}
+        {% endif %}
+    </td>
+    <td>
+        {% if result["bear"] %}
+            {{ "{:,.0f}".format(result["bear"]["summary"]["value"]) }}
+        {% endif %}
+    </td>
+</tr>
+
+{% endfor %}
+</table>
+</div>
+<!-- 🏆 BEST MODEL SUMMARY -->
+<div class="card">
+<h3>🏆 Best Performing Model</h3>
+
+{% set best_model = None %}
+{% set best_value = 0 %}
+
+{% for model, result in data.items() %}
+    {% if result["normal"]["summary"]["value"] > best_value %}
+        {% set best_value = result["normal"]["summary"]["value"] %}
+        {% set best_model = model %}
+    {% endif %}
+{% endfor %}
+
+<p><b>Best Model:</b> {{ best_model|upper }}</p>
+<p><b>Value:</b> KES {{ "{:,.0f}".format(best_value) }}</p>
+</div>
 </div>
 <h3>Model Comparison</h3>
 
@@ -339,21 +399,26 @@ KES 18,000/year
                 {{ scenario["ai"].get("risk", scenario["ai"].get("risk_level", "N/A")) }}
             </p>
 
-            <h4>Allocation</h4>
+{% if scenario_name == "normal" %}
+<h4>Allocation</h4>
 
-            <table>
-                <tr>
-                    <th>Asset</th>
-                    <th>%</th>
-                </tr>
+<table>
+    <tr>
+        <th>Asset</th>
+        <th>%</th>
+        <th>KES</th>
+    </tr>
 
-                {% for p in scenario["plan"] %}
-                <tr>
-                    <td>{{ p["name"] }}</td>
-                    <td>{{ p["percent"] }}</td>
-                </tr>
-                {% endfor %}
-            </table>
+    {% for p in scenario["plan"] %}
+    <tr>
+        <td>{{ p["name"] }}</td>
+        <td>{{ p["percent"] }}</td>
+        <td>{{ "{:,.0f}".format(p["kes"]) }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endif %}
+               
 
             <h4>Returns</h4>
 
