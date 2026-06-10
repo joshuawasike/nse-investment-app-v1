@@ -785,17 +785,20 @@ def index():
     is_premium = False
     data = {}
     goal_result = None
+    best_model_name = None
+    best_model_value = 0
 
     try:
+
         if request.method == "POST":
 
-            # INPUTS
+            # ================= INPUTS =================
             monthly = float(request.form.get("monthly") or 0)
             years = int(request.form.get("years") or 1)
             model = request.form.get("model", "dividend")
             target_amount = float(request.form.get("target_amount") or 0)
 
-            # GOAL
+            # ================= GOAL ENGINE =================
             if target_amount > 0:
                 goal_result = {
                     "target": target_amount,
@@ -806,7 +809,7 @@ def index():
                     "monthly_15": monthly_for_goal(target_amount, 15)
                 }
 
-            # USER CHECK
+            # ================= USER CHECK =================
             code = request.form.get("transaction_code", "").strip().upper()
             phone = request.form.get("phone", "").strip()
 
@@ -814,18 +817,14 @@ def index():
                 if u.get("code") == code and is_active(u):
                     is_premium = True
 
-            # RUN MODELS
+            # ================= RUN MODELS =================
             models = ["dividend", "growth", "banking", "value", "income"]
 
             for m in models:
                 normal = simulate(monthly, years, "normal", m)
 
-                if is_premium:
-                    bull = simulate(monthly, years, "bull", m)
-                    bear = simulate(monthly, years, "bear", m)
-                else:
-                    bull = None
-                    bear = None
+                bull = simulate(monthly, years, "bull", m) if is_premium else None
+                bear = simulate(monthly, years, "bear", m) if is_premium else None
 
                 data[m] = {
                     "normal": normal,
@@ -833,7 +832,7 @@ def index():
                     "bear": bear
                 }
 
-            # STORE USER
+            # ================= STORE USER =================
             if code and not any(u.get("code") == code for u in users):
                 users.append({
                     "code": code,
@@ -844,14 +843,27 @@ def index():
                 })
                 save_users(users)
 
-        return render_template(
-            "index.html",
-            data=data,
-            goal_result=goal_result,
-            is_premium=is_premium,
-            payment=PAYMENT_INFO
-        )
+            # ================= BEST MODEL + RANKING =================
+            for model, result in data.items():
+                value = result["normal"]["summary"]["value"]
 
+                if value > best_model_value:
+                    best_model_value = value
+                    best_model_name = model
+ranking = sorted(
+    data.items(),
+    key=lambda x: x[1]["normal"]["summary"]["value"],
+    reverse=True
+)
+return render_template(
+    "index.html",
+    data=data,
+    ranking=ranking,
+    best_model_name=best_model_name,
+    best_model_value=best_model_value,
+    goal_result=goal_result,
+    is_premium=is_premium
+)
     except Exception as e:
         return f"APP ERROR: {str(e)}"
 # =========================================================
