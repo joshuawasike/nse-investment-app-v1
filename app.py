@@ -557,32 +557,27 @@ def simulate(monthly, years, mode, model="dividend"):
     nav = invested
     curve = []
 
-    for t in range(months):
+for t in range(months):
 
-        idx = t % 300
+    idx = t % 300
 
-        if t % 6 == 0:
-            w = optimize_weights(R, mode)
-            weights = apply_model_bias(w, model)
+    if t % 6 == 0:
+        w = optimize_weights(R, mode)
+        weights = apply_model_bias(w, model)
 
-        port_ret = np.dot(weights, R[:, idx])
+    port_ret = np.dot(weights, R[:, idx])
 
-        if mode == "bull":
-            port_ret = np.clip(port_ret, -0.02, 0.06)
-        elif mode == "bear":
-            port_ret = np.clip(port_ret, -0.05, 0.02)
-        else:
-            port_ret = np.clip(port_ret, -0.03, 0.04)
+    if mode == "bull":
+        port_ret = np.clip(port_ret, -0.02, 0.06)
+    elif mode == "bear":
+        port_ret = np.clip(port_ret, -0.05, 0.02)
+    else:
+        port_ret = np.clip(port_ret, -0.03, 0.04)
 
-# proper capital allocation of new contributions
-contribution = monthly * 0.98
+    nav = nav * (1 + port_ret)
+    nav += monthly * 0.98
 
-nav = nav * (1 + port_ret)
-
-# reinvest contributions into portfolio growth (not flat addition)
-nav += contribution * (1 + port_ret)
-
-        curve.append(nav)
+    curve.append(nav)
 
     # =========================================================
     # 💰 DIVIDENDS
