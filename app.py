@@ -509,21 +509,29 @@ def ai_portfolio_advisor(weights, R, assets):
         "commentary": comment
     }
 # =========================================================
-# 📊 SIMULATION ENGINE V2 (CLEAN + FIXED FINAL)
+# 📊 SIMULATION ENGINE V2 (FINAL CLEAN ARCHITECTURE)
 # =========================================================
 def simulate(monthly, years, mode, model="dividend"):
 
+    # =========================================================
+    # 🧠 ASSET SELECTION (MODEL → UNIVERSE)
+    # =========================================================
     assets = get_model_assets(model)
 
-# override with strict model universe (IMPORTANT FIX)
-if model in MODEL_UNIVERSES:
-    allowed = MODEL_UNIVERSES[model]
-    assets = [a for a in assets if a[0] in allowed]
+    MODEL_UNIVERSES = {
+        "dividend": ["Equity Bank", "KCB Group", "Co-op Bank", "EABL"],
+        "growth":   ["Safaricom", "Kenya Airways", "NCBA", "KenGen"],
+        "banking":  ["Equity Bank", "KCB Group", "Co-op Bank", "NCBA"],
+        "value":    ["EABL", "KenGen", "Safaricom"],
+        "income":   ["EABL", "Co-op Bank", "KCB Group", "Safaricom"]
+    }
 
-if not assets:
-    assets = ASSETS[:4]
+    if model in MODEL_UNIVERSES:
+        allowed = MODEL_UNIVERSES[model]
+        assets = [a for a in assets if a[0] in allowed]
+
     if not assets:
-        assets = ASSETS[:4]
+        assets = ASSETS[:6]
 
     N = len(assets)
 
@@ -540,9 +548,6 @@ if not assets:
 
     drift_base, vol_base, momentum = model_params.get(model, (0.001, 0.01, 0.6))
 
-    # =========================================================
-    # 🌍 REGIME ADJUSTMENT
-    # =========================================================
     regime = {
         "normal": (1.0, 1.0),
         "bull":   (1.9, 0.7),
@@ -559,10 +564,7 @@ if not assets:
     # =========================================================
     R = generate_market(mode, N, drift, vol, momentum)
 
-    # =========================================================
-    # 🔥 MODEL BOOST
-    # =========================================================
-    model_boost = {
+    R *= {
         "dividend": 0.97,
         "growth": 1.20,
         "banking": 1.07,
@@ -570,17 +572,16 @@ if not assets:
         "income": 0.98
     }.get(model, 1.0)
 
-    R = R * model_boost
-    R = R * (1 + drift * 0.3)
+    R *= (1 + drift * 0.3)
 
     # =========================================================
-    # 🧠 WEIGHTS
+    # 🧠 WEIGHTS (ONLY ONE SOURCE OF TRUTH)
     # =========================================================
     weights = optimize_weights(R, mode)
     weights = apply_model_bias(weights, model)
 
     # =========================================================
-    # 📊 MONTE CARLO PATH
+    # 💰 PORTFOLIO SIMULATION
     # =========================================================
     months = years * 12
     invested = monthly * months
@@ -598,12 +599,11 @@ if not assets:
 
         port_ret = np.dot(weights, R[:, idx])
 
-        if mode == "bull":
-            port_ret = np.clip(port_ret, -0.03, 0.08)
-        elif mode == "bear":
-            port_ret = np.clip(port_ret, -0.08, 0.03)
-        else:
-            port_ret = np.clip(port_ret, -0.05, 0.06)
+        port_ret = np.clip(
+            port_ret,
+            -0.05 if mode == "bear" else -0.03,
+            0.08 if mode == "bull" else 0.05
+        )
 
         nav = nav * (1 + port_ret)
         nav += monthly * (1 + drift * 0.5)
@@ -611,11 +611,11 @@ if not assets:
         curve.append(nav)
 
     # =========================================================
-    # 💰 DIVIDENDS
+    # 💰 DIVIDENDS (REAL MONEY ALLOCATION FIX)
     # =========================================================
     asset_investment = invested * weights
     yields = np.array([a[2] for a in assets])
-    dividends = asset_investment * yields * (1 + 0.03 * years)
+    dividends = asset_investment * yields
 
     # =========================================================
     # 📈 LONG TERM VALUE MODEL
@@ -637,45 +637,65 @@ if not assets:
 
     for i in range(N):
         drift_i = base_returns[i]
-
-        growth_factor = np.exp((drift_i - (annual_vol**2) / 2) * years)
-
+        growth_factor = np.exp((drift_i - (annual_vol**2)/2) * years)
         asset_values.append(asset_investment[i] * growth_factor)
 
     asset_values = np.array(asset_values)
     portfolio_value = float(np.sum(asset_values))
 
     # =========================================================
-    # 📦 OUTPUT
+    # 📊 PLAN (FIX: now clearly exists + includes MONEY + %)
     # =========================================================
-    return {
-        "summary": {
-            "invested": float(invested),
-            "value": float(portfolio_value),
-            "dividends": float(np.sum(dividends))
-        },
+    plan = [
+        {
+            "name": assets[i][0],
+            "percent": round(weights[i] * 100, 2),
+            "kes": round(asset_investment[i], 2)
+        }
+        for i in range(N)
+    ]
 
-        "plan": [
-            {
-                "name": assets[i][0],
-                "percent": round(weights[i] * 100, 2),
-                "kes": round(asset_investment[i], 2)
-            }
-            for i in range(N)
-        ],
-
-        "returns": [
-            {
-                "name": assets[i][0],
-                "value": round(asset_values[i], 2),
-                "dividends": round(dividends[i], 2)
-            }
-            for i in range(N)
-        ],
-
-        "curve": curve,
-        "ai": ai_portfolio_advisor(weights, R, assets)
+    # =========================================================
+    # 🤖 MINIMAL AI ADVISOR (FIXED SINGLE VERSION)
+    # =========================================================
+    risk = float(np.std(np.mean(R, axis=1)))
+    ai = {
+        "top_asset": assets[int(np.argmax(weights))][0],
+        "risk_level": risk,
+        "commentary": (
+            "Low risk environment." if risk < 0.01 else
+            "Moderate risk balanced portfolio." if risk < 0.02 else
+            "High volatility detected."
+        )
     }
+
+# =========================================================
+# 📦 OUTPUT
+# =========================================================
+return {
+    "summary": {
+        "invested": float(invested),
+        "value": float(portfolio_value),
+        "dividends": float(np.sum(dividends))
+    },
+
+    "chart": chart(curve),  # 🔥 NAV curve chart
+
+    "plan": plan,
+
+    "returns": [
+        {
+            "name": assets[i][0],
+            "value": round(asset_values[i], 2),
+            "dividends": round(dividends[i], 2)
+        }
+        for i in range(N)
+    ],
+
+    "curve": curve,
+
+    "ai": ai
+}
 # =========================================================
 # 📊 CHART
 # =========================================================
