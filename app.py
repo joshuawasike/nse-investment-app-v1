@@ -188,37 +188,31 @@ def get_model_assets(model):
     grouped["risk_score"] = grouped["std"] + 1e-9
     grouped["sharpe_like"] = grouped["return_score"] / grouped["risk_score"]
 
-    # =========================================================
-    # 🧠 MODEL UNIVERSES
-    # =========================================================
+# =========================================================
+# 🧠 MODEL UNIVERSES
+# =========================================================
 model_universe = {
-    "dividend": {
-        "core": ["EABL", "KCB", "COOP"],
-        "optional": ["KPLC", "BAT", "KEGN"]
-    },
-
-    "growth": {
-        "core": ["SCOM", "NCBA"],
-        "optional": ["KQ", "ARM"]
-    },
-
-    "banking": {
-        "core": ["KCB", "EQTY", "COOP"],
-        "optional": ["NCBA", "DTB", "SBM"]
-    },
-
-    "value": {
-        "core": ["KEGN", "NMG"],
-        "optional": ["EABL", "ARM"]
-    },
-
-    "income": {
-        "core": ["EABL", "COOP"],
-        "optional": ["KCB", "BAT"]
-    }
+    "dividend": ["EABL","KCB","EQTY","COOP","KEGN","SCOM","KPLC","BAT"],
+    "growth":   ["NCBA","SCOM","KQ","ARM","KCB","EQTY","COOP"],
+    "banking":  ["KCB","EQTY","COOP","NCBA","DTB","SBM"],
+    "value":    ["NMG","KPLC","KEGN","EABL","COOP","KCB"],
+    "income":   ["EABL","BAT","KPLC","SCOM","COOP","KCB"]
 }
 
-    # =========================================================
+allowed = model_universe.get(model, [])
+
+if allowed:
+    grouped = grouped[grouped["CODE"].isin(allowed)]
+
+# =========================================================
+# FALLBACK
+# =========================================================
+if grouped.empty:
+    grouped = df.groupby("CODE")["PREVIOUS"].agg(["mean", "std"]).reset_index()
+
+    grouped["return_score"] = grouped["mean"]
+    grouped["risk_score"] = grouped["std"] + 1e-9
+    grouped["sharpe_like"] = grouped["return_score"] / grouped["risk_score"]====================================
     # FALLBACK
     # =========================================================
     if grouped.empty:
