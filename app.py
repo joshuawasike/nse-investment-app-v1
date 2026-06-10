@@ -829,13 +829,18 @@ def index():
                 else:
                     bull = None
                     bear = None
+def safe_value(x):
+    try:
+        return x["summary"]["value"]
+    except:
+        return 0
 
                 data[m] = {
                     "normal": normal,
                     "bull": bull,
                     "bear": bear
                 }
-
+print(m, type(normal), normal)
             # STORE USER
             if code and not any(u.get("code") == code for u in users):
                 users.append({
