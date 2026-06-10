@@ -590,25 +590,65 @@ def simulate(monthly, years, mode, model="dividend"):
     # =========================================================
     asset_investment = invested * weights
     yields = np.array([a[2] for a in assets])
-    dividends = asset_investment * yields
+if mode == "bull":
+    dividend_factor = 1.20
 
-    # =========================================================
-    # 📈 LONG TERM VALUE MODEL
-    # =========================================================
-    return_map = {
-        "dividend": (0.08, 0.14),
-        "growth":   (0.15, 0.38),
-        "banking":  (0.10, 0.18),
-        "value":    (0.11, 0.25),
-        "income":   (0.07, 0.13)
-    }
+elif mode == "bear":
+    dividend_factor = 0.75
 
-    low, high = return_map.get(model, (0.06, 0.12))
-    base_returns = np.linspace(low, high, N)
+else:
+    dividend_factor = 1.00
 
-    asset_values = asset_investment * ((1 + base_returns) ** years)
-    portfolio_value = float(np.sum(asset_values))
+dividends = asset_investment * yields * dividend_factor
 
+# =========================================================
+# 📈 SCENARIO-AWARE VALUE ENGINE
+# =========================================================
+
+return_map = {
+    "dividend": (0.08, 0.14),
+    "growth":   (0.18, 0.45),
+    "banking":  (0.10, 0.20),
+    "value":    (0.12, 0.28),
+    "income":   (0.07, 0.14)
+}
+
+low, high = return_map.get(model, (0.06, 0.12))
+
+# ----------------------------------
+# Scenario multipliers
+# ----------------------------------
+if mode == "bull":
+
+    low *= 1.60
+    high *= 1.80
+
+elif mode == "bear":
+
+    low *= 0.40
+    high *= 0.60
+
+# ----------------------------------
+# Asset growth rates
+# ----------------------------------
+base_returns = np.random.uniform(low, high, N)
+
+# ----------------------------------
+# Asset future values
+# ----------------------------------
+asset_values = asset_investment * ((1 + base_returns) ** years)
+
+# ----------------------------------
+# Scenario bonus from simulation
+# ----------------------------------
+sim_boost = np.mean(R)
+
+portfolio_value = float(np.sum(asset_values))
+
+portfolio_value *= (
+    1 +
+    np.clip(sim_boost * years * 3, -0.50, 1.50)
+)
     # =========================================================
     # 📦 OUTPUT
     # =========================================================
