@@ -487,7 +487,7 @@ def generate_market(mode, N, drift, vol, momentum):
 
 
 # =========================================================
-# 📊 SIMULATION ENGINE V2 (CLEAN + FIXED)
+# 📊 SIMULATION ENGINE V2 (CLEAN + FIXED FINAL)
 # =========================================================
 def simulate(monthly, years, mode, model="dividend"):
 
@@ -557,27 +557,27 @@ def simulate(monthly, years, mode, model="dividend"):
     nav = invested
     curve = []
 
-for t in range(months):
+    for t in range(months):
 
-    idx = t % 300
+        idx = t % 300
 
-    if t % 6 == 0:
-        w = optimize_weights(R, mode)
-        weights = apply_model_bias(w, model)
+        if t % 6 == 0:
+            w = optimize_weights(R, mode)
+            weights = apply_model_bias(w, model)
 
-    port_ret = np.dot(weights, R[:, idx])
+        port_ret = np.dot(weights, R[:, idx])
 
-    if mode == "bull":
-        port_ret = np.clip(port_ret, -0.02, 0.06)
-    elif mode == "bear":
-        port_ret = np.clip(port_ret, -0.05, 0.02)
-    else:
-        port_ret = np.clip(port_ret, -0.03, 0.04)
+        if mode == "bull":
+            port_ret = np.clip(port_ret, -0.02, 0.06)
+        elif mode == "bear":
+            port_ret = np.clip(port_ret, -0.05, 0.02)
+        else:
+            port_ret = np.clip(port_ret, -0.03, 0.04)
 
-    nav = nav * (1 + port_ret)
-    nav += monthly * 0.98
+        nav = nav * (1 + port_ret)
+        nav += monthly * 0.98
 
-    curve.append(nav)
+        curve.append(nav)
 
     # =========================================================
     # 💰 DIVIDENDS
@@ -600,18 +600,17 @@ for t in range(months):
     low, high = return_map.get(model, (0.06, 0.12))
     base_returns = np.linspace(low, high, N)
 
-  annual_vol = 0.12  # stabilize growth
+    annual_vol = 0.12  # stabilize growth
 
-asset_values = []
-for i in range(N):
-    drift = base_returns[i]
-    
-    # dampened compounding (realistic finance model)
-    growth_factor = (1 + drift - (annual_vol * 0.5)) ** years
-    
-    asset_values.append(asset_investment[i] * growth_factor)
+    asset_values = []
+    for i in range(N):
+        drift_i = base_returns[i]
 
-asset_values = np.array(asset_values)
+        growth_factor = (1 + drift_i - (annual_vol * 0.5)) ** years
+
+        asset_values.append(asset_investment[i] * growth_factor)
+
+    asset_values = np.array(asset_values)
     portfolio_value = float(np.sum(asset_values))
 
     # =========================================================
