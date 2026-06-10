@@ -314,6 +314,10 @@ KES 18,000/year
         <div class="card" style="margin-top:10px;border-left:4px solid #60a5fa;">
 
             <h4>{{ scenario_name|upper }} SCENARIO</h4>
+{% if scenario.chart %}
+    <h4>Portfolio Curve</h4>
+    <img src="data:image/png;base64,{{ scenario.chart }}" />
+{% endif %}
 
             <p>
                 <b>Invested:</b><br>
@@ -332,7 +336,7 @@ KES 18,000/year
 
             <p>
                 <b>Risk Score:</b>
-                {{ scenario["ai"]["risk"] }}
+                {{ scenario["ai"].get("risk", scenario["ai"].get("risk_level", "N/A")) }}
             </p>
 
             <h4>Allocation</h4>
