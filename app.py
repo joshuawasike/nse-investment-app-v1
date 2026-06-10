@@ -653,6 +653,7 @@ def simulate(monthly, years, mode, model="dividend"):
     # 🤖 MINIMAL AI ADVISOR (FIXED SINGLE VERSION)
     # =========================================================
     risk = float(np.std(np.mean(R, axis=1)))
+
     ai = {
         "top_asset": assets[int(np.argmax(weights))][0],
         "risk_level": risk,
@@ -663,33 +664,33 @@ def simulate(monthly, years, mode, model="dividend"):
         )
     }
 
-# =========================================================
-# 📦 OUTPUT
-# =========================================================
-return {
-    "summary": {
-        "invested": float(invested),
-        "value": float(portfolio_value),
-        "dividends": float(np.sum(dividends))
-    },
+    # =========================================================
+    # 📦 OUTPUT
+    # =========================================================
+    return {
+        "summary": {
+            "invested": float(invested),
+            "value": float(portfolio_value),
+            "dividends": float(np.sum(dividends))
+        },
 
-    "chart": chart(curve),  # 🔥 NAV curve chart
+        "chart": chart(curve),
 
-    "plan": plan,
+        "plan": plan,
 
-    "returns": [
-        {
-            "name": assets[i][0],
-            "value": round(asset_values[i], 2),
-            "dividends": round(dividends[i], 2)
-        }
-        for i in range(N)
-    ],
+        "returns": [
+            {
+                "name": assets[i][0],
+                "value": round(asset_values[i], 2),
+                "dividends": round(dividends[i], 2)
+            }
+            for i in range(N)
+        ],
 
-    "curve": curve,
+        "curve": curve,
 
-    "ai": ai
-}
+        "ai": ai
+    }
 # =========================================================
 # 📊 CHART
 # =========================================================
