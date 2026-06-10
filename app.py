@@ -500,13 +500,13 @@ def simulate(monthly, years, mode, model="dividend"):
     # =========================================================
     # 🧠 MODEL PARAMETERS
     # =========================================================
-model_params = {
-    "dividend": (0.0035, 0.012, 0.60),
-    "growth":   (0.0060, 0.022, 1.10),
-    "banking":  (0.0045, 0.016, 0.80),
-    "value":    (0.0040, 0.015, 0.75),
-    "income":   (0.0038, 0.013, 0.70),
-}
+    model_params = {
+        "dividend": (0.0035, 0.012, 0.60),
+        "growth":   (0.0060, 0.022, 1.10),
+        "banking":  (0.0045, 0.016, 0.80),
+        "value":    (0.0040, 0.015, 0.75),
+        "income":   (0.0038, 0.013, 0.70),
+    }
 
     drift_base, vol_base, momentum = model_params.get(model, (0.001, 0.01, 0.6))
 
@@ -540,7 +540,7 @@ model_params = {
         "income": 0.98
     }.get(model, 1.0)
 
-    R *= model_boost
+    R = R * model_boost
     R = R * (1 + drift * 0.3)
 
     # =========================================================
@@ -562,21 +562,21 @@ model_params = {
 
         idx = t % 300
 
-        if t % 6 == 0:
+        if t % 12 == 0:
             w = optimize_weights(R, mode)
             weights = apply_model_bias(w, model)
 
         port_ret = np.dot(weights, R[:, idx])
 
         if mode == "bull":
-            port_ret = np.clip(port_ret, -0.02, 0.06)
+            port_ret = np.clip(port_ret, -0.03, 0.08)
         elif mode == "bear":
-            port_ret = np.clip(port_ret, -0.05, 0.02)
+            port_ret = np.clip(port_ret, -0.08, 0.03)
         else:
-            port_ret = np.clip(port_ret, -0.03, 0.04)
+            port_ret = np.clip(port_ret, -0.05, 0.06)
 
         nav = nav * (1 + port_ret)
-        nav += monthly * (1 + drift * 2)
+        nav += monthly * (1 + drift * 0.5)
 
         curve.append(nav)
 
@@ -585,70 +585,67 @@ model_params = {
     # =========================================================
     asset_investment = invested * weights
     yields = np.array([a[2] for a in assets])
-    dividends = asset_investment * yields
+    dividends = asset_investment * yields * (1 + 0.03 * years)
 
-# =========================================================
-# 📈 LONG TERM VALUE MODEL
-# =========================================================
+    # =========================================================
+    # 📈 LONG TERM VALUE MODEL
+    # =========================================================
+    return_map = {
+        "dividend": (0.08, 0.14),
+        "growth":   (0.15, 0.38),
+        "banking":  (0.10, 0.18),
+        "value":    (0.11, 0.25),
+        "income":   (0.07, 0.13)
+    }
 
-return_map = {
-    "dividend": (0.08, 0.14),
-    "growth":   (0.15, 0.38),
-    "banking":  (0.10, 0.18),
-    "value":    (0.11, 0.25),
-    "income":   (0.07, 0.13)
-}
+    low, high = return_map.get(model, (0.06, 0.12))
+    base_returns = np.linspace(low, high, N)
 
-low, high = return_map.get(model, (0.06, 0.12))
-base_returns = np.linspace(low, high, N)
+    annual_vol = 0.12
 
-annual_vol = 0.12  # stabilize growth
+    asset_values = []
 
-asset_values = []
+    for i in range(N):
+        drift_i = base_returns[i]
 
-for i in range(N):
-    drift_i = base_returns[i]
+        growth_factor = np.exp((drift_i - (annual_vol**2) / 2) * years)
 
-    # stable long-term compounding model
-    growth_factor = (1 + drift_i) ** years * np.exp(-annual_vol * 0.15 * years)
+        asset_values.append(asset_investment[i] * growth_factor)
 
-    asset_values.append(asset_investment[i] * growth_factor)
+    asset_values = np.array(asset_values)
+    portfolio_value = float(np.sum(asset_values))
 
-asset_values = np.array(asset_values)
-portfolio_value = float(np.sum(asset_values))
+    # =========================================================
+    # 📦 OUTPUT
+    # =========================================================
+    return {
+        "summary": {
+            "invested": float(invested),
+            "value": float(portfolio_value),
+            "dividends": float(np.sum(dividends))
+        },
 
-# =========================================================
-# 📦 OUTPUT
-# =========================================================
+        "plan": [
+            {
+                "name": assets[i][0],
+                "percent": round(weights[i] * 100, 2),
+                "kes": round(asset_investment[i], 2)
+            }
+            for i in range(N)
+        ],
 
-return {
-    "summary": {
-        "invested": float(invested),
-        "value": float(portfolio_value),
-        "dividends": float(np.sum(dividends))
-    },
+        "returns": [
+            {
+                "name": assets[i][0],
+                "value": round(asset_values[i], 2),
+                "dividends": round(dividends[i], 2)
+            }
+            for i in range(N)
+        ],
 
-    "plan": [
-        {
-            "name": assets[i][0],
-            "percent": round(weights[i] * 100, 2),
-            "kes": round(asset_investment[i], 2)
-        }
-        for i in range(N)
-    ],
-
-    "returns": [
-        {
-            "name": assets[i][0],
-            "value": round(asset_values[i], 2),
-            "dividends": round(dividends[i], 2)
-        }
-        for i in range(N)
-    ],
-
-    "curve": curve,
-    "ai": ai_portfolio_advisor(weights, R, assets)
-}
+        "curve": curve,
+        "ai": ai_portfolio_advisor(weights, R, assets)
+    }
 # =========================================================
 # 📊 CHART
 # =========================================================
