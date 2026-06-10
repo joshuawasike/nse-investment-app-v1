@@ -341,16 +341,6 @@ KES 18,000/year
 <div class="card">
 <h3>🏆 Best Performing Model</h3>
 
-{% set best_model = None %}
-{% set best_value = 0 %}
-
-{% for model, result in data.items() %}
-    {% if result["normal"]["summary"]["value"] > best_value %}
-        {% set best_value = result["normal"]["summary"]["value"] %}
-        {% set best_model = model %}
-    {% endif %}
-{% endfor %}
-
 <p><b>Best Model:</b> {{ best_model|upper }}</p>
 <p><b>Value:</b> KES {{ "{:,.0f}".format(best_value) }}</p>
 </div>
