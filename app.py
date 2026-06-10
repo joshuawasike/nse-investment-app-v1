@@ -189,27 +189,24 @@ def get_model_assets(model):
     grouped["sharpe_like"] = grouped["return_score"] / grouped["risk_score"]
 
     # =========================================================
-    # 🧠 MODEL UNIVERSES
+    # 🧠 MODEL UNIVERSES (FIXED LOCATION + FIXED KEYS)
     # =========================================================
-MODEL_UNIVERSES = {
-    "dividend": ["Equity Bank", "KCB Group", "Co-op Bank", "EABL"],
-    "growth":   ["Safaricom", "Kenya Airways", "NCBA", "KenGen"],
-    "banking":  ["Equity Bank", "KCB Group", "Co-op Bank", "NCBA"],
-    "value":    ["EABL", "KenGen", "Equity Bank", "Safaricom"],
-    "income":   ["EABL", "Co-op Bank", "KCB Group", "Safaricom"]
-}
+    MODEL_UNIVERSES = {
+        "dividend": ["EQTY", "KCB", "COOP", "EABL"],
+        "growth":   ["SCOM", "KQ", "NCBA", "KEGN"],
+        "banking":  ["EQTY", "KCB", "COOP", "NCBA"],
+        "value":    ["EABL", "KEGN", "SCOM", "KQ"],
+        "income":   ["EABL", "COOP", "KCB", "SCOM"]
+    }
 
-    allowed = model_universe.get(model, [])
+    allowed = MODEL_UNIVERSES.get(model, [])
 
     if allowed:
         grouped = grouped[grouped["CODE"].isin(allowed)]
 
-    # =========================================================
-    # FALLBACK (FIXED)
-    # =========================================================
+    # fallback if filtering removes everything
     if grouped.empty:
         grouped = df.groupby("CODE")["PREVIOUS"].agg(["mean", "std"]).reset_index()
-
         grouped["return_score"] = grouped["mean"]
         grouped["risk_score"] = grouped["std"] + 1e-9
         grouped["sharpe_like"] = grouped["return_score"] / grouped["risk_score"]
@@ -219,13 +216,11 @@ MODEL_UNIVERSES = {
     # =========================================================
     def model_bias(code):
 
-        code = str(code)
-
         if model == "dividend":
-            return 1.8 if code in ["EABL", "KCB", "COOP", "KEGN"] else 1.0
+            return 1.8 if code in ["EQTY", "KCB", "COOP", "EABL"] else 1.0
 
         elif model == "growth":
-            return 2.0 if code in ["KQ", "SCOM", "NCBA"] else 0.9
+            return 2.0 if code in ["SCOM", "KQ", "NCBA"] else 0.9
 
         elif model == "banking":
             return 2.2 if code in ["EQTY", "KCB", "COOP", "NCBA"] else 0.7
@@ -244,23 +239,22 @@ MODEL_UNIVERSES = {
     # FINAL SCORE
     # =========================================================
     grouped["score"] = grouped["sharpe_like"] * grouped["bias"]
+    grouped = grouped.sort_values("score", ascending=False).head(8)
 
-    grouped = grouped.sort_values("score", ascending=False)
-
-    top = grouped.head(8)
-
-    assets = []
-
-    for _, row in top.iterrows():
-        assets.append(
-            (
-                row["CODE"],
-                row["CODE"],
-                float(np.random.uniform(0.04, 0.12))
-            )
+    # =========================================================
+    # OUTPUT ASSETS
+    # =========================================================
+    assets = [
+        (
+            row["CODE"],
+            row["CODE"],
+            float(np.random.uniform(0.04, 0.12))
         )
+        for _, row in grouped.iterrows()
+    ]
 
-    return assets# =========================================================
+    return assets
+# =========================================================
 # 📊 ASSETS
 # =========================================================
 ASSETS = [
