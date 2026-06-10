@@ -587,64 +587,68 @@ model_params = {
     yields = np.array([a[2] for a in assets])
     dividends = asset_investment * yields
 
-    # =========================================================
-    # 📈 LONG TERM VALUE MODEL
-    # =========================================================
-    return_map = {
-        "dividend": (0.08, 0.14),
-        "growth":   (0.15, 0.38),
-        "banking":  (0.10, 0.18),
-        "value":    (0.11, 0.25),
-        "income":   (0.07, 0.13)
-    }
+# =========================================================
+# 📈 LONG TERM VALUE MODEL
+# =========================================================
 
-    low, high = return_map.get(model, (0.06, 0.12))
-    base_returns = np.linspace(low, high, N)
+return_map = {
+    "dividend": (0.08, 0.14),
+    "growth":   (0.15, 0.38),
+    "banking":  (0.10, 0.18),
+    "value":    (0.11, 0.25),
+    "income":   (0.07, 0.13)
+}
 
-    annual_vol = 0.12  # stabilize growth
+low, high = return_map.get(model, (0.06, 0.12))
+base_returns = np.linspace(low, high, N)
 
-    asset_values = []
-    for i in range(N):
-        drift_i = base_returns[i]
+annual_vol = 0.12  # stabilize growth
 
-        growth_factor = (1 + drift) ** years * np.exp(-annual_vol * 0.15 * years)
+asset_values = []
 
-        asset_values.append(asset_investment[i] * growth_factor)
+for i in range(N):
+    drift_i = base_returns[i]
 
-    asset_values = np.array(asset_values)
-    portfolio_value = float(np.sum(asset_values))
+    # stable long-term compounding model
+    growth_factor = (1 + drift_i) ** years * np.exp(-annual_vol * 0.15 * years)
 
-    # =========================================================
-    # 📦 OUTPUT
-    # =========================================================
-    return {
-        "summary": {
-            "invested": float(invested),
-            "value": float(portfolio_value),
-            "dividends": float(np.sum(dividends))
-        },
+    asset_values.append(asset_investment[i] * growth_factor)
 
-        "plan": [
-            {
-                "name": assets[i][0],
-                "percent": round(weights[i] * 100, 2),
-                "kes": round(asset_investment[i], 2)
-            }
-            for i in range(N)
-        ],
+asset_values = np.array(asset_values)
+portfolio_value = float(np.sum(asset_values))
 
-        "returns": [
-            {
-                "name": assets[i][0],
-                "value": round(asset_values[i], 2),
-                "dividends": round(dividends[i], 2)
-            }
-            for i in range(N)
-        ],
+# =========================================================
+# 📦 OUTPUT
+# =========================================================
 
-        "curve": curve,
-        "ai": ai_portfolio_advisor(weights, R, assets)
-    }
+return {
+    "summary": {
+        "invested": float(invested),
+        "value": float(portfolio_value),
+        "dividends": float(np.sum(dividends))
+    },
+
+    "plan": [
+        {
+            "name": assets[i][0],
+            "percent": round(weights[i] * 100, 2),
+            "kes": round(asset_investment[i], 2)
+        }
+        for i in range(N)
+    ],
+
+    "returns": [
+        {
+            "name": assets[i][0],
+            "value": round(asset_values[i], 2),
+            "dividends": round(dividends[i], 2)
+        }
+        for i in range(N)
+    ],
+
+    "curve": curve,
+    "ai": ai_portfolio_advisor(weights, R, assets)
+}
 # =========================================================
 # 📊 CHART
 # =========================================================
