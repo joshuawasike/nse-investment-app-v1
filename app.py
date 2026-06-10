@@ -500,13 +500,13 @@ def simulate(monthly, years, mode, model="dividend"):
     # =========================================================
     # 🧠 MODEL PARAMETERS
     # =========================================================
-    model_params = {
-        "dividend": (0.0008, 0.006, 0.55),
-        "growth":   (0.0028, 0.018, 1.10),
-        "banking":  (0.0013, 0.010, 0.75),
-        "value":    (0.0010, 0.012, 0.65),
-        "income":   (0.0011, 0.008, 0.60),
-    }
+model_params = {
+    "dividend": (0.0035, 0.012, 0.60),
+    "growth":   (0.0060, 0.022, 1.10),
+    "banking":  (0.0045, 0.016, 0.80),
+    "value":    (0.0040, 0.015, 0.75),
+    "income":   (0.0038, 0.013, 0.70),
+}
 
     drift_base, vol_base, momentum = model_params.get(model, (0.001, 0.01, 0.6))
 
@@ -541,6 +541,7 @@ def simulate(monthly, years, mode, model="dividend"):
     }.get(model, 1.0)
 
     R *= model_boost
+    R = R * (1 + drift * 0.3)
 
     # =========================================================
     # 🧠 WEIGHTS
@@ -575,7 +576,7 @@ def simulate(monthly, years, mode, model="dividend"):
             port_ret = np.clip(port_ret, -0.03, 0.04)
 
         nav = nav * (1 + port_ret)
-        nav += monthly * 0.98
+        nav += monthly * (1 + drift * 2)
 
         curve.append(nav)
 
@@ -606,7 +607,7 @@ def simulate(monthly, years, mode, model="dividend"):
     for i in range(N):
         drift_i = base_returns[i]
 
-        growth_factor = (1 + drift_i - (annual_vol * 0.5)) ** years
+        growth_factor = (1 + drift) ** years * np.exp(-annual_vol * 0.15 * years)
 
         asset_values.append(asset_investment[i] * growth_factor)
 
