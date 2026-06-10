@@ -321,15 +321,27 @@ KES 18,000/year
 
 <tr>
     <td>{{ model }}</td>
-    <td>{{ "{:,.0f}".format(result["normal"]["summary"]["value"]) }}</td>
+
+    <!-- NORMAL -->
     <td>
-        {% if result["bull"] %}
-            {{ "{:,.0f}".format(result["bull"]["summary"]["value"]) }}
+        {{ "{:,.0f}".format(result["normal"]["summary"]["value"] | default(0)) }}
+    </td>
+
+    <!-- BULL -->
+    <td>
+        {% if result["bull"] and result["bull"].get("summary") %}
+            {{ "{:,.0f}".format(result["bull"]["summary"]["value"] | default(0)) }}
+        {% else %}
+            N/A
         {% endif %}
     </td>
+
+    <!-- BEAR -->
     <td>
-        {% if result["bear"] %}
-            {{ "{:,.0f}".format(result["bear"]["summary"]["value"]) }}
+        {% if result["bear"] and result["bear"].get("summary") %}
+            {{ "{:,.0f}".format(result["bear"]["summary"]["value"] | default(0)) }}
+        {% else %}
+            N/A
         {% endif %}
     </td>
 </tr>
