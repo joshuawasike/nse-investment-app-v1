@@ -790,15 +790,15 @@ def index():
     ranking = []
 
     try:
+
         if request.method == "POST":
 
             # INPUTS
             monthly = float(request.form.get("monthly") or 0)
             years = int(request.form.get("years") or 1)
-            model = request.form.get("model", "dividend")
             target_amount = float(request.form.get("target_amount") or 0)
 
-            # GOAL
+            # GOAL ANALYSIS
             if target_amount > 0:
                 goal_result = {
                     "target": target_amount,
@@ -817,10 +817,17 @@ def index():
                 if u.get("code") == code and is_active(u):
                     is_premium = True
 
-            # RUN MODELS
-            models = ["dividend", "growth", "banking", "value", "income"]
+            # RUN ALL MODELS
+            models = [
+                "dividend",
+                "growth",
+                "banking",
+                "value",
+                "income"
+            ]
 
             for m in models:
+
                 normal = simulate(monthly, years, "normal", m)
 
                 if is_premium:
@@ -829,20 +836,16 @@ def index():
                 else:
                     bull = None
                     bear = None
-def safe_value(x):
-    try:
-        return x["summary"]["value"]
-    except:
-        return 0
 
                 data[m] = {
                     "normal": normal,
                     "bull": bull,
                     "bear": bear
                 }
-print(m, type(normal), normal)
-            # STORE USER
+
+            # SAVE NEW USER
             if code and not any(u.get("code") == code for u in users):
+
                 users.append({
                     "code": code,
                     "phone": phone,
@@ -850,21 +853,23 @@ print(m, type(normal), normal)
                     "plan": "all_models",
                     "expiry": ""
                 })
+
                 save_users(users)
 
-            # =====================================================
-            # 🏆 BEST MODEL (FIXED HERE)
-            # =====================================================
+            # BEST MODEL
             for model_name, result in data.items():
-                value = result["normal"]["summary"]["value"]
 
-                if value > best_model_value:
-                    best_model_value = value
-                    best_model_name = model_name
+                try:
+                    value = result["normal"]["summary"]["value"]
 
-            # =====================================================
-            # 📊 RANKING (THIS IS WHERE IT GOES)
-            # =====================================================
+                    if value > best_model_value:
+                        best_model_value = value
+                        best_model_name = model_name
+
+                except:
+                    pass
+
+            # MODEL RANKING
             ranking = sorted(
                 data.items(),
                 key=lambda x: x[1]["normal"]["summary"]["value"],
@@ -874,11 +879,11 @@ print(m, type(normal), normal)
         return render_template(
             "index.html",
             data=data,
+            goal_result=goal_result,
+            is_premium=is_premium,
             best_model_name=best_model_name,
             best_model_value=best_model_value,
-            ranking=ranking,
-            goal_result=goal_result,
-            is_premium=is_premium
+            ranking=ranking
         )
 
     except Exception as e:
