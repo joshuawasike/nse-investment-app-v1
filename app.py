@@ -574,8 +574,13 @@ def simulate(monthly, years, mode, model="dividend"):
         else:
             port_ret = np.clip(port_ret, -0.03, 0.04)
 
-        nav = max(nav * (1 + port_ret), 0)
-        nav += monthly * 0.98
+# proper capital allocation of new contributions
+contribution = monthly * 0.98
+
+nav = nav * (1 + port_ret)
+
+# reinvest contributions into portfolio growth (not flat addition)
+nav += contribution * (1 + port_ret)
 
         curve.append(nav)
 
@@ -600,7 +605,18 @@ def simulate(monthly, years, mode, model="dividend"):
     low, high = return_map.get(model, (0.06, 0.12))
     base_returns = np.linspace(low, high, N)
 
-    asset_values = asset_investment * ((1 + base_returns) ** years)
+  annual_vol = 0.12  # stabilize growth
+
+asset_values = []
+for i in range(N):
+    drift = base_returns[i]
+    
+    # dampened compounding (realistic finance model)
+    growth_factor = (1 + drift - (annual_vol * 0.5)) ** years
+    
+    asset_values.append(asset_investment[i] * growth_factor)
+
+asset_values = np.array(asset_values)
     portfolio_value = float(np.sum(asset_values))
 
     # =========================================================
