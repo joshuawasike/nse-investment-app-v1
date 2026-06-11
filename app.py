@@ -476,7 +476,32 @@ def generate_market(mode, N, drift, vol, momentum):
     else:
         shock_mult = 1.0
         bias = 0.0
+    # =====================================================
+    # 📊 CORE MARKET STRUCTURE
+    # =====================================================
 
+    trend = drift + (base * vol * momentum)
+
+    mean_reversion = -0.004 * np.cumsum(base, axis=1)
+
+    shock = (
+        np.random.standard_t(5, size=(N, 300))
+        * vol
+        * 0.2
+        * shock_mult
+    )
+
+    R = trend + mean_reversion + shock
+
+    # =====================================================
+    # 📊 REGIME ALIGNMENT FIX (CRITICAL STABILITY LAYER)
+    # =====================================================
+    R = R + bias
+
+    # hard safety clamp (prevents cross-model explosions)
+    R = np.clip(R, -0.20, 0.30)
+
+    return R
     # =====================================================
     # 📈 RETURN COMPONENTS
     # =====================================================
