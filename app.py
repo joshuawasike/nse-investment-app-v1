@@ -631,36 +631,37 @@ sim = simulate_paths(R, mode)
 weights = institutional_allocator(sim, mode)
 weights = apply_model_bias(weights, model)
 
-    # =========================================================
-    # 💰 PORTFOLIO SIMULATION
-    # =========================================================
-    months = years * 12
-    invested = monthly * months
+# =========================================================
+# 💰 PORTFOLIO SIMULATION
+# =========================================================
 
-    nav = invested
-    curve = []
+months = years * 12
+invested = monthly * months
 
-    for t in range(months):
+nav = invested
+curve = []
 
-        idx = t % 300
+for t in range(months):
 
-        if t % 12 == 0:
-            w = optimize_weights(R, mode)
-            weights = apply_model_bias(w, model)
+    idx = t % 300
 
-        port_ret = np.dot(weights, R[:, idx])
+    if t % 12 == 0:
+        sim = simulate_paths(R, mode)
+        weights = institutional_allocator(sim, mode)
+        weights = apply_model_bias(weights, model)
 
-        port_ret = np.clip(
-            port_ret,
-            -0.05 if mode == "bear" else -0.03,
-            0.08 if mode == "bull" else 0.05
-        )
+    port_ret = np.dot(weights, R[:, idx])
 
-        nav = nav * (1 + port_ret)
-        nav += monthly * (1 + drift * 0.5)
+    port_ret = np.clip(
+        port_ret,
+        -0.05 if mode == "bear" else -0.03,
+        0.08 if mode == "bull" else 0.05
+    )
 
-        curve.append(nav)
+    nav = nav * (1 + port_ret)
+    nav += monthly * (1 + drift * 0.5)
 
+    curve.append(nav)
     # =========================================================
     # 💰 DIVIDENDS
     # =========================================================
