@@ -638,14 +638,14 @@ portfolio_value = float(np.sum(asset_values))
     # =========================================================
     # 📊 PLAN (FIX: now clearly exists + includes MONEY + %)
     # =========================================================
-    plan = [
+plan = [
         {
             "name": assets[i][0],
             "percent": round(weights[i] * 100, 2),
             "kes": round(asset_investment[i], 2)
         }
         for i in range(N)
-    ]
+]
 
     # =========================================================
     # 🤖 MINIMAL AI ADVISOR (FIXED SINGLE VERSION)
