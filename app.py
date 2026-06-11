@@ -589,15 +589,12 @@ def simulate_paths(R, mode):
         sim.append(series)
 
     return np.array(sim)
-# =========================================================
-# 📊 SIMULATION ENGINE V2 (CLEAN + DEPLOY SAFE)
-# =========================================================
 def simulate(monthly, years, mode, model="dividend"):
 
     # =========================================================
-    # 🧠 ASSET SELECTION
+    # 🧠 ASSET SELECTION (MODEL → UNIVERSE)
     # =========================================================
-    assets = get_model_assets(model)
+    base_assets = get_model_assets(model)
 
     MODEL_UNIVERSES = {
         "dividend": ["Equity Bank", "KCB Group", "Co-op Bank", "EABL"],
@@ -609,7 +606,9 @@ def simulate(monthly, years, mode, model="dividend"):
 
     if model in MODEL_UNIVERSES:
         allowed = MODEL_UNIVERSES[model]
-        assets = [a for a in assets if a[0] in allowed]
+        assets = [a for a in base_assets if a[0] in allowed]
+    else:
+        assets = base_assets
 
     if not assets:
         assets = ASSETS[:6]
@@ -641,9 +640,13 @@ def simulate(monthly, years, mode, model="dividend"):
     vol = vol_base
 
     # =========================================================
-    # 📊 MARKET SIMULATION
+    # 📊 MARKET SIMULATION (FIXED ALIGNMENT)
     # =========================================================
-    R = generate_market(mode, N, drift, vol, momentum)
+    R_full = generate_market(mode, len(ASSETS), drift, vol, momentum)
+
+    # 👉 ALIGN R TO SELECTED ASSETS
+    selected_indices = [ASSETS.index(a) for a in assets]
+    R = R_full[selected_indices]
 
     R *= {
         "dividend": 0.97,
@@ -656,9 +659,11 @@ def simulate(monthly, years, mode, model="dividend"):
     R *= (1 + drift * 0.3)
 
     # =========================================================
-    # 🧠 WEIGHTS (INSTITUTIONAL ALLOCATOR - FIXED)
+    # 🧠 WEIGHTS (INSTITUTIONAL ALLOCATOR)
     # =========================================================
-    weights = institutional_allocator(R, mode)
+    sim = simulate_paths(R, mode)
+
+    weights = institutional_allocator(sim, mode)
     weights = apply_model_bias(weights, model)
 
     # =========================================================
@@ -675,7 +680,8 @@ def simulate(monthly, years, mode, model="dividend"):
         idx = t % 300
 
         if t % 12 == 0:
-            weights = institutional_allocator(R, mode)
+            sim = simulate_paths(R, mode)
+            weights = institutional_allocator(sim, mode)
             weights = apply_model_bias(weights, model)
 
         port_ret = np.dot(weights, R[:, idx])
@@ -699,14 +705,15 @@ def simulate(monthly, years, mode, model="dividend"):
     dividends = asset_investment * yields
 
     # =========================================================
-    # 📈 VALUE MODEL (STABLE + CROSS-MODEL FIX)
+    # 📈 VALUE MODEL (CONSISTENT)
     # =========================================================
     base_returns = np.mean(R, axis=1)
     annual_returns = np.clip(base_returns * 12, -0.25, 0.45)
 
     asset_values = []
     for i in range(N):
-        growth_factor = max(0.5, (1 + annual_returns[i]) ** years)
+        growth_factor = (1 + annual_returns[i]) ** years
+        growth_factor = max(0.5, growth_factor)
         asset_values.append(asset_investment[i] * growth_factor)
 
     asset_values = np.array(asset_values)
