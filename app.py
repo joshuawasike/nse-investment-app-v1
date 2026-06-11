@@ -617,7 +617,31 @@ def simulate_paths(R, mode):
 def simulate(monthly, years, mode, model="dividend"):
 
     # =========================================================
-    # 📊 MARKET GENERATION (FULL UNIVERSE)
+    # 🧠 MODEL PARAMETERS (MUST BE FIRST)
+    # =========================================================
+    model_params = {
+        "dividend": (0.0035, 0.012, 0.60),
+        "growth":   (0.0060, 0.022, 1.10),
+        "banking":  (0.0045, 0.016, 0.80),
+        "value":    (0.0040, 0.015, 0.75),
+        "income":   (0.0038, 0.013, 0.70),
+    }
+
+    drift_base, vol_base, momentum = model_params.get(model, (0.001, 0.01, 0.6))
+
+    regime = {
+        "normal": (1.0, 1.0),
+        "bull":   (1.9, 0.7),
+        "bear":   (0.55, 1.5)
+    }
+
+    drift_mult, vol_mult = regime.get(mode, (1.0, 1.0))
+
+    drift = drift_base * drift_mult
+    vol = vol_base
+
+    # =========================================================
+    # 🌍 MARKET GENERATION
     # =========================================================
     R_full = generate_market(mode, len(ASSETS), drift, vol, momentum)
 
