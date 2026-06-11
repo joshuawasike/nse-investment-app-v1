@@ -611,32 +611,30 @@ def simulate(monthly, years, mode, model="dividend"):
     yields = np.array([a[2] for a in assets])
     dividends = asset_investment * yields
 
-    # =========================================================
-    # 📈 LONG TERM VALUE MODEL
-    # =========================================================
-    return_map = {
-        "dividend": (0.08, 0.14),
-        "growth":   (0.15, 0.38),
-        "banking":  (0.10, 0.18),
-        "value":    (0.11, 0.25),
-        "income":   (0.07, 0.13)
-    }
+# =========================================================
+# 📈 LONG TERM VALUE MODEL (SCENARIO DRIVEN)
+# =========================================================
 
-    low, high = return_map.get(model, (0.06, 0.12))
-    base_returns = np.linspace(low, high, N)
+asset_values = []
 
-    annual_vol = 0.12
+for i in range(N):
 
-    asset_values = []
+    simulated_return = np.mean(R[i])
 
-    for i in range(N):
-        drift_i = base_returns[i]
-        growth_factor = np.exp((drift_i - (annual_vol**2)/2) * years)
-        asset_values.append(asset_investment[i] * growth_factor)
+    annualized_return = simulated_return * 12
 
-    asset_values = np.array(asset_values)
-    portfolio_value = float(np.sum(asset_values))
+    growth_factor = max(
+        0.50,
+        (1 + annualized_return) ** years
+    )
 
+    asset_values.append(
+        asset_investment[i] * growth_factor
+    )
+
+asset_values = np.array(asset_values)
+
+portfolio_value = float(np.sum(asset_values))
     # =========================================================
     # 📊 PLAN (FIX: now clearly exists + includes MONEY + %)
     # =========================================================
