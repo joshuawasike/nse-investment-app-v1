@@ -557,8 +557,7 @@ def simulate(monthly, years, mode, model="dividend"):
     # =========================================================
     # 📊 MARKET SIMULATION
     # =========================================================
-    R = generate_market("normal", N, drift, vol, momentum)
-
+    R = generate_market(mode, N, drift, vol, momentum)
     R *= {
         "dividend": 0.97,
         "growth": 1.20,
