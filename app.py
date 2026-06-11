@@ -670,7 +670,7 @@ def simulate(monthly, years, mode, model="dividend"):
     selected_names = [a[0] for a in assets]
 
 # =========================================================
-# 🔥 FIXED SAFE ALIGNMENT (NO BROADCAST ERRORS)
+# 🔥 FIXED SAFE ALIGNMENT
 # =========================================================
 asset_names = [a[0] for a in ASSETS]
 selected_names = [a[0] for a in assets]
@@ -680,10 +680,8 @@ for name in selected_names:
     if name in asset_names:
         selected_idx.append(asset_names.index(name))
 
-# FORCE SAFE SIZE MATCH
-selected_idx = selected_idx[:len(assets)]
+selected_idx = selected_idx[:len(selected_names)]
 
-# fallback safety
 if len(selected_idx) < 2:
     selected_idx = list(range(min(6, len(ASSETS))))
 
@@ -691,13 +689,13 @@ R = R_full[selected_idx]
 
 # ALIGN ASSETS TO MATRIX
 assets = assets[:len(selected_idx)]
-    # =========================================================
-    # 🧠 INSTITUTIONAL WEIGHTS
-    # =========================================================
-    sim = R
-    weights = institutional_allocator(sim, mode)
-    weights = apply_model_bias(weights, model)
 
+# =========================================================
+# 🧠 INSTITUTIONAL WEIGHTS
+# =========================================================
+sim = R
+weights = institutional_allocator(sim, mode)
+weights = apply_model_bias(weights, model)
     # =========================================================
     # 💰 PORTFOLIO SIMULATION
     # =========================================================
