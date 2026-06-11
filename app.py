@@ -452,33 +452,49 @@ MODEL_UNIVERSES = {
     "income":   [3,4,1,0,2]        # dividend-heavy names
 }
 # =========================================================
-# 🌍 MARKET GENERATOR (CLEAN)
+# 🌍 MARKET GENERATOR (CLEAN + REGIME CONSISTENT)
 # =========================================================
 def generate_market(mode, N, drift, vol, momentum):
 
     base = np.random.randn(N, 300)
 
+    # =====================================================
+    # 📊 REGIME ADJUSTMENT (CORE DRIVER)
+    # =====================================================
     if mode == "bull":
         drift *= 1.8
         vol *= 0.65
         shock_mult = 0.8
+        bias = 0.004
 
     elif mode == "bear":
         drift *= 0.55
         vol *= 1.6
         shock_mult = 1.4
+        bias = -0.004
 
     else:
         shock_mult = 1.0
+        bias = 0.0
 
+    # =====================================================
+    # 📈 RETURN COMPONENTS
+    # =====================================================
     trend = drift + (base * vol * momentum)
     mean_reversion = -0.004 * np.cumsum(base, axis=1)
     shock = np.random.standard_t(5, size=(N, 300)) * vol * 0.2 * shock_mult
 
     R = trend + mean_reversion + shock
 
-    return np.clip(R, -0.20, 0.30)
+    # =====================================================
+    # ⚖️ REGIME ALIGNMENT (MUST BE INSIDE FUNCTION)
+    # =====================================================
+    R = R + bias
 
+    # =====================================================
+    # 🛡️ SAFETY CLAMP
+    # =====================================================
+    return np.clip(R, -0.20, 0.30)
 # =========================================================
 # 🧠 AI PORTFOLIO ADVISOR (ADD HERE)
 # =========================================================
