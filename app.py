@@ -519,6 +519,44 @@ def ai_portfolio_advisor(weights, R, assets):
         "commentary": comment
     }
 # =========================================================
+# 🏦 REGIME-CONSISTENT INSTITUTIONAL ALLOCATOR
+# =========================================================
+def institutional_allocator(sim, mode):
+
+    mean = np.mean(sim, axis=1)
+    vol = np.std(sim, axis=1) + 1e-9
+    downside = np.mean(np.minimum(sim, 0), axis=1)
+
+    sharpe = mean / vol
+    sortino = mean / (np.abs(downside) + 1e-9)
+
+    score = (0.7 * sharpe) + (0.3 * sortino)
+
+    regime_map = {
+        "normal": 1.0,
+        "bull": 1.25,
+        "bear": 0.65
+    }
+
+    score *= regime_map.get(mode, 1.0)
+
+    if len(score) > 3:
+        score[3] *= 1.15
+
+    if len(score) > 7:
+        score[7] *= 0.10
+
+    score = np.tanh(score * 2.2)
+
+    weights = np.exp(score)
+    weights = weights / np.sum(weights)
+
+    MIN = np.array([0.04,0.04,0.04,0.10,0.03,0.03,0.03,0.00])
+    MAX = np.array([0.30,0.30,0.30,0.45,0.20,0.20,0.20,0.05])
+
+    weights = np.clip(weights, MIN, MAX)
+    return weights / np.sum(weights)
+# =========================================================
 # 📊 SIMULATION ENGINE V2 (FINAL CLEAN ARCHITECTURE)
 # =========================================================
 def simulate(monthly, years, mode, model="dividend"):
@@ -587,8 +625,7 @@ def simulate(monthly, years, mode, model="dividend"):
     # =========================================================
     # 🧠 WEIGHTS
     # =========================================================
-    weights = optimize_weights(R, mode)
-    weights = apply_model_bias(weights, model)
+    weights = institutional_allocator(sim, mode)
 
     # =========================================================
     # 💰 PORTFOLIO SIMULATION
