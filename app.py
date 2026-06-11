@@ -557,6 +557,39 @@ def institutional_allocator(sim, mode):
     weights = np.clip(weights, MIN, MAX)
     return weights / np.sum(weights)
 # =========================================================
+# 🧠 PATH SIMULATION (MISSING FUNCTION FIX)
+# =========================================================
+def simulate_paths(R, mode):
+
+    REGIME = {
+        "normal": {"mu": 0.0025, "vol": 1.0},
+        "bull":   {"mu": 0.0055, "vol": 1.2},
+        "bear":   {"mu": -0.0035, "vol": 1.3},
+    }
+
+    cfg = REGIME.get(mode, REGIME["normal"])
+    N = R.shape[0]
+    T = R.shape[1]
+
+    sim = []
+
+    for i in range(N):
+        base_vol = np.std(R[i]) + 1e-9
+        series = []
+
+        for t in range(T):
+            shock = np.random.standard_t(5) * base_vol * cfg["vol"]
+            step = R[i][t] + cfg["mu"] + shock
+
+            if mode == "bear":
+                step = np.clip(step, -0.05, 0.01)
+
+            series.append(step)
+
+        sim.append(series)
+
+    return np.array(sim)
+# =========================================================
 # 📊 SIMULATION ENGINE V2 (FINAL CLEAN ARCHITECTURE)
 # =========================================================
 def simulate(monthly, years, mode, model="dividend"):
