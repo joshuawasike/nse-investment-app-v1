@@ -548,15 +548,16 @@ def simulate(monthly, years, mode, model="dividend"):
         "bear":   (0.55, 1.5)
     }
 
-    drift_mult, vol_mult = regime.get(mode, (1.0, 1.0))
+drift_mult, vol_mult = regime.get(mode, (1.0, 1.0))
 
-    drift = drift_base * drift_mult
-    vol = vol_base * vol_mult
+# ONLY apply drift adjustment slightly (not volatility)
+drift = drift_base * drift_mult
+vol = vol_base
 
     # =========================================================
     # 📊 MARKET SIMULATION
     # =========================================================
-    R = generate_market(mode, N, drift, vol, momentum)
+    R = generate_market("normal", N, drift, vol, momentum)
 
     R *= {
         "dividend": 0.97,
