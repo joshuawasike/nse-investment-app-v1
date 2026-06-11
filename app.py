@@ -611,88 +611,84 @@ def simulate(monthly, years, mode, model="dividend"):
     yields = np.array([a[2] for a in assets])
     dividends = asset_investment * yields
 
-# =========================================================
-# 📈 LONG TERM VALUE MODEL (SCENARIO DRIVEN)
-# =========================================================
+    # =========================================================
+    # 📈 LONG TERM VALUE MODEL (SCENARIO DRIVEN)
+    # =========================================================
+    asset_values = []
 
-asset_values = []
+    for i in range(N):
 
-for i in range(N):
+        simulated_return = np.mean(R[i])
 
-    simulated_return = np.mean(R[i])
+        annualized_return = simulated_return * 12
 
-    annualized_return = simulated_return * 12
+        growth_factor = max(
+            0.50,
+            (1 + annualized_return) ** years
+        )
 
-    growth_factor = max(
-        0.50,
-        (1 + annualized_return) ** years
-    )
+        asset_values.append(
+            asset_investment[i] * growth_factor
+        )
 
-    asset_values.append(
-        asset_investment[i] * growth_factor
-    )
+    asset_values = np.array(asset_values)
 
-asset_values = np.array(asset_values)
+    portfolio_value = float(np.sum(asset_values))
 
-portfolio_value = float(np.sum(asset_values))
-
-# =========================================================
-# 📊 PLAN (FIX: now clearly exists + includes MONEY + %)
-# =========================================================
-
-plan = [
-    {
-        "name": assets[i][0],
-        "percent": round(weights[i] * 100, 2),
-        "kes": round(asset_investment[i], 2)
-    }
-    for i in range(N)
-]
-
-# =========================================================
-# 🤖 MINIMAL AI ADVISOR
-# =========================================================
-
-risk = float(np.std(np.mean(R, axis=1)))
-
-ai = {
-    "top_asset": assets[int(np.argmax(weights))][0],
-    "risk_level": risk,
-    "commentary": (
-        "Low risk environment." if risk < 0.01 else
-        "Moderate risk balanced portfolio." if risk < 0.02 else
-        "High volatility detected."
-    )
-}
-
-# =========================================================
-# 📦 OUTPUT
-# =========================================================
-
-return {
-    "summary": {
-        "invested": float(invested),
-        "value": float(portfolio_value),
-        "dividends": float(np.sum(dividends))
-    },
-
-    "chart": chart(curve),
-
-    "plan": plan,
-
-    "returns": [
+    # =========================================================
+    # 📊 PLAN (FIX: now clearly exists + includes MONEY + %)
+    # =========================================================
+    plan = [
         {
             "name": assets[i][0],
-            "value": round(asset_values[i], 2),
-            "dividends": round(dividends[i], 2)
+            "percent": round(weights[i] * 100, 2),
+            "kes": round(asset_investment[i], 2)
         }
         for i in range(N)
-    ],
+    ]
 
-    "curve": curve,
+    # =========================================================
+    # 🤖 MINIMAL AI ADVISOR
+    # =========================================================
+    risk = float(np.std(np.mean(R, axis=1)))
 
-    "ai": ai
-}
+    ai = {
+        "top_asset": assets[int(np.argmax(weights))][0],
+        "risk_level": risk,
+        "commentary": (
+            "Low risk environment." if risk < 0.01 else
+            "Moderate risk balanced portfolio." if risk < 0.02 else
+            "High volatility detected."
+        )
+    }
+
+    # =========================================================
+    # 📦 OUTPUT
+    # =========================================================
+    return {
+        "summary": {
+            "invested": float(invested),
+            "value": float(portfolio_value),
+            "dividends": float(np.sum(dividends))
+        },
+
+        "chart": chart(curve),
+
+        "plan": plan,
+
+        "returns": [
+            {
+                "name": assets[i][0],
+                "value": round(asset_values[i], 2),
+                "dividends": round(dividends[i], 2)
+            }
+            for i in range(N)
+        ],
+
+        "curve": curve,
+
+        "ai": ai
+    }
 # =========================================================
 # 📊 CHART
 # =========================================================
