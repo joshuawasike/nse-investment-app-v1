@@ -166,7 +166,7 @@ def get_df():
         df = load_data()
     return df
 # =========================================================
-# 🧠 MODEL → REAL COMPANY MAPPING (FIXED)
+# 🧠 MODEL → REAL COMPANY MAPPING (FIXED SAFE VERSION)
 # =========================================================
 def get_model_assets(model):
 
@@ -178,9 +178,6 @@ def get_model_assets(model):
     df = df.copy()
     df["CODE"] = df["CODE"].astype(str).str.upper().str.strip()
 
-    # =========================================================
-    # 📊 PERFORMANCE ENGINE
-    # =========================================================
     grouped = df.groupby("CODE")["PREVIOUS"].agg(["mean", "std"]).reset_index()
     grouped = grouped.dropna()
 
@@ -188,9 +185,6 @@ def get_model_assets(model):
     grouped["risk_score"] = grouped["std"] + 1e-9
     grouped["sharpe_like"] = grouped["return_score"] / grouped["risk_score"]
 
-    # =========================================================
-    # 🧠 MODEL UNIVERSES
-    # =========================================================
     MODEL_UNIVERSES = {
         "dividend": ["EQTY", "KCB", "COOP", "EABL"],
         "growth":   ["SCOM", "KQ", "NCBA", "KEGN"],
@@ -204,72 +198,30 @@ def get_model_assets(model):
     if allowed:
         grouped = grouped[grouped["CODE"].isin(allowed)]
 
-    # =========================================================
-    # FALLBACK
-    # =========================================================
     if grouped.empty:
-
-        grouped = (
-            df.groupby("CODE")["PREVIOUS"]
-            .agg(["mean", "std"])
-            .reset_index()
-        )
-
+        grouped = df.groupby("CODE")["PREVIOUS"].agg(["mean", "std"]).reset_index()
         grouped["return_score"] = grouped["mean"]
         grouped["risk_score"] = grouped["std"] + 1e-9
-        grouped["sharpe_like"] = (
-            grouped["return_score"] /
-            grouped["risk_score"]
-        )
+        grouped["sharpe_like"] = grouped["return_score"] / grouped["risk_score"]
 
-    # =========================================================
-    # MODEL BIAS
-    # =========================================================
-    def model_bias(code):
+    def bias(code):
+        return 1.2 if code in allowed else 1.0
 
-        if model == "dividend":
-            return 1.8 if code in ["EQTY", "KCB", "COOP", "EABL"] else 1.0
-
-        elif model == "growth":
-            return 2.0 if code in ["SCOM", "KQ", "NCBA", "KEGN"] else 0.9
-
-        elif model == "banking":
-            return 2.2 if code in ["EQTY", "KCB", "COOP", "NCBA"] else 0.7
-
-        elif model == "value":
-            return 1.8 if code in ["EABL", "KEGN", "SCOM", "KQ"] else 0.9
-
-        elif model == "income":
-            return 2.0 if code in ["EABL", "COOP", "KCB", "SCOM"] else 0.9
-
-        return 1.0
-
-    grouped["bias"] = grouped["CODE"].apply(model_bias)
-
-    # =========================================================
-    # FINAL SCORE
-    # =========================================================
     grouped["score"] = grouped["sharpe_like"] * grouped["bias"]
 
-    grouped = grouped.sort_values(
-        "score",
-        ascending=False
-    ).head(8)
+    grouped = grouped.sort_values("score", ascending=False).head(len(ASSETS))
 
-    # =========================================================
-    # OUTPUT ASSETS
-    # =========================================================
+    # IMPORTANT: keep SAME structure as ASSETS (8 slots always)
     assets = [
-        (
-            row["CODE"],
-            row["CODE"],
-            float(np.random.uniform(0.04, 0.12))
-        )
+        (row["CODE"], row["CODE"], float(np.random.uniform(0.04, 0.12)))
         for _, row in grouped.iterrows()
     ]
 
-    return assets
-    # =========================================================
+    # PAD to 8 to prevent broadcast errors
+    while len(assets) < len(ASSETS):
+        assets.append(ASSETS[len(assets)])
+
+    return assets    # =========================================================
 # 🎯 APPLY MODEL BIAS TO WEIGHTS
 # =========================================================
 def apply_model_bias(weights, model):
@@ -617,8 +569,9 @@ def institutional_allocator(sim, mode):
     weights = np.exp(score)
     weights = weights / np.sum(weights)
 
-    MIN = np.array([0.04,0.04,0.04,0.10,0.03,0.03,0.03,0.00])
-    MAX = np.array([0.30,0.30,0.30,0.45,0.20,0.20,0.20,0.05])
+    n = len(w)
+    MIN = np.full(n, 0.04)
+    MAX = np.full(n, 0.40)
 
     weights = np.clip(weights, MIN, MAX)
     return weights / np.sum(weights)
@@ -655,6 +608,7 @@ def simulate_paths(R, mode):
         sim.append(series)
 
     return np.array(sim)
+
 def simulate(monthly, years, mode, model="dividend"):
 
     # =========================================================
@@ -714,17 +668,28 @@ def simulate(monthly, years, mode, model="dividend"):
     asset_names = [a[0] for a in ASSETS]
     selected_names = [a[0] for a in assets]
 
-    selected_idx = []
-    for name in selected_names:
-        if name in asset_names:
-            selected_idx.append(asset_names.index(name))
+# =========================================================
+# 🔥 FIXED SAFE ALIGNMENT (NO BROADCAST ERRORS)
+# =========================================================
+asset_names = [a[0] for a in ASSETS]
+selected_names = [a[0] for a in assets]
 
-    # fallback safety
-    if not selected_idx:
-        selected_idx = list(range(min(6, len(R_full))))
+selected_idx = []
+for name in selected_names:
+    if name in asset_names:
+        selected_idx.append(asset_names.index(name))
 
-    R = R_full[selected_idx]
+# FORCE SAFE SIZE MATCH
+selected_idx = selected_idx[:len(assets)]
 
+# fallback safety
+if len(selected_idx) < 2:
+    selected_idx = list(range(min(6, len(ASSETS))))
+
+R = R_full[selected_idx]
+
+# ALIGN ASSETS TO MATRIX
+assets = assets[:len(selected_idx)]
     # =========================================================
     # 🧠 INSTITUTIONAL WEIGHTS
     # =========================================================
