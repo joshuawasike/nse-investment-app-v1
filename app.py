@@ -548,11 +548,14 @@ def simulate(monthly, years, mode, model="dividend"):
         "bear":   (0.55, 1.5)
     }
 
-drift_mult, vol_mult = regime.get(mode, (1.0, 1.0))
+    # =========================================================
+    # ✔ FIXED INDENTATION (CRITICAL)
+    # =========================================================
+    drift_mult, vol_mult = regime.get(mode, (1.0, 1.0))
 
-# ONLY apply drift adjustment slightly (not volatility)
-drift = drift_base * drift_mult
-vol = vol_base
+    # ONLY drift slightly adjusted, volatility kept stable
+    drift = drift_base * drift_mult
+    vol = vol_base
 
     # =========================================================
     # 📊 MARKET SIMULATION
@@ -606,18 +609,15 @@ vol = vol_base
         curve.append(nav)
 
     # =========================================================
-    # 💰 DIVIDENDS (REAL MONEY ALLOCATION FIX)
+    # 💰 DIVIDENDS
     # =========================================================
     asset_investment = invested * weights
     yields = np.array([a[2] for a in assets])
     dividends = asset_investment * yields
 
     # =========================================================
-    # 📈 FIXED VALUE MODEL (CRITICAL FIX)
+    # 📈 FIXED VALUE MODEL (CONSISTENT CROSS-MODEL OUTPUT)
     # =========================================================
-    # Instead of independent exponential asset growth (WRONG),
-    # we anchor all assets to REAL portfolio NAV consistency.
-
     total_growth = nav / max(invested, 1e-9)
     asset_values = asset_investment * total_growth
 
