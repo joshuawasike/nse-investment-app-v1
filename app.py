@@ -548,12 +548,9 @@ def simulate(monthly, years, mode, model="dividend"):
         "bear":   (0.55, 1.5)
     }
 
-    # =========================================================
-    # ✔ FIXED INDENTATION (CRITICAL)
-    # =========================================================
     drift_mult, vol_mult = regime.get(mode, (1.0, 1.0))
 
-    # ONLY drift slightly adjusted, volatility kept stable
+    # ✔ FIX: stable volatility (prevents cross-model explosion)
     drift = drift_base * drift_mult
     vol = vol_base
 
@@ -573,7 +570,7 @@ def simulate(monthly, years, mode, model="dividend"):
     R *= (1 + drift * 0.3)
 
     # =========================================================
-    # 🧠 WEIGHTS (ONLY ONE SOURCE OF TRUTH)
+    # 🧠 WEIGHTS
     # =========================================================
     weights = optimize_weights(R, mode)
     weights = apply_model_bias(weights, model)
@@ -616,10 +613,25 @@ def simulate(monthly, years, mode, model="dividend"):
     dividends = asset_investment * yields
 
     # =========================================================
-    # 📈 FIXED VALUE MODEL (CONSISTENT CROSS-MODEL OUTPUT)
+    # 📈 FIXED VALUE MODEL (CROSS-MODEL CONSISTENCY FIX)
     # =========================================================
-    total_growth = nav / max(invested, 1e-9)
-    asset_values = asset_investment * total_growth
+
+    base_returns = np.mean(R, axis=1)
+    annual_returns = base_returns * 12
+
+    # stability clamp (prevents crazy spikes across models)
+    annual_returns = np.clip(annual_returns, -0.25, 0.45)
+
+    asset_values = []
+
+    for i in range(N):
+
+        growth_factor = (1 + annual_returns[i]) ** years
+        growth_factor = max(0.5, growth_factor)
+
+        asset_values.append(asset_investment[i] * growth_factor)
+
+    asset_values = np.array(asset_values)
 
     portfolio_value = float(np.sum(asset_values))
 
