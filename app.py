@@ -622,10 +622,14 @@ def simulate(monthly, years, mode, model="dividend"):
 
     R *= (1 + drift * 0.3)
 
-    # =========================================================
-    # 🧠 WEIGHTS
-    # =========================================================
-    weights = institutional_allocator(sim, mode)
+# =========================================================
+# 🧠 WEIGHTS (INSTITUTIONAL ALLOCATOR)
+# =========================================================
+
+sim = simulate_paths(R, mode)
+
+weights = institutional_allocator(sim, mode)
+weights = apply_model_bias(weights, model)
 
     # =========================================================
     # 💰 PORTFOLIO SIMULATION
