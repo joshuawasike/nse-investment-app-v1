@@ -612,31 +612,18 @@ def simulate(monthly, years, mode, model="dividend"):
     dividends = asset_investment * yields
 
     # =========================================================
-    # 📈 LONG TERM VALUE MODEL (SCENARIO DRIVEN)
+    # 📈 FIXED VALUE MODEL (CRITICAL FIX)
     # =========================================================
-    asset_values = []
+    # Instead of independent exponential asset growth (WRONG),
+    # we anchor all assets to REAL portfolio NAV consistency.
 
-    for i in range(N):
-
-        simulated_return = np.mean(R[i])
-
-        annualized_return = simulated_return * 12
-
-        growth_factor = max(
-            0.50,
-            (1 + annualized_return) ** years
-        )
-
-        asset_values.append(
-            asset_investment[i] * growth_factor
-        )
-
-    asset_values = np.array(asset_values)
+    total_growth = nav / max(invested, 1e-9)
+    asset_values = asset_investment * total_growth
 
     portfolio_value = float(np.sum(asset_values))
 
     # =========================================================
-    # 📊 PLAN (FIX: now clearly exists + includes MONEY + %)
+    # 📊 PLAN
     # =========================================================
     plan = [
         {
@@ -648,7 +635,7 @@ def simulate(monthly, years, mode, model="dividend"):
     ]
 
     # =========================================================
-    # 🤖 MINIMAL AI ADVISOR
+    # 🤖 AI ADVISOR
     # =========================================================
     risk = float(np.std(np.mean(R, axis=1)))
 
