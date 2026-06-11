@@ -297,7 +297,7 @@ KES 18,000/year
 <div class="card">
 <h3>🎯 Goal Advisory</h3>
 
-<p>Target: KES {{ "{:,.0f}".format(goal_result.target) }}</p>
+<p>Target: KES {{ "{:,.0f}".format(goal_result["target"]) }}</p>
 
 <p>Years needed: {{ goal_result.years_needed }}</p>
 
@@ -350,11 +350,17 @@ KES 18,000/year
 </table>
 </div>
 <!-- 🏆 BEST MODEL SUMMARY -->
+<!-- 🏆 BEST MODEL SUMMARY -->
 <div class="card">
 <h3>🏆 Best Performing Model</h3>
 
-<p><b>Best Model:</b> {{ best_model|upper }}</p>
-<p><b>Value:</b> KES {{ "{:,.0f}".format(best_value) }}</p>
+<p><b>Best Model:</b> {{ best_model_name|default("N/A")|upper }}</p>
+
+<p>
+<b>Value:</b>
+KES {{ "{:,.0f}".format(best_model_value|default(0)) }}
+</p>
+
 </div>
 </div>
 <h3>Model Comparison</h3>
@@ -376,9 +382,9 @@ KES 18,000/year
         <div class="card" style="margin-top:10px;border-left:4px solid #60a5fa;">
 
             <h4>{{ scenario_name|upper }} SCENARIO</h4>
-{% if scenario.chart %}
+{% if scenario.get("chart") %}
     <h4>Portfolio Curve</h4>
-    <img src="data:image/png;base64,{{ scenario.chart }}" />
+    <img src="data:image/png;base64,{{ scenario['chart'] }}" />
 {% endif %}
 
             <p>
