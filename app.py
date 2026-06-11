@@ -189,7 +189,7 @@ def get_model_assets(model):
     grouped["sharpe_like"] = grouped["return_score"] / grouped["risk_score"]
 
     # =========================================================
-    # 🧠 MODEL UNIVERSES (FIXED LOCATION + FIXED KEYS)
+    # 🧠 MODEL UNIVERSES
     # =========================================================
     MODEL_UNIVERSES = {
         "dividend": ["EQTY", "KCB", "COOP", "EABL"],
@@ -204,15 +204,26 @@ def get_model_assets(model):
     if allowed:
         grouped = grouped[grouped["CODE"].isin(allowed)]
 
-    # fallback if filtering removes everything
+    # =========================================================
+    # FALLBACK
+    # =========================================================
     if grouped.empty:
-        grouped = df.groupby("CODE")["PREVIOUS"].agg(["mean", "std"]).reset_index()
+
+        grouped = (
+            df.groupby("CODE")["PREVIOUS"]
+            .agg(["mean", "std"])
+            .reset_index()
+        )
+
         grouped["return_score"] = grouped["mean"]
         grouped["risk_score"] = grouped["std"] + 1e-9
-        grouped["sharpe_like"] = grouped["return_score"] / grouped["risk_score"]
+        grouped["sharpe_like"] = (
+            grouped["return_score"] /
+            grouped["risk_score"]
+        )
 
     # =========================================================
-    # 🎯 MODEL BIAS
+    # MODEL BIAS
     # =========================================================
     def model_bias(code):
 
@@ -220,16 +231,16 @@ def get_model_assets(model):
             return 1.8 if code in ["EQTY", "KCB", "COOP", "EABL"] else 1.0
 
         elif model == "growth":
-            return 2.0 if code in ["SCOM", "KQ", "NCBA"] else 0.9
+            return 2.0 if code in ["SCOM", "KQ", "NCBA", "KEGN"] else 0.9
 
         elif model == "banking":
             return 2.2 if code in ["EQTY", "KCB", "COOP", "NCBA"] else 0.7
 
         elif model == "value":
-            return 1.8 if code in ["KEGN", "EABL", "KQ"] else 0.9
+            return 1.8 if code in ["EABL", "KEGN", "SCOM", "KQ"] else 0.9
 
         elif model == "income":
-            return 2.0 if code in ["EABL", "KCB", "COOP"] else 0.9
+            return 2.0 if code in ["EABL", "COOP", "KCB", "SCOM"] else 0.9
 
         return 1.0
 
@@ -239,7 +250,11 @@ def get_model_assets(model):
     # FINAL SCORE
     # =========================================================
     grouped["score"] = grouped["sharpe_like"] * grouped["bias"]
-    grouped = grouped.sort_values("score", ascending=False).head(8)
+
+    grouped = grouped.sort_values(
+        "score",
+        ascending=False
+    ).head(8)
 
     # =========================================================
     # OUTPUT ASSETS
@@ -254,6 +269,32 @@ def get_model_assets(model):
     ]
 
     return assets
+    # =========================================================
+# 🎯 APPLY MODEL BIAS TO WEIGHTS
+# =========================================================
+def apply_model_bias(weights, model):
+
+    bias = np.ones(len(weights))
+
+    if model == "dividend":
+        bias *= 1.10
+
+    elif model == "growth":
+        bias *= 1.15
+
+    elif model == "banking":
+        bias *= 1.12
+
+    elif model == "value":
+        bias *= 1.08
+
+    elif model == "income":
+        bias *= 1.06
+
+    weights = weights * bias
+    weights = weights / np.sum(weights)
+
+    return weights
 # =========================================================
 # 📊 ASSETS
 # =========================================================
