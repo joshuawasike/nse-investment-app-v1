@@ -604,7 +604,6 @@ def simulate(monthly, years, mode, model="dividend"):
 
     drift_mult, vol_mult = regime.get(mode, (1.0, 1.0))
 
-    # ✔ FIX: stable volatility (prevents cross-model explosion)
     drift = drift_base * drift_mult
     vol = vol_base
 
@@ -612,6 +611,7 @@ def simulate(monthly, years, mode, model="dividend"):
     # 📊 MARKET SIMULATION
     # =========================================================
     R = generate_market(mode, N, drift, vol, momentum)
+
     R *= {
         "dividend": 0.97,
         "growth": 1.20,
@@ -622,46 +622,45 @@ def simulate(monthly, years, mode, model="dividend"):
 
     R *= (1 + drift * 0.3)
 
-# =========================================================
-# 🧠 WEIGHTS (INSTITUTIONAL ALLOCATOR)
-# =========================================================
+    # =========================================================
+    # 🧠 WEIGHTS (INSTITUTIONAL ALLOCATOR)
+    # =========================================================
+    sim = simulate_paths(R, mode)
 
-sim = simulate_paths(R, mode)
+    weights = institutional_allocator(sim, mode)
+    weights = apply_model_bias(weights, model)
 
-weights = institutional_allocator(sim, mode)
-weights = apply_model_bias(weights, model)
+    # =========================================================
+    # 💰 PORTFOLIO SIMULATION
+    # =========================================================
+    months = years * 12
+    invested = monthly * months
 
-# =========================================================
-# 💰 PORTFOLIO SIMULATION
-# =========================================================
+    nav = invested
+    curve = []
 
-months = years * 12
-invested = monthly * months
+    for t in range(months):
 
-nav = invested
-curve = []
+        idx = t % 300
 
-for t in range(months):
+        if t % 12 == 0:
+            sim = simulate_paths(R, mode)
+            weights = institutional_allocator(sim, mode)
+            weights = apply_model_bias(weights, model)
 
-    idx = t % 300
+        port_ret = np.dot(weights, R[:, idx])
 
-    if t % 12 == 0:
-        sim = simulate_paths(R, mode)
-        weights = institutional_allocator(sim, mode)
-        weights = apply_model_bias(weights, model)
+        port_ret = np.clip(
+            port_ret,
+            -0.05 if mode == "bear" else -0.03,
+            0.08 if mode == "bull" else 0.05
+        )
 
-    port_ret = np.dot(weights, R[:, idx])
+        nav = nav * (1 + port_ret)
+        nav += monthly * (1 + drift * 0.5)
 
-    port_ret = np.clip(
-        port_ret,
-        -0.05 if mode == "bear" else -0.03,
-        0.08 if mode == "bull" else 0.05
-    )
+        curve.append(nav)
 
-    nav = nav * (1 + port_ret)
-    nav += monthly * (1 + drift * 0.5)
-
-    curve.append(nav)
     # =========================================================
     # 💰 DIVIDENDS
     # =========================================================
@@ -672,24 +671,18 @@ for t in range(months):
     # =========================================================
     # 📈 FIXED VALUE MODEL (CROSS-MODEL CONSISTENCY FIX)
     # =========================================================
-
     base_returns = np.mean(R, axis=1)
     annual_returns = base_returns * 12
 
-    # stability clamp (prevents crazy spikes across models)
     annual_returns = np.clip(annual_returns, -0.25, 0.45)
 
     asset_values = []
-
     for i in range(N):
-
         growth_factor = (1 + annual_returns[i]) ** years
         growth_factor = max(0.5, growth_factor)
-
         asset_values.append(asset_investment[i] * growth_factor)
 
     asset_values = np.array(asset_values)
-
     portfolio_value = float(np.sum(asset_values))
 
     # =========================================================
