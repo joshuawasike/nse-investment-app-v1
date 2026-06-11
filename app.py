@@ -590,12 +590,12 @@ def simulate_paths(R, mode):
 
     return np.array(sim)
 # =========================================================
-# 📊 SIMULATION ENGINE V2 (FINAL CLEAN ARCHITECTURE)
+# 📊 SIMULATION ENGINE V2 (CLEAN + DEPLOY SAFE)
 # =========================================================
 def simulate(monthly, years, mode, model="dividend"):
 
     # =========================================================
-    # 🧠 ASSET SELECTION (MODEL → UNIVERSE)
+    # 🧠 ASSET SELECTION
     # =========================================================
     assets = get_model_assets(model)
 
@@ -656,11 +656,9 @@ def simulate(monthly, years, mode, model="dividend"):
     R *= (1 + drift * 0.3)
 
     # =========================================================
-    # 🧠 WEIGHTS (INSTITUTIONAL ALLOCATOR)
+    # 🧠 WEIGHTS (INSTITUTIONAL ALLOCATOR - FIXED)
     # =========================================================
-    sim = simulate_paths(R, mode)
-
-    weights = institutional_allocator(sim, mode)
+    weights = institutional_allocator(R, mode)
     weights = apply_model_bias(weights, model)
 
     # =========================================================
@@ -677,8 +675,7 @@ def simulate(monthly, years, mode, model="dividend"):
         idx = t % 300
 
         if t % 12 == 0:
-            sim = simulate_paths(R, mode)
-            weights = institutional_allocator(sim, mode)
+            weights = institutional_allocator(R, mode)
             weights = apply_model_bias(weights, model)
 
         port_ret = np.dot(weights, R[:, idx])
@@ -702,17 +699,14 @@ def simulate(monthly, years, mode, model="dividend"):
     dividends = asset_investment * yields
 
     # =========================================================
-    # 📈 FIXED VALUE MODEL (CROSS-MODEL CONSISTENCY FIX)
+    # 📈 VALUE MODEL (STABLE + CROSS-MODEL FIX)
     # =========================================================
     base_returns = np.mean(R, axis=1)
-    annual_returns = base_returns * 12
-
-    annual_returns = np.clip(annual_returns, -0.25, 0.45)
+    annual_returns = np.clip(base_returns * 12, -0.25, 0.45)
 
     asset_values = []
     for i in range(N):
-        growth_factor = (1 + annual_returns[i]) ** years
-        growth_factor = max(0.5, growth_factor)
+        growth_factor = max(0.5, (1 + annual_returns[i]) ** years)
         asset_values.append(asset_investment[i] * growth_factor)
 
     asset_values = np.array(asset_values)
@@ -754,11 +748,8 @@ def simulate(monthly, years, mode, model="dividend"):
             "value": float(portfolio_value),
             "dividends": float(np.sum(dividends))
         },
-
         "chart": chart(curve),
-
         "plan": plan,
-
         "returns": [
             {
                 "name": assets[i][0],
@@ -767,9 +758,7 @@ def simulate(monthly, years, mode, model="dividend"):
             }
             for i in range(N)
         ],
-
         "curve": curve,
-
         "ai": ai
     }
 # =========================================================
