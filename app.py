@@ -755,10 +755,11 @@ def simulate(monthly, years, mode, model="dividend"):
     # =========================================================
     # 💰 DIVIDENDS
     # =========================================================
-    asset_investment = invested * weights
-    yields = np.array([a[2] for a in assets])
-    dividends = asset_investment * yields
+ dividends = 0
 
+for t in range(months):
+    monthly_allocation = monthly * weights
+    dividends += monthly_allocation * yields
     # =========================================================
     # 📈 PORTFOLIO VALUE MODEL
     # =========================================================
