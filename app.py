@@ -551,10 +551,13 @@ def ai_portfolio_advisor(weights, R, assets):
         "commentary": comment
     }
 # =========================================================
-# 🏦 REGIME-CONSISTENT INSTITUTIONAL ALLOCATOR
+# 🏦 REGIME-CONSISTENT INSTITUTIONAL ALLOCATOR (FIXED)
 # =========================================================
 def institutional_allocator(sim, mode):
 
+    # =====================================================
+    # 📊 CORE STATISTICS
+    # =====================================================
     mean = np.mean(sim, axis=1)
     vol = np.std(sim, axis=1) + 1e-9
     downside = np.mean(np.minimum(sim, 0), axis=1)
@@ -562,32 +565,49 @@ def institutional_allocator(sim, mode):
     sharpe = mean / vol
     sortino = mean / (np.abs(downside) + 1e-9)
 
+    # =====================================================
+    # 🧠 COMPOSITE SCORE
+    # =====================================================
     score = (0.7 * sharpe) + (0.3 * sortino)
 
+    # =====================================================
+    # 🌍 REGIME ADJUSTMENT
+    # =====================================================
     regime_map = {
         "normal": 1.0,
         "bull": 1.25,
         "bear": 0.65
     }
 
-    score *= regime_map.get(mode, 1.0)
+    score = score * regime_map.get(mode, 1.0)
 
+    # =====================================================
+    # 🔧 STRUCTURAL TILTS
+    # =====================================================
     if len(score) > 3:
         score[3] *= 1.15
 
     if len(score) > 7:
         score[7] *= 0.10
 
+    # =====================================================
+    # 🔥 NORMALIZATION
+    # =====================================================
     score = np.tanh(score * 2.2)
 
     weights = np.exp(score)
     weights = weights / np.sum(weights)
 
-    n = len(w)
+    # =====================================================
+    # 🛡️ SAFETY CLIPPING (FIXED ERROR HERE)
+    # =====================================================
+    n = len(weights)
+
     MIN = np.full(n, 0.04)
     MAX = np.full(n, 0.40)
 
     weights = np.clip(weights, MIN, MAX)
+
     return weights / np.sum(weights)
 # =========================================================
 # 🧠 PATH SIMULATION (MISSING FUNCTION FIX)
