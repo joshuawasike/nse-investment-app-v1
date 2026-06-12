@@ -661,10 +661,13 @@ def simulate(monthly, years, mode, model="dividend"):
         (0.001, 0.01, 0.6)
     )
 
+    # =========================================================
+    # 📈 REGIME SETTINGS
+    # =========================================================
     regime = {
-        "normal": (1.0, 1.0),
-        "bull":   (1.9, 0.7),
-        "bear":   (0.55, 1.5)
+        "normal": (1.00, 1.00),
+        "bull":   (1.80, 0.75),
+        "bear":   (0.55, 1.50)
     }
 
     drift_mult, vol_mult = regime.get(mode, (1.0, 1.0))
@@ -751,12 +754,12 @@ def simulate(monthly, years, mode, model="dividend"):
         port_ret = np.clip(
             port_ret,
             -0.05 if mode == "bear" else -0.03,
-            0.08 if mode == "bull" else 0.05
+            0.10 if mode == "bull" else 0.06
         )
 
         nav = nav * (1 + port_ret)
 
-        # Monthly contribution
+        # monthly contribution
         nav += monthly
 
         curve.append(nav)
@@ -766,7 +769,7 @@ def simulate(monthly, years, mode, model="dividend"):
     # =========================================================
     monthly_allocation = monthly * weights
 
-    # Total amount contributed to each asset
+    # Total contributions per asset
     asset_investment = monthly_allocation * months
 
     # =========================================================
@@ -777,26 +780,48 @@ def simulate(monthly, years, mode, model="dividend"):
     dividends = np.zeros(len(weights))
 
     for _ in range(months):
-        dividends += monthly_allocation * yields
+        dividends += monthly_allocation * (yields / 12)
+
+    total_dividends = float(np.sum(dividends))
 
     # =========================================================
-    # 📈 PORTFOLIO VALUE MODEL
+    # 📈 ASSET RETURNS
     # =========================================================
     base_returns = np.mean(R, axis=1)
 
     annual_returns = np.clip(
         base_returns * 12,
-        -0.25,
-        0.45
+        -0.20,
+        0.35
     )
 
+    # =========================================================
+    # 📈 REGIME CONSISTENCY
+    # =========================================================
+    if mode == "bull":
+        annual_returns *= 1.50
+
+    elif mode == "bear":
+        annual_returns *= 0.60
+
+    # =========================================================
+    # 💰 FUTURE VALUE BY ASSET
+    # =========================================================
     asset_values = np.array([
+
         asset_investment[i] *
-        max(0.5, (1 + annual_returns[i]) ** years)
+        max(
+            0.70,
+            (1 + annual_returns[i]) ** years
+        )
+
         for i in range(len(assets))
+
     ])
 
-    portfolio_value = float(np.sum(asset_values))
+    portfolio_value = float(
+        np.sum(asset_values) + total_dividends
+    )
 
     # =========================================================
     # 📊 PLAN OUTPUT
@@ -804,9 +829,12 @@ def simulate(monthly, years, mode, model="dividend"):
     plan = []
 
     for i in range(len(assets)):
+
         plan.append({
             "name": assets[i][0],
             "percent": round(weights[i] * 100, 2),
+
+            # MONTHLY MONEY ALLOCATION
             "kes": round(monthly_allocation[i], 2)
         })
 
@@ -825,6 +853,21 @@ def simulate(monthly, years, mode, model="dividend"):
             if risk < 0.02 else
             "High volatility detected."
         )
+    }
+
+    # =========================================================
+    # 📦 OUTPUT
+    # =========================================================
+    return {
+        "summary": {
+            "invested": float(invested),
+            "value": float(portfolio_value),
+            "dividends": float(total_dividends)
+        },
+        "chart": chart(curve),
+        "plan": plan,
+        "curve": curve,
+        "ai": ai
     }
 
     # =========================================================
