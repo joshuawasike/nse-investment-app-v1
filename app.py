@@ -752,13 +752,18 @@ def simulate(monthly, years, mode, model="dividend"):
 
         curve.append(nav)
 
-    # =========================================================
-    # 💰 DIVIDENDS
-    # =========================================================
- dividends = 0
+# =========================================================
+# 💰 DIVIDENDS (MONTHLY FLOW MODEL - FIXED)
+# =========================================================
+dividends = np.zeros(len(weights))
+yields = np.array([a[2] for a in assets])
 
 for t in range(months):
+
+    # monthly allocation into each asset
     monthly_allocation = monthly * weights
+
+    # accumulate dividends per asset over time
     dividends += monthly_allocation * yields
     # =========================================================
     # 📈 PORTFOLIO VALUE MODEL
