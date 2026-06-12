@@ -687,23 +687,38 @@ def simulate(monthly, years, mode, model="dividend"):
     elif mode == "bear":
         R_full -= 0.0020
 
-    # =========================================================
-    # 🧠 ASSET SELECTION
-    # =========================================================
-    base_assets = get_model_assets(model)
+   # =====================================================
+# 🧠 MODEL ASSET SELECTION (SECTOR CONTROLLED UNIVERSE)
+# =====================================================
 
-    MODEL_UNIVERSES = {
-        "dividend": ["Equity Bank", "KCB Group", "Co-op Bank", "EABL"],
-        "growth":   ["Safaricom", "Kenya Airways", "NCBA", "KenGen"],
-        "banking":  ["Equity Bank", "KCB Group", "Co-op Bank", "NCBA"],
-        "value":    ["EABL", "KenGen", "Safaricom"],
-        "income":   ["EABL", "Co-op Bank", "KCB Group", "Safaricom"]
-    }
+base_assets = get_model_assets(model)
 
-    assets = [a for a in base_assets if a[0] in MODEL_UNIVERSES.get(model, [a[0]])]
+MODEL_UNIVERSES = {
+    "dividend": ["Equity Bank", "KCB Group", "Co-op Bank", "EABL"],
+    "growth":   ["Safaricom", "Kenya Airways", "NCBA", "KenGen"],
+    "banking":  ["Equity Bank", "KCB Group", "Co-op Bank", "NCBA"],
+    "value":    ["EABL", "KenGen", "Safaricom"],
+    "income":   ["EABL", "Co-op Bank", "KCB Group", "Safaricom"]
+}
 
-    if not assets:
-        assets = ASSETS[:6]
+# =====================================================
+# 🎯 APPLY MODEL FILTER
+# =====================================================
+if model in MODEL_UNIVERSES:
+    allowed = MODEL_UNIVERSES[model]
+    assets = [a for a in base_assets if a[0] in allowed]
+else:
+    assets = base_assets
+
+if not assets:
+    assets = ASSETS[:6]
+
+# =====================================================
+# 🏛️ VALUE MODEL STABILITY (PUT IT HERE)
+# =====================================================
+if model == "value":
+    drift *= 1.05
+    vol *= 0.85
 
     # =========================================================
     # 🔥 INDEX ALIGNMENT
@@ -767,11 +782,24 @@ def simulate(monthly, years, mode, model="dividend"):
 
         curve.append(nav)
 
-        # =====================================================
-        # 💰 DIVIDEND ACCUMULATION (REALISTIC CASHFLOW MODEL)
-        # =====================================================
-        capital += monthly * weights
-        dividends += (capital * yields) / 12
+ # =====================================================
+# 💰 DIVIDEND ACCUMULATION (CLEAN CASHFLOW MODEL)
+# =====================================================
+
+monthly_allocation = monthly * weights
+
+# build capital gradually (correct compounding)
+capital += monthly_allocation
+
+# apply regime-aware dividend yield
+regime_multiplier = {
+    "normal": 1.0,
+    "bull": 1.15,
+    "bear": 0.85
+}.get(mode, 1.0)
+
+# dividends are earned on current capital, not re-multiplied stack
+dividends += (monthly_allocation * yields * regime_multiplier) / 12
 
     # =========================================================
     # 📊 INVESTMENT BREAKDOWN
@@ -802,11 +830,13 @@ def simulate(monthly, years, mode, model="dividend"):
         for i in range(len(assets))
     ])
 
-    # =========================================================
-    # 💰 FINAL PORTFOLIO VALUE
-    # =========================================================
-    portfolio_value = float(np.sum(price_value) + total_dividends)
+# =====================================================
+# 📈 FINAL PORTFOLIO VALUE (CLEAN SEPARATION MODEL)
+# =====================================================
 
+final_nav = curve[-1]
+
+portfolio_value = float(final_nav + np.sum(dividends))
     # =========================================================
     # 📊 PLAN OUTPUT
     # =========================================================
