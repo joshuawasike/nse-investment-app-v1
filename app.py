@@ -227,27 +227,40 @@ def get_model_assets(model):
 # =========================================================
 def apply_model_bias(weights, model):
 
-    bias = np.ones(len(weights))
+    w = np.array(weights, dtype=float)
+
+    # safety fix
+    if len(w) == 0:
+        return w
 
     if model == "dividend":
-        bias *= 1.10
+        target = np.array([0.20, 0.18, 0.15, 0.10, 0.15, 0.12, 0.08, 0.02])
 
     elif model == "growth":
-        bias *= 1.15
+        target = np.array([0.08, 0.08, 0.08, 0.25, 0.08, 0.08, 0.10, 0.25])
 
     elif model == "banking":
-        bias *= 1.12
+        target = np.array([0.25, 0.22, 0.20, 0.05, 0.05, 0.05, 0.15, 0.03])
 
     elif model == "value":
-        bias *= 1.08
+        target = np.array([0.08, 0.08, 0.08, 0.05, 0.12, 0.20, 0.12, 0.27])
 
     elif model == "income":
-        bias *= 1.06
+        target = np.array([0.10, 0.15, 0.15, 0.10, 0.25, 0.15, 0.08, 0.02])
 
-    weights = weights * bias
-    weights = weights / np.sum(weights)
+    else:
+        target = np.ones(len(w))
 
-    return weights
+    # adjust size safety
+    target = target[:len(w)]
+
+    # blend
+    w = (0.3 * w) + (0.7 * target)
+
+    # normalize
+    w = w / np.sum(w)
+
+    return w
 # =========================================================
 # 📊 ASSETS
 # =========================================================
