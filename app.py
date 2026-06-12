@@ -656,18 +656,12 @@ def simulate(monthly, years, mode, model="dividend"):
         "income":   (0.0038, 0.013, 0.70),
     }
 
-    drift_base, vol_base, momentum = model_params.get(
-        model,
-        (0.001, 0.01, 0.6)
-    )
+    drift_base, vol_base, momentum = model_params.get(model, (0.001, 0.01, 0.6))
 
-    # =========================================================
-    # 📈 REGIME SETTINGS
-    # =========================================================
     regime = {
-        "normal": (1.00, 1.00),
-        "bull":   (1.80, 0.75),
-        "bear":   (0.55, 1.50)
+        "normal": (1.0, 1.0),
+        "bull":   (1.9, 0.7),
+        "bear":   (0.55, 1.5)
     }
 
     drift_mult, vol_mult = regime.get(mode, (1.0, 1.0))
@@ -678,13 +672,7 @@ def simulate(monthly, years, mode, model="dividend"):
     # =========================================================
     # 🌍 MARKET GENERATOR
     # =========================================================
-    R_full = generate_market(
-        mode,
-        len(ASSETS),
-        drift,
-        vol,
-        momentum
-    )
+    R_full = generate_market(mode, len(ASSETS), drift, vol, momentum)
 
     # =========================================================
     # 🧠 MODEL ASSET SELECTION
@@ -714,11 +702,11 @@ def simulate(monthly, years, mode, model="dividend"):
     asset_names = [a[0] for a in ASSETS]
     selected_names = [a[0] for a in assets]
 
-    selected_idx = []
-
-    for name in selected_names:
-        if name in asset_names:
-            selected_idx.append(asset_names.index(name))
+    selected_idx = [
+        asset_names.index(name)
+        for name in selected_names
+        if name in asset_names
+    ]
 
     if len(selected_idx) < 2:
         selected_idx = list(range(min(6, len(ASSETS))))
@@ -727,24 +715,33 @@ def simulate(monthly, years, mode, model="dividend"):
     assets = assets[:len(selected_idx)]
 
     # =========================================================
-    # 🧠 INSTITUTIONAL WEIGHTS
+    # 🧠 INITIAL WEIGHTS
     # =========================================================
     weights = institutional_allocator(R, mode)
     weights = apply_model_bias(weights, model)
 
     # =========================================================
-    # 💰 PORTFOLIO SIMULATION
+    # 💰 SIMULATION SETUP
     # =========================================================
     months = years * 12
     invested = monthly * months
 
-    nav = 0
+    nav = 0.0
     curve = []
 
+    # dividend tracking (REAL CASHFLOW MODEL)
+    capital = np.zeros(len(weights))
+    dividends = np.zeros(len(weights))
+    yields = np.array([a[2] for a in assets])
+
+    # =========================================================
+    # 📈 MAIN LOOP
+    # =========================================================
     for t in range(months):
 
         idx = t % R.shape[1]
 
+        # periodic rebalancing
         if t % 12 == 0:
             weights = institutional_allocator(R, mode)
             weights = apply_model_bias(weights, model)
@@ -754,89 +751,65 @@ def simulate(monthly, years, mode, model="dividend"):
         port_ret = np.clip(
             port_ret,
             -0.05 if mode == "bear" else -0.03,
-            0.10 if mode == "bull" else 0.06
+            0.08 if mode == "bull" else 0.05
         )
 
+        # NAV growth
         nav = nav * (1 + port_ret)
 
-        # monthly contribution
+        # monthly contribution (IMPORTANT FIX)
         nav += monthly
 
         curve.append(nav)
 
+        # =====================================================
+        # 💰 DIVIDENDS (ACCRUAL MODEL)
+        # =====================================================
+        capital += monthly * weights
+        dividends += (capital * yields) / 12
+
     # =========================================================
-    # 💰 MONTHLY ALLOCATION PLAN
+    # 💰 ASSET INVESTMENT BREAKDOWN
     # =========================================================
     monthly_allocation = monthly * weights
-
-    # Total contributions per asset
     asset_investment = monthly_allocation * months
 
-    # =========================================================
-    # 💰 DIVIDENDS
-    # =========================================================
-    yields = np.array([a[2] for a in assets])
-
-    dividends = np.zeros(len(weights))
-
-    for _ in range(months):
-        dividends += monthly_allocation * (yields / 12)
+    asset_breakdown = [
+        {
+            "asset": assets[i][0],
+            "allocation_pct": float(weights[i]),
+            "capital": float(asset_investment[i]),
+            "dividends": float(dividends[i])
+        }
+        for i in range(len(assets))
+    ]
 
     total_dividends = float(np.sum(dividends))
 
     # =========================================================
-    # 📈 ASSET RETURNS
+    # 📈 PORTFOLIO VALUE MODEL
     # =========================================================
     base_returns = np.mean(R, axis=1)
+    annual_returns = np.clip(base_returns * 12, -0.25, 0.45)
 
-    annual_returns = np.clip(
-        base_returns * 12,
-        -0.20,
-        0.35
-    )
-
-    # =========================================================
-    # 📈 REGIME CONSISTENCY
-    # =========================================================
-    if mode == "bull":
-        annual_returns *= 1.50
-
-    elif mode == "bear":
-        annual_returns *= 0.60
-
-    # =========================================================
-    # 💰 FUTURE VALUE BY ASSET
-    # =========================================================
-    asset_values = np.array([
-
-        asset_investment[i] *
-        max(
-            0.70,
-            (1 + annual_returns[i]) ** years
-        )
-
+    asset_values = [
+        asset_investment[i] * max(0.5, (1 + annual_returns[i]) ** years)
         for i in range(len(assets))
+    ]
 
-    ])
-
-    portfolio_value = float(
-        np.sum(asset_values) + total_dividends
-    )
+    portfolio_value = float(np.sum(asset_values))
 
     # =========================================================
     # 📊 PLAN OUTPUT
     # =========================================================
-    plan = []
-
-    for i in range(len(assets)):
-
-        plan.append({
+    plan = [
+        {
             "name": assets[i][0],
             "percent": round(weights[i] * 100, 2),
-
-            # MONTHLY MONEY ALLOCATION
             "kes": round(monthly_allocation[i], 2)
-        })
+        }
+        for i in range(len(assets))
+    ]
 
     # =========================================================
     # 🤖 AI INSIGHT ENGINE
@@ -856,33 +829,19 @@ def simulate(monthly, years, mode, model="dividend"):
     }
 
     # =========================================================
-    # 📦 OUTPUT
+    # 📦 FINAL OUTPUT
     # =========================================================
     return {
         "summary": {
             "invested": float(invested),
             "value": float(portfolio_value),
-            "dividends": float(total_dividends)
+            "dividends": total_dividends
         },
         "chart": chart(curve),
         "plan": plan,
         "curve": curve,
-        "ai": ai
-    }
-
-    # =========================================================
-    # 📦 OUTPUT
-    # =========================================================
-    return {
-        "summary": {
-            "invested": float(invested),
-            "value": float(portfolio_value),
-            "dividends": float(np.sum(dividends))
-        },
-        "chart": chart(curve),
-        "plan": plan,
-        "curve": curve,
-        "ai": ai
+        "ai": ai,
+        "assets": asset_breakdown
     }
 # =========================================================
 # 📊 CHART
