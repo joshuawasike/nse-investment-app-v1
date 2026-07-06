@@ -529,6 +529,132 @@ DIVIDEND_DATABASE = {
 
 }
 # =========================================================
+# 🏦 CORPORATE ACTION DATABASE
+# =========================================================
+
+CORPORATE_ACTIONS = {
+
+    "EQTY":{
+
+        "split":0.01,
+        "bonus":0.03,
+        "rights":0.04,
+        "buyback":0.01,
+        "special_dividend":0.02
+
+    },
+
+    "KCB":{
+
+        "split":0.01,
+        "bonus":0.02,
+        "rights":0.03,
+        "buyback":0.02,
+        "special_dividend":0.01
+
+    },
+
+    "COOP":{
+
+        "split":0.00,
+        "bonus":0.04,
+        "rights":0.02,
+        "buyback":0.01,
+        "special_dividend":0.02
+
+    },
+
+    "SCOM":{
+
+        "split":0.00,
+        "bonus":0.01,
+        "rights":0.01,
+        "buyback":0.04,
+        "special_dividend":0.05
+
+    },
+
+    "EABL":{
+
+        "split":0.00,
+        "bonus":0.02,
+        "rights":0.01,
+        "buyback":0.02,
+        "special_dividend":0.04
+
+    },
+
+    "KEGN":{
+
+        "split":0.00,
+        "bonus":0.01,
+        "rights":0.02,
+        "buyback":0.01,
+        "special_dividend":0.01
+
+    },
+
+    "NCBA":{
+
+        "split":0.01,
+        "bonus":0.02,
+        "rights":0.03,
+        "buyback":0.02,
+        "special_dividend":0.02
+
+    },
+
+    "KQ":{
+
+        "split":0.00,
+        "bonus":0.00,
+        "rights":0.08,
+        "buyback":0.00,
+        "special_dividend":0.00
+
+    }
+
+}
+# =========================================================
+# 🏦 CORPORATE ACTION ENGINE
+# =========================================================
+
+def apply_corporate_actions(capital, code):
+
+    profile = CORPORATE_ACTIONS.get(code)
+
+    if profile is None:
+        return capital, 0.0
+
+    bonus = 0.0
+
+    # Bonus shares
+    if np.random.rand() < profile["bonus"]:
+
+        capital *= 1.10
+
+    # Rights issue
+    if np.random.rand() < profile["rights"]:
+
+        capital *= 1.05
+
+    # Share buyback
+    if np.random.rand() < profile["buyback"]:
+
+        capital *= 1.03
+
+    # Stock split
+    if np.random.rand() < profile["split"]:
+
+        capital *= 1.00
+
+    # Special dividend
+    if np.random.rand() < profile["special_dividend"]:
+
+        bonus = capital * 0.03
+
+    return capital, bonus
+# =========================================================
 # 💰 DYNAMIC DIVIDEND ENGINE
 # =========================================================
 
@@ -1312,45 +1438,38 @@ def simulate(monthly, years, mode, model="dividend"):
 
             growth = profile.get("growth", 0.00)
 
-            stability = profile.get("stability", 1.00)
+            stability = profile.get("stability", 0.90)
 
-            payout = profile.get("payout", 0.00)
+            payout = profile.get("payout", 0.40)
 
-            # Only pay dividends in scheduled months
+            years_elapsed = m / 12
+
+            dividend_yield = forecast_dividend_yield(
+                code,
+                years_elapsed,
+                mode
+            )
+
+            current_month = (m % 12) + 1
+
             if current_month in payment_months:
 
-                # Dividend yield grows over time
-                current_yield = forecast_dividend_yield(
-                    code,
-                    m // 12,
-                    mode
-                )
+                payments = len(payment_months)
 
-                # Market regime adjustments
-                if mode == "bull":
-                    current_yield *= 1.10
-
-                elif mode == "bear":
-                    current_yield *= 0.80
-
-                # Company may reduce or skip dividend
-                health = dividend_health_score(code, stats)
-
-                annual_dividend = (
-
+                dividend = (
                     capital[i]
-
-                    * current_yield
-
+                    * dividend_yield
                     * payout
-
-                    * health
-
+                    * regime_multiplier
+                    / payments
                 )
 
-                dividend = annual_dividend / max(len(payment_months), 1)
-
-                dividends[i] += dividend
+                capital[i], bonus = apply_corporate_actions(
+                    capital[i],
+                    code
+                )
+    
+                dividends[i] += dividend + bonus
     # -----------------------------------------------------
     # FINAL VALUES
     # -----------------------------------------------------
