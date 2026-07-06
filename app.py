@@ -435,96 +435,351 @@ ASSETS = [
 
 N = len(ASSETS)
 # =========================================================
-# 💰 INSTITUTIONAL DIVIDEND RESEARCH DATABASE
+# 💰 INSTITUTIONAL DIVIDEND RESEARCH DATABASE V2
 # =========================================================
+
 DIVIDEND_DATABASE = {
 
+    # =====================================================
+    # EQUITY BANK
+    # =====================================================
     "EQTY":{
+
+        "company":"Equity Bank",
+        "sector":"Banking",
+
         "months":[6],
+
         "base_yield":0.090,
         "growth":0.060,
         "payout":0.45,
         "stability":0.96,
         "quality":0.95,
         "policy":"progressive",
-        "sector":"Banking"
+
+        "beta":0.92,
+        "roe":0.23,
+        "eps_growth":0.14,
+
+        "pe":6.8,
+        "pb":1.50,
+
+        "market_cap":255_000_000_000,
+
+        "credit":"A",
+
+        "esg":82,
+
+        "risk":"Low",
+
+        "currency":"KES"
+
     },
 
+    # =====================================================
+    # KCB GROUP
+    # =====================================================
     "KCB":{
+
+        "company":"KCB Group",
+        "sector":"Banking",
+
         "months":[5,11],
+
         "base_yield":0.085,
         "growth":0.055,
         "payout":0.42,
         "stability":0.94,
         "quality":0.93,
         "policy":"progressive",
-        "sector":"Banking"
+
+        "beta":0.94,
+        "roe":0.21,
+        "eps_growth":0.11,
+
+        "pe":7.2,
+        "pb":1.30,
+
+        "market_cap":215_000_000_000,
+
+        "credit":"A",
+
+        "esg":79,
+
+        "risk":"Low",
+
+        "currency":"KES"
+
     },
 
+    # =====================================================
+    # CO-OPERATIVE BANK
+    # =====================================================
     "COOP":{
+
+        "company":"Co-operative Bank",
+
+        "sector":"Banking",
+
         "months":[6],
+
         "base_yield":0.090,
+
         "growth":0.070,
+
         "payout":0.50,
+
         "stability":0.98,
+
         "quality":0.96,
+
         "policy":"stable",
-        "sector":"Banking"
+
+        "beta":0.88,
+
+        "roe":0.20,
+
+        "eps_growth":0.12,
+
+        "pe":5.9,
+
+        "pb":1.20,
+
+        "market_cap":145_000_000_000,
+
+        "credit":"A-",
+
+        "esg":83,
+
+        "risk":"Low",
+
+        "currency":"KES"
+
     },
 
+    # =====================================================
+    # SAFARICOM
+    # =====================================================
     "SCOM":{
+
+        "company":"Safaricom PLC",
+
+        "sector":"Telecom",
+
         "months":[4,10],
+
         "base_yield":0.065,
+
         "growth":0.080,
+
         "payout":0.70,
+
         "stability":0.99,
+
         "quality":0.98,
+
         "policy":"progressive",
-        "sector":"Telecom"
+
+        "beta":0.75,
+
+        "roe":0.31,
+
+        "eps_growth":0.16,
+
+        "pe":14.5,
+
+        "pb":6.10,
+
+        "market_cap":720_000_000_000,
+
+        "credit":"AA",
+
+        "esg":91,
+
+        "risk":"Very Low",
+
+        "currency":"KES"
+
     },
 
+    # =====================================================
+    # EABL
+    # =====================================================
     "EABL":{
+
+        "company":"East African Breweries",
+
+        "sector":"Consumer",
+
         "months":[7],
+
         "base_yield":0.075,
+
         "growth":0.040,
+
         "payout":0.65,
+
         "stability":0.95,
+
         "quality":0.92,
+
         "policy":"stable",
-        "sector":"Consumer"
+
+        "beta":0.86,
+
+        "roe":0.27,
+
+        "eps_growth":0.08,
+
+        "pe":12.1,
+
+        "pb":4.00,
+
+        "market_cap":150_000_000_000,
+
+        "credit":"AA-",
+
+        "esg":84,
+
+        "risk":"Medium",
+
+        "currency":"KES"
+
     },
 
+    # =====================================================
+    # KENGEN
+    # =====================================================
     "KEGN":{
+
+        "company":"KenGen",
+
+        "sector":"Utilities",
+
         "months":[8],
+
         "base_yield":0.080,
+
         "growth":0.050,
+
         "payout":0.55,
+
         "stability":0.90,
+
         "quality":0.88,
+
         "policy":"cyclical",
-        "sector":"Utilities"
+
+        "beta":0.68,
+
+        "roe":0.14,
+
+        "eps_growth":0.09,
+
+        "pe":5.6,
+
+        "pb":0.90,
+
+        "market_cap":95_000_000_000,
+
+        "credit":"BBB+",
+
+        "esg":87,
+
+        "risk":"Low",
+
+        "currency":"KES"
+
     },
 
+    # =====================================================
+    # NCBA
+    # =====================================================
     "NCBA":{
+
+        "company":"NCBA Group",
+
+        "sector":"Banking",
+
         "months":[5,11],
+
         "base_yield":0.060,
+
         "growth":0.050,
+
         "payout":0.40,
+
         "stability":0.93,
+
         "quality":0.90,
+
         "policy":"progressive",
-        "sector":"Banking"
+
+        "beta":0.98,
+
+        "roe":0.18,
+
+        "eps_growth":0.10,
+
+        "pe":6.5,
+
+        "pb":1.10,
+
+        "market_cap":85_000_000_000,
+
+        "credit":"A-",
+
+        "esg":78,
+
+        "risk":"Medium",
+
+        "currency":"KES"
+
     },
 
+    # =====================================================
+    # KENYA AIRWAYS
+    # =====================================================
     "KQ":{
+
+        "company":"Kenya Airways",
+
+        "sector":"Airline",
+
         "months":[],
+
         "base_yield":0.000,
+
         "growth":0.000,
+
         "payout":0.00,
+
         "stability":0.20,
+
         "quality":0.25,
+
         "policy":"suspended",
-        "sector":"Airline"
+
+        "beta":1.80,
+
+        "roe":-0.10,
+
+        "eps_growth":0.18,
+
+        "pe":None,
+
+        "pb":0.40,
+
+        "market_cap":28_000_000_000,
+
+        "credit":"B",
+
+        "esg":62,
+
+        "risk":"Very High",
+
+        "currency":"KES"
+
     }
 
 }
@@ -725,7 +980,73 @@ def estimate_dividend_yields(mode, model):
         yields[code] = float(y)
 
     return yields
-    # =========================================================
+# =========================================================
+# INSTITUTIONAL COMPANY ANALYTICS
+# =========================================================
+def company_analytics(code, capital):
+
+    profile = DIVIDEND_DATABASE.get(code, {})
+
+    dividend_yield = profile.get("base_yield",0)
+
+    growth = profile.get("growth",0)
+
+    quality = profile.get("quality",0)
+
+    payout = profile.get("payout",0)
+
+    stability = profile.get("stability",0)
+
+    beta = profile.get("beta",1)
+
+    income = capital * dividend_yield
+
+    health = (
+
+        quality*40 +
+
+        stability*30 +
+
+        (1-beta)*20 +
+
+        (1-payout)*10
+
+    )
+
+    health = max(0,min(100,health))
+
+    return{
+
+        "yield":round(dividend_yield*100,2),
+
+        "growth":round(growth*100,2),
+
+        "quality":round(quality*100,1),
+
+        "stability":round(stability*100,1),
+
+        "health":round(health,1),
+
+        "income":round(income,2),
+
+        "beta":beta,
+
+        "policy":profile.get("policy"),
+
+        "sector":profile.get("sector"),
+
+        "roe":round(profile.get("roe",0)*100,1),
+
+        "pe":profile.get("pe"),
+
+        "pb":profile.get("pb"),
+
+        "credit":profile.get("credit"),
+
+        "esg":profile.get("esg")
+
+    }
+# =========================================================
 # 📈 DIVIDEND FORECAST ENGINE
 # =========================================================
 def forecast_dividend_yield(code, years_elapsed, mode):
@@ -1621,65 +1942,88 @@ def simulate(monthly, years, mode, model="dividend"):
 
     real_value = portfolio_value / ((1 + inflation) ** years)
 
-    # -----------------------------------------------------
-    # BREAKDOWN
-    # -----------------------------------------------------
-    monthly_alloc = monthly * weights
+# -----------------------------------------------------
+# BREAKDOWN
+# -----------------------------------------------------
+monthly_alloc = monthly * weights
 
-    breakdown = []
+breakdown = []
 
-    asset_values = capital + dividends
+asset_values = capital + dividends
 
-    for i in range(len(assets)):
+for i in range(len(assets)):
 
-        invested_asset = invested * weights[i]
+    invested_asset = invested * weights[i]
 
-        breakdown.append({
+    code = assets[i][1]
 
-            "asset": assets[i][0],
+    analytics = company_analytics(
+        code,
+        capital[i]
+    )
 
-            "ticker": code,
+    breakdown.append({
 
-            "sector": profile["sector"],
+        # -------------------------------
+        # Basic Portfolio Information
+        # -------------------------------
+        "asset": assets[i][0],
 
-            "allocation_pct": round(weights[i]*100,2),
+        "code": code,
 
-            "capital": round(invested_asset,2),
+        "allocation_pct": round(weights[i] * 100, 2),
 
-            "current_value": round(capital[i],2),
+        "capital": round(float(invested_asset), 2),
 
-            "capital_gain": round(capital[i]-invested_asset,2),
+        "current_value": round(float(capital[i]), 2),
 
-            "dividends": round(dividends[i],2),
+        "capital_gain": round(
+            float(capital[i] - invested_asset),
+            2
+        ),
 
-            "total_return": round(asset_values[i],2),
+        "dividends": round(
+            float(dividends[i]),
+            2
+        ),
 
-            "yield": round(dividend_yield*100,2),
+        "total_return": round(
+            float(asset_values[i]),
+            2
+        ),
 
-            "payout_ratio": round(profile["payout"]*100,1),
+        # -------------------------------
+        # Institutional Analytics
+        # -------------------------------
+        "dividend_yield": analytics["yield"],
 
-            "quality": round(profile["quality"]*100,1),
+        "dividend_growth": analytics["growth"],
 
-            "stability": round(profile["stability"]*100,1),
+        "dividend_health": analytics["health"],
 
-            "growth_rate": round(profile["growth"]*100,1),
+        "quality_score": analytics["quality"],
 
-            "policy": profile["policy"],
+        "stability_score": analytics["stability"],
 
-            "payment_months": ", ".join(
-                map(str, profile["months"])
-            ),
+        "estimated_income": analytics["income"],
 
-            "forecast_income":
-                round(
-                    capital[i]*dividend_yield,
-                    2
-                ),
+        "beta": analytics["beta"],
 
-            "risk":
-                round(stats["sigma"][code]*100,2)
+        "policy": analytics["policy"],
 
-        })
+        "sector": analytics["sector"],
+
+        "roe": analytics["roe"],
+
+        "pe": analytics["pe"],
+
+        "pb": analytics["pb"],
+
+        "credit": analytics["credit"],
+
+        "esg": analytics["esg"]
+
+    })
     # -----------------------------------------------------
     # PLAN
     # -----------------------------------------------------
