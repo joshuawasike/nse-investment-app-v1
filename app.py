@@ -207,7 +207,7 @@ def get_model_assets(model):
     def bias(code):
         return 1.2 if code in allowed else 1.0
 
-    grouped["score"] = grouped["sharpe_like"] * grouped["bias"]
+    grouped["score"] = grouped["CODE"].apply(bias) * grouped["sharpe_like"]
 
     grouped = grouped.sort_values("score", ascending=False).head(len(ASSETS))
 
