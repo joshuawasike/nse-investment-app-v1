@@ -1638,22 +1638,46 @@ def simulate(monthly, years, mode, model="dividend"):
 
             "asset": assets[i][0],
 
-            "allocation_pct": round(weights[i] * 100, 2),
+            "ticker": code,
 
-            # Amount actually invested into this asset
-            "capital": round(float(invested_asset), 2),
+            "sector": profile["sector"],
 
-            # Current value after growth
-            "current_value": round(float(capital[i]), 2),
+            "allocation_pct": round(weights[i]*100,2),
 
-            # Profit excluding dividends
-            "capital_gain": round(float(capital[i] - invested_asset), 2),
+            "capital": round(invested_asset,2),
 
-            # Total dividends earned
-            "dividends": round(float(dividends[i]), 2),
+            "current_value": round(capital[i],2),
 
-            # Final value including dividends
-            "total_return": round(float(asset_values[i]), 2)
+            "capital_gain": round(capital[i]-invested_asset,2),
+
+            "dividends": round(dividends[i],2),
+
+            "total_return": round(asset_values[i],2),
+
+            "yield": round(dividend_yield*100,2),
+
+            "payout_ratio": round(profile["payout"]*100,1),
+
+            "quality": round(profile["quality"]*100,1),
+
+            "stability": round(profile["stability"]*100,1),
+
+            "growth_rate": round(profile["growth"]*100,1),
+
+            "policy": profile["policy"],
+
+            "payment_months": ", ".join(
+                map(str, profile["months"])
+            ),
+
+            "forecast_income":
+                round(
+                    capital[i]*dividend_yield,
+                    2
+                ),
+
+            "risk":
+                round(stats["sigma"][code]*100,2)
 
         })
     # -----------------------------------------------------
