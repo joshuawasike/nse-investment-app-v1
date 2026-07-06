@@ -393,7 +393,7 @@ def apply_model_bias(weights, model):
     w = w / np.sum(w)
 
     return w
-    }
+    
 MODEL_UNIVERSES = {
     "dividend": [0,1,2,3,4,5,6],   # safe banks + blue chips
     "growth":   [7,5,6,1,2,3,4],   # includes KQ aggressively
@@ -563,7 +563,235 @@ def simulate_paths(R, mode):
         sim.append(series)
 
     return np.array(sim)
+# =========================================================
+# 📈 FULL INSTITUTIONAL SIMULATION ENGINE V11
+# =========================================================
+def simulate(monthly, years, mode, model="dividend"):
 
+    # -----------------------------------------------------
+    # MODEL CONFIGURATION
+    # -----------------------------------------------------
+    MODEL_PARAMS = {
+        "dividend": (0.0035, 0.012, 0.60),
+        "growth":   (0.0060, 0.022, 1.10),
+        "banking":  (0.0045, 0.016, 0.80),
+        "value":    (0.0040, 0.015, 0.75),
+        "income":   (0.0038, 0.013, 0.70),
+    }
+
+    drift, vol, momentum = MODEL_PARAMS.get(
+        model,
+        MODEL_PARAMS["dividend"]
+    )
+
+    # -----------------------------------------------------
+    # MARKET
+    # -----------------------------------------------------
+    R_full = generate_market(
+        mode,
+        len(ASSETS),
+        drift,
+        vol,
+        momentum
+    )
+
+    # -----------------------------------------------------
+    # SELECT MODEL ASSETS
+    # -----------------------------------------------------
+    assets = get_model_assets(model)
+
+    names = [a[0] for a in ASSETS]
+    selected = [a[0] for a in assets]
+
+    idx = [
+        names.index(n)
+        for n in selected
+        if n in names
+    ]
+
+    if len(idx) == 0:
+        idx = list(range(len(ASSETS)))
+        assets = ASSETS
+
+    R = R_full[idx]
+
+    # -----------------------------------------------------
+    # PORTFOLIO WEIGHTS
+    # -----------------------------------------------------
+    weights = institutional_allocator(R, mode)
+    weights = apply_model_bias(weights, model)
+
+    if len(weights) > len(assets):
+        weights = weights[:len(assets)]
+        weights = weights / np.sum(weights)
+
+    # -----------------------------------------------------
+    # SIMULATION SETTINGS
+    # -----------------------------------------------------
+    months = years * 12
+
+    invested = monthly * months
+
+    nav = 0.0
+
+    curve = []
+
+    dividends = np.zeros(len(weights))
+
+    yields = np.array([a[2] for a in assets])
+
+    # -----------------------------------------------------
+    # REGIME DIVIDEND MULTIPLIER
+    # -----------------------------------------------------
+    regime_multiplier = {
+        "normal": 1.00,
+        "bull": 1.15,
+        "bear": 0.85
+    }.get(mode, 1.0)
+
+    # -----------------------------------------------------
+    # MONTHLY LOOP
+    # -----------------------------------------------------
+    for m in range(months):
+
+        col = m % R.shape[1]
+
+        # yearly rebalance
+        if m > 0 and m % 12 == 0:
+
+            weights = institutional_allocator(R, mode)
+            weights = apply_model_bias(weights, model)
+
+            if len(weights) > len(assets):
+                weights = weights[:len(assets)]
+
+            weights = weights / np.sum(weights)
+
+        portfolio_return = np.dot(weights, R[:, col])
+
+        if mode == "bull":
+            portfolio_return = np.clip(portfolio_return, -0.03, 0.08)
+
+        elif mode == "bear":
+            portfolio_return = np.clip(portfolio_return, -0.05, 0.03)
+
+        else:
+            portfolio_return = np.clip(portfolio_return, -0.04, 0.05)
+
+        nav *= (1 + portfolio_return)
+
+        nav += monthly
+
+        curve.append(nav)
+
+        monthly_alloc = monthly * weights
+
+        dividends += (
+            monthly_alloc
+            * yields
+            * regime_multiplier
+            / 12
+        )
+
+    # -----------------------------------------------------
+    # FINAL VALUES
+    # -----------------------------------------------------
+    final_nav = curve[-1]
+
+    total_dividends = float(np.sum(dividends))
+
+    portfolio_value = float(final_nav + total_dividends)
+
+    # -----------------------------------------------------
+    # BREAKDOWN
+    # -----------------------------------------------------
+    monthly_alloc = monthly * weights
+
+    total_capital = monthly_alloc * months
+
+    breakdown = []
+
+    for i in range(len(assets)):
+
+        breakdown.append({
+
+            "asset":
+                assets[i][0],
+
+            "allocation_pct":
+                round(weights[i] * 100, 2),
+
+            "capital":
+                float(total_capital[i]),
+
+            "dividends":
+                float(dividends[i])
+
+        })
+
+    # -----------------------------------------------------
+    # PLAN
+    # -----------------------------------------------------
+    plan = []
+
+    for i in range(len(assets)):
+
+        plan.append({
+
+            "name":
+                assets[i][0],
+
+            "percent":
+                round(weights[i] * 100, 2),
+
+            "kes":
+                round(monthly_alloc[i], 2)
+
+        })
+
+    # -----------------------------------------------------
+    # AI
+    # -----------------------------------------------------
+    ai = ai_portfolio_advisor(
+        weights,
+        R,
+        assets
+    )
+
+    # -----------------------------------------------------
+    # SUMMARY
+    # -----------------------------------------------------
+    summary = {
+
+        "invested":
+            float(invested),
+
+        "value":
+            float(portfolio_value),
+
+        "dividends":
+            total_dividends
+
+    }
+
+    # -----------------------------------------------------
+    # RETURN
+    # -----------------------------------------------------
+    return {
+
+        "summary": summary,
+
+        "chart": chart(curve),
+
+        "plan": plan,
+
+        "curve": curve,
+
+        "ai": ai,
+
+        "assets": breakdown
+
+    }
 # =========================================================
 # 📊 CHART
 # =========================================================
