@@ -1,0 +1,113 @@
+[
+    {
+        "code": "EQTY",
+        "company": "Equity Group Holdings PLC",
+        "currency": "KES",
+        "frequency": "Annual",
+        "last_dividend": 4.25,
+        "dividend_yield": 9.1,
+        "five_year_average": 8.8,
+        "growth_rate": 8.4,
+        "payout_ratio": 45.2,
+        "next_payment_month": "June",
+        "status": "Stable"
+    },
+
+    {
+        "code": "KCB",
+        "company": "KCB Group PLC",
+        "currency": "KES",
+        "frequency": "Annual",
+        "last_dividend": 3.00,
+        "dividend_yield": 8.6,
+        "five_year_average": 8.1,
+        "growth_rate": 7.8,
+        "payout_ratio": 42.8,
+        "next_payment_month": "May",
+        "status": "Stable"
+    },
+
+    {
+        "code": "COOP",
+        "company": "Co-operative Bank PLC",
+        "currency": "KES",
+        "frequency": "Annual",
+        "last_dividend": 1.50,
+        "dividend_yield": 9.3,
+        "five_year_average": 8.9,
+        "growth_rate": 9.2,
+        "payout_ratio": 46.5,
+        "next_payment_month": "May",
+        "status": "Growing"
+    },
+
+    {
+        "code": "SCOM",
+        "company": "Safaricom PLC",
+        "currency": "KES",
+        "frequency": "Annual",
+        "last_dividend": 1.20,
+        "dividend_yield": 7.2,
+        "five_year_average": 6.9,
+        "growth_rate": 10.5,
+        "payout_ratio": 79.0,
+        "next_payment_month": "August",
+        "status": "Growing"
+    },
+
+    {
+        "code": "EABL",
+        "company": "East African Breweries PLC",
+        "currency": "KES",
+        "frequency": "Annual",
+        "last_dividend": 8.00,
+        "dividend_yield": 5.4,
+        "five_year_average": 5.7,
+        "growth_rate": 6.8,
+        "payout_ratio": 58.0,
+        "next_payment_month": "October",
+        "status": "Stable"
+    },
+
+    {
+        "code": "KEGN",
+        "company": "KenGen PLC",
+        "currency": "KES",
+        "frequency": "Annual",
+        "last_dividend": 0.30,
+        "dividend_yield": 6.8,
+        "five_year_average": 6.2,
+        "growth_rate": 5.9,
+        "payout_ratio": 39.5,
+        "next_payment_month": "November",
+        "status": "Stable"
+    },
+
+    {
+        "code": "NCBA",
+        "company": "NCBA Group PLC",
+        "currency": "KES",
+        "frequency": "Annual",
+        "last_dividend": 3.25,
+        "dividend_yield": 7.8,
+        "five_year_average": 7.5,
+        "growth_rate": 7.4,
+        "payout_ratio": 44.6,
+        "next_payment_month": "June",
+        "status": "Growing"
+    },
+
+    {
+        "code": "KQ",
+        "company": "Kenya Airways PLC",
+        "currency": "KES",
+        "frequency": "None",
+        "last_dividend": 0.00,
+        "dividend_yield": 0.0,
+        "five_year_average": 0.0,
+        "growth_rate": 0.0,
+        "payout_ratio": 0.0,
+        "next_payment_month": "-",
+        "status": "No Dividend"
+    }
+]
