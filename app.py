@@ -1942,27 +1942,27 @@ def simulate(monthly, years, mode, model="dividend"):
 
     real_value = portfolio_value / ((1 + inflation) ** years)
 
-# -----------------------------------------------------
-# BREAKDOWN
-# -----------------------------------------------------
-monthly_alloc = monthly * weights
+    # -----------------------------------------------------
+    # BREAKDOWN
+    # -----------------------------------------------------
+    monthly_alloc = monthly * weights
 
-breakdown = []
+    breakdown = []
 
-asset_values = capital + dividends
+    asset_values = capital + dividends
 
-for i in range(len(assets)):
+    for i in range(len(assets)):
 
-    invested_asset = invested * weights[i]
+        invested_asset = invested * weights[i]
 
-    code = assets[i][1]
+        code = assets[i][1]
 
-    analytics = company_analytics(
-        code,
-        capital[i]
-    )
+        analytics = company_analytics(
+            code,
+            capital[i]
+        )
 
-    breakdown.append({
+        breakdown.append({
 
         # -------------------------------
         # Basic Portfolio Information
