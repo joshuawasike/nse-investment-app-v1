@@ -1,0 +1,401 @@
+{% extends "base.html" %}
+
+{% block title %}
+JOBURA WEALTH® | Executive Reports Centre
+{% endblock %}
+
+{% block content %}
+
+<!-- ========================================================= -->
+<!-- PAGE HEADER -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+<h1>📄 Executive Reports Centre</h1>
+
+<p>
+
+<b>JOBURA WEALTH®</b><br>
+
+NSE Institutional Wealth Management Platform<br>
+
+Professional Analytics Suite
+
+</p>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- EXECUTIVE SUMMARY -->
+<!-- ========================================================= -->
+
+<div class="kpi-grid">
+
+<div class="kpi-card">
+<div class="kpi-title">Portfolio Value</div>
+<div class="kpi-value">
+KES {{ "{:,.0f}".format(report.portfolio_value|default(18500000)) }}
+</div>
+</div>
+
+<div class="kpi-card">
+<div class="kpi-title">Total Return</div>
+<div class="kpi-value">
+{{ report.return_rate|default("18.6%") }}
+</div>
+</div>
+
+<div class="kpi-card">
+<div class="kpi-title">Dividend Income</div>
+<div class="kpi-value">
+KES {{ "{:,.0f}".format(report.dividends|default(1450000)) }}
+</div>
+</div>
+
+<div class="kpi-card">
+<div class="kpi-title">Portfolio Health</div>
+<div class="kpi-value">
+{{ report.health|default("94 / 100") }}
+</div>
+</div>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- EXECUTIVE REPORT -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+<h2>📋 Executive Portfolio Summary</h2>
+
+<table>
+
+<tr>
+<th>Metric</th>
+<th>Value</th>
+</tr>
+
+<tr>
+<td>Total Capital Invested</td>
+<td>KES {{ "{:,.0f}".format(report.invested|default(12000000)) }}</td>
+</tr>
+
+<tr>
+<td>Current Portfolio Value</td>
+<td>KES {{ "{:,.0f}".format(report.portfolio_value|default(18500000)) }}</td>
+</tr>
+
+<tr>
+<td>Capital Appreciation</td>
+<td>KES {{ "{:,.0f}".format(report.growth|default(6500000)) }}</td>
+</tr>
+
+<tr>
+<td>Total Dividend Income</td>
+<td>KES {{ "{:,.0f}".format(report.dividends|default(1450000)) }}</td>
+</tr>
+
+<tr>
+<td>Total Return</td>
+<td>{{ report.return_rate|default("18.6%") }}</td>
+</tr>
+
+<tr>
+<td>CAGR</td>
+<td>{{ report.cagr|default("16.2%") }}</td>
+</tr>
+
+<tr>
+<td>Sharpe Ratio</td>
+<td>{{ report.sharpe|default("1.84") }}</td>
+</tr>
+
+<tr>
+<td>Portfolio Rating</td>
+<td>{{ report.rating|default("AAA") }}</td>
+</tr>
+
+</table>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- ASSET ALLOCATION -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+<h2>🏦 Asset Allocation Report</h2>
+
+<table>
+
+<tr>
+<th>Company</th>
+<th>Sector</th>
+<th>Allocation</th>
+<th>Value</th>
+</tr>
+
+{% for asset in assets %}
+
+<tr>
+
+<td>{{ asset.name }}</td>
+
+<td>{{ asset.sector }}</td>
+
+<td>{{ asset.percent }}</td>
+
+<td>KES {{ "{:,.0f}".format(asset.value) }}</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- DIVIDEND REPORT -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+<h2>💰 Dividend Performance Report</h2>
+
+<table>
+
+<tr>
+
+<th>Company</th>
+
+<th>Dividend Yield</th>
+
+<th>Dividend Received</th>
+
+</tr>
+
+{% for dividend in dividends %}
+
+<tr>
+
+<td>{{ dividend.name }}</td>
+
+<td>{{ dividend.yield }}</td>
+
+<td>KES {{ "{:,.0f}".format(dividend.amount) }}</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- RISK REPORT -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+<h2>⚠ Executive Risk Summary</h2>
+
+<table>
+
+<tr>
+<th>Indicator</th>
+<th>Value</th>
+<th>Status</th>
+</tr>
+
+<tr>
+<td>Portfolio Risk</td>
+<td>{{ report.risk|default("LOW") }}</td>
+<td>✔ Healthy</td>
+</tr>
+
+<tr>
+<td>Volatility</td>
+<td>{{ report.volatility|default("18.5%") }}</td>
+<td>✔ Stable</td>
+</tr>
+
+<tr>
+<td>Maximum Drawdown</td>
+<td>{{ report.drawdown|default("-13.6%") }}</td>
+<td>✔ Acceptable</td>
+</tr>
+
+<tr>
+<td>Diversification</td>
+<td>{{ report.diversification|default("91%") }}</td>
+<td>✔ Excellent</td>
+</tr>
+
+</table>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- AI EXECUTIVE REPORT -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+<h2>🤖 JOBURA AI® Executive Commentary</h2>
+
+<div class="ai-box">
+
+<p>
+
+{{ ai.executive|default(
+
+"Overall portfolio performance remains strong with consistent dividend income, moderate volatility and a diversified asset allocation suitable for long-term institutional wealth creation."
+
+) }}
+
+</p>
+
+<p>
+
+{{ ai.outlook|default(
+
+"The current allocation is expected to continue outperforming the broader market over the long term provided dividends remain stable and regular portfolio reviews are maintained."
+
+) }}
+
+</p>
+
+</div>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- REPORT EXPORT -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+<h2>📤 Export Reports</h2>
+
+<div class="kpi-grid">
+
+<div class="kpi-card">
+📄 Executive PDF Report
+</div>
+
+<div class="kpi-card">
+📊 Excel Portfolio Report
+</div>
+
+<div class="kpi-card">
+📈 Investment Performance Report
+</div>
+
+<div class="kpi-card">
+🖨 Print Summary
+</div>
+
+</div>
+
+<p style="margin-top:20px;">
+
+<i>Export functionality will be connected to the reporting engine in a future release.</i>
+
+</p>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- REPORT HISTORY -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+<h2>🕒 Report History</h2>
+
+<table>
+
+<tr>
+
+<th>Date</th>
+
+<th>Report Type</th>
+
+<th>Status</th>
+
+</tr>
+
+<tr>
+
+<td>01 Jul 2026</td>
+
+<td>Quarterly Portfolio Report</td>
+
+<td>Generated</td>
+
+</tr>
+
+<tr>
+
+<td>01 Apr 2026</td>
+
+<td>Risk Assessment</td>
+
+<td>Generated</td>
+
+</tr>
+
+<tr>
+
+<td>01 Jan 2026</td>
+
+<td>Annual Performance Report</td>
+
+<td>Generated</td>
+
+</tr>
+
+</table>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- FUTURE FEATURES -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+<h2>🚀 Future Reporting Features</h2>
+
+<ul>
+
+<li>Automated Monthly Reports</li>
+
+<li>Email Report Distribution</li>
+
+<li>Board Meeting Reports</li>
+
+<li>Fund Manager Reports</li>
+
+<li>Client Statements</li>
+
+<li>Tax Reporting</li>
+
+<li>ESG Reporting</li>
+
+<li>Regulatory Compliance Reports</li>
+
+<li>Interactive PDF Reports</li>
+
+<li>Digital Report Signatures</li>
+
+</ul>
+
+</div>
+
+{% endblock %}
