@@ -492,64 +492,44 @@ def ai_portfolio_advisor(weights, R, assets):
         "commentary": comment
     }
 # =========================================================
-# 🏦 REGIME-CONSISTENT INSTITUTIONAL ALLOCATOR (FIXED)
+# 🏦 INSTITUTIONAL ALLOCATOR V4
 # =========================================================
 def institutional_allocator(sim, mode):
 
-    # =====================================================
-    # 📊 CORE STATISTICS
-    # =====================================================
     mean = np.mean(sim, axis=1)
     vol = np.std(sim, axis=1) + 1e-9
-    downside = np.mean(np.minimum(sim, 0), axis=1)
 
     sharpe = mean / vol
-    sortino = mean / (np.abs(downside) + 1e-9)
+
+    score = sharpe.copy()
 
     # =====================================================
-    # 🧠 COMPOSITE SCORE
+    # REGIME TILTS
     # =====================================================
-    score = (0.7 * sharpe) + (0.3 * sortino)
+    if mode == "bull":
+        score = score * 1.25 + mean * 15
+
+    elif mode == "bear":
+        score = score * 0.70 - vol * 4
+
+    else:
+        score = score * 1.00
 
     # =====================================================
-    # 🌍 REGIME ADJUSTMENT
+    # SOFTMAX WEIGHTS
     # =====================================================
-    regime_map = {
-        "normal": 1.0,
-        "bull": 1.25,
-        "bear": 0.65
-    }
-
-    score = score * regime_map.get(mode, 1.0)
-
-    # =====================================================
-    # 🔧 STRUCTURAL TILTS
-    # =====================================================
-    if len(score) > 3:
-        score[3] *= 1.15
-
-    if len(score) > 7:
-        score[7] *= 0.10
-
-    # =====================================================
-    # 🔥 NORMALIZATION
-    # =====================================================
-    score = np.tanh(score * 2.2)
+    score = score - np.max(score)
 
     weights = np.exp(score)
     weights = weights / np.sum(weights)
 
     # =====================================================
-    # 🛡️ SAFETY CLIPPING (FIXED ERROR HERE)
+    # CONCENTRATION LIMITS
     # =====================================================
-    n = len(weights)
+    weights = np.clip(weights, 0.05, 0.35)
+    weights = weights / np.sum(weights)
 
-    MIN = np.full(n, 0.04)
-    MAX = np.full(n, 0.40)
-
-    weights = np.clip(weights, MIN, MAX)
-
-    return weights / np.sum(weights)
+    return weights
 # =========================================================
 # 🧠 PATH SIMULATION (MISSING FUNCTION FIX)
 # =========================================================
@@ -584,244 +564,6 @@ def simulate_paths(R, mode):
 
     return np.array(sim)
 
-# =========================================================
-# 📈 FULL INSTITUTIONAL SIMULATION ENGINE (CLEAN VERSION)
-# =========================================================
-
-def simulate(monthly, years, mode, model="dividend"):
-
-    # =========================================================
-    # 🧠 MODEL PARAMETERS
-    # =========================================================
-    model_params = {
-        "dividend": (0.0035, 0.012, 0.60),
-        "growth":   (0.0060, 0.022, 1.10),
-        "banking":  (0.0045, 0.016, 0.80),
-        "value":    (0.0040, 0.015, 0.75),
-        "income":   (0.0038, 0.013, 0.70),
-    }
-
-    drift_base, vol_base, momentum = model_params.get(model, (0.001, 0.01, 0.6))
-
-    # =========================================================
-    # 📊 REGIME CONTROL (VERY IMPORTANT)
-    # =========================================================
-    regime = {
-        "normal": (1.0, 1.0),
-        "bull":   (2.0, 0.7),
-        "bear":   (0.45, 1.8)
-    }
-
-    drift_mult, vol_mult = regime.get(mode, (1.0, 1.0))
-
-    drift = drift_base * drift_mult
-    vol = vol_base * vol_mult
-
-    # =========================================================
-    # 🌍 MARKET GENERATION
-    # =========================================================
-    R_full = generate_market(mode, len(ASSETS), drift, vol, momentum)
-
-    # regime bias (stability anchor)
-    if mode == "bull":
-        R_full += 0.0015
-    elif mode == "bear":
-        R_full -= 0.0020
-
-   # =====================================================
-# 🧠 MODEL ASSET SELECTION (SECTOR CONTROLLED UNIVERSE)
-# =====================================================
-
-base_assets = get_model_assets(model)
-
-MODEL_UNIVERSES = {
-    "dividend": ["Equity Bank", "KCB Group", "Co-op Bank", "EABL"],
-    "growth":   ["Safaricom", "Kenya Airways", "NCBA", "KenGen"],
-    "banking":  ["Equity Bank", "KCB Group", "Co-op Bank", "NCBA"],
-    "value":    ["EABL", "KenGen", "Safaricom"],
-    "income":   ["EABL", "Co-op Bank", "KCB Group", "Safaricom"]
-}
-
-# =====================================================
-# 🎯 APPLY MODEL FILTER
-# =====================================================
-if model in MODEL_UNIVERSES:
-    allowed = MODEL_UNIVERSES[model]
-    assets = [a for a in base_assets if a[0] in allowed]
-else:
-    assets = base_assets
-
-if not assets:
-    assets = ASSETS[:6]
-
-# =====================================================
-# 🏛️ VALUE MODEL STABILITY (PUT IT HERE)
-# =====================================================
-if model == "value":
-    drift *= 1.05
-    vol *= 0.85
-
-    # =========================================================
-    # 🔥 INDEX ALIGNMENT
-    # =========================================================
-    names = [a[0] for a in ASSETS]
-    selected = [a[0] for a in assets]
-
-    idx = [names.index(n) for n in selected if n in names]
-
-    if len(idx) < 2:
-        idx = list(range(min(6, len(ASSETS))))
-
-    R = R_full[idx]
-    assets = assets[:len(idx)]
-
-    # =========================================================
-    # 🧠 WEIGHTS
-    # =========================================================
-    weights = institutional_allocator(R, mode)
-    weights = apply_model_bias(weights, model)
-
-    # =========================================================
-    # 💰 SIMULATION SETUP
-    # =========================================================
-    months = years * 12
-    invested = monthly * months
-
-    nav = 0.0
-    curve = []
-
-    # dividend tracking
-    capital = np.zeros(len(weights))
-    dividends = np.zeros(len(weights))
-    yields = np.array([a[2] for a in assets])
-
-    # =========================================================
-    # 📈 MAIN LOOP
-    # =========================================================
-    for t in range(months):
-
-        col = t % R.shape[1]
-
-        # rebalance yearly
-        if t % 12 == 0:
-            weights = institutional_allocator(R, mode)
-            weights = apply_model_bias(weights, model)
-
-        # portfolio return
-        ret = np.dot(weights, R[:, col])
-
-        # stability clamp
-        ret = np.clip(
-            ret,
-            -0.05 if mode == "bear" else -0.03,
-            0.08 if mode == "bull" else 0.05
-        )
-
-        # NAV update (price growth)
-        nav = nav * (1 + ret)
-        nav += monthly
-
-        curve.append(nav)
-
- # =====================================================
-# 💰 DIVIDEND ACCUMULATION (CLEAN CASHFLOW MODEL)
-# =====================================================
-
-monthly_allocation = monthly * weights
-
-# build capital gradually (correct compounding)
-capital += monthly_allocation
-
-# apply regime-aware dividend yield
-regime_multiplier = {
-    "normal": 1.0,
-    "bull": 1.15,
-    "bear": 0.85
-}.get(mode, 1.0)
-
-# dividends are earned on current capital, not re-multiplied stack
-dividends += (monthly_allocation * yields * regime_multiplier) / 12
-
-    # =========================================================
-    # 📊 INVESTMENT BREAKDOWN
-    # =========================================================
-    monthly_alloc = monthly * weights
-    asset_investment = monthly_alloc * months
-
-    breakdown = [
-        {
-            "asset": assets[i][0],
-            "allocation_pct": round(weights[i] * 100, 2),
-            "capital": float(asset_investment[i]),
-            "dividends": float(dividends[i])
-        }
-        for i in range(len(assets))
-    ]
-
-    total_dividends = float(np.sum(dividends))
-
-    # =========================================================
-    # 📈 PRICE-BASED VALUE
-    # =========================================================
-    base_returns = np.mean(R, axis=1)
-    annual_returns = np.clip(base_returns * 12, -0.30, 0.50)
-
-    price_value = np.array([
-        asset_investment[i] * (1 + annual_returns[i]) ** years
-        for i in range(len(assets))
-    ])
-
-# =====================================================
-# 📈 FINAL PORTFOLIO VALUE (CLEAN SEPARATION MODEL)
-# =====================================================
-
-final_nav = curve[-1]
-
-portfolio_value = float(final_nav + np.sum(dividends))
-    # =========================================================
-    # 📊 PLAN OUTPUT
-    # =========================================================
-    plan = [
-        {
-            "name": assets[i][0],
-            "percent": round(weights[i] * 100, 2),
-            "kes": round(monthly_alloc[i], 2)
-        }
-        for i in range(len(assets))
-    ]
-
-    # =========================================================
-    # 🤖 AI INSIGHT
-    # =========================================================
-    risk = float(np.std(np.mean(R, axis=1)))
-
-    ai = {
-        "top_asset": assets[int(np.argmax(weights))][0],
-        "risk_level": risk,
-        "commentary": (
-            "Low risk environment."
-            if risk < 0.01 else
-            "Moderate risk environment."
-            if risk < 0.02 else
-            "High volatility detected."
-        )
-    }
-
-    # =========================================================
-    # 📦 OUTPUT
-    # =========================================================
-    return {
-        "summary": {
-            "invested": float(invested),
-            "value": float(portfolio_value),
-            "dividends": total_dividends
-        },
-        "chart": chart(curve),
-        "plan": plan,
-        "curve": curve,
-        "ai": ai,
-        "assets": breakdown
-    }
 # =========================================================
 # 📊 CHART
 # =========================================================
