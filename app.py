@@ -686,13 +686,21 @@ def simulate(monthly, years, mode, model="dividend"):
 
         monthly_alloc = monthly * weights
 
-        dividends += (
-            monthly_alloc
+        # Add this month's investment
+        capital += monthly_alloc
+
+        # Grow existing capital using this month's portfolio return
+        capital *= (1 + portfolio_return)
+
+        # Dividends generated this month
+        monthly_dividend = (
+            capital
             * yields
             * regime_multiplier
             / 12
         )
 
+        dividends += monthly_dividend
     # -----------------------------------------------------
     # FINAL VALUES
     # -----------------------------------------------------
@@ -790,7 +798,8 @@ def simulate(monthly, years, mode, model="dividend"):
         "ai": ai,
 
         "assets": breakdown
-
+        
+        "returns": returns_table
     }
 # =========================================================
 # 📊 CHART
