@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>
+
+        {% block title %}
+
+        JOBURA WEALTH®
+
+        {% endblock %}
+
+    </title>
+
+    <!-- Google Font -->
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet">
+
+    <!-- Main Stylesheet -->
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/wealth.css') }}">
+
+    {% block extra_css %}
+
+    {% endblock %}
+
+</head>
+
+<body>
+
+<!-- ===================================================== -->
+<!-- HEADER -->
+<!-- ===================================================== -->
+
+<header class="top-header">
+
+    <div class="logo-area">
+
+        <h1>
+
+            JOBURA WEALTH®
+
+        </h1>
+
+        <div class="subtitle">
+
+            NSE Institutional Wealth Management Platform
+
+        </div>
+
+    </div>
+
+    <div class="header-right">
+
+        <div class="platform-name">
+
+            Professional Analytics Suite
+
+        </div>
+
+        <div class="version">
+
+            Version 2026
+
+        </div>
+
+    </div>
+
+</header>
+
+<!-- ===================================================== -->
+<!-- MAIN LAYOUT -->
+<!-- ===================================================== -->
+
+<div class="layout">
+
+    <!-- SIDEBAR -->
+
+    <aside class="sidebar">
+
+        <h3>Navigation</h3>
+
+        <ul>
+
+            <li>
+
+                <a href="/">
+
+                    🏠 Dashboard
+
+                </a>
+
+            </li>
+
+            <li>
+
+                <a href="/investment">
+
+                    📊 Investment Terminal
+
+                </a>
+
+            </li>
+
+            <li>
+
+                <a href="/alpha">
+
+                    ⚡ Alpha Signal Engine
+
+                </a>
+
+            </li>
+
+            <li>
+
+                <a href="/research">
+
+                    🏦 Research Centre
+
+                </a>
+
+            </li>
+
+            <li>
+
+                <a href="/goal">
+
+                    🎯 Goal Planner
+
+                </a>
+
+            </li>
+
+            <li>
+
+                <a href="/reports">
+
+                    📑 Reports
+
+                </a>
+
+            </li>
+
+            <li>
+
+                <a href="/admin">
+
+                    ⚙ Administration
+
+                </a>
+
+            </li>
+
+        </ul>
+
+    </aside>
+
+    <!-- PAGE CONTENT -->
+
+    <main class="content">
+
+        {% block content %}
+
+        {% endblock %}
+
+    </main>
+
+</div>
+
+<!-- ===================================================== -->
+<!-- FOOTER -->
+<!-- ===================================================== -->
+
+<footer class="footer">
+
+    <div>
+
+        <strong>
+
+            JOBURA WEALTH®
+
+        </strong>
+
+    </div>
+
+    <div>
+
+        NSE Institutional Wealth Management Platform
+
+    </div>
+
+    <br>
+
+    <div>
+
+        Powered by
+
+    </div>
+
+    <br>
+
+    <div>
+
+        • Monte Carlo Simulation Engine
+
+    </div>
+
+    <div>
+
+        • Institutional Risk Analytics
+
+    </div>
+
+    <div>
+
+        • AI Investment Advisor
+
+    </div>
+
+    <div>
+
+        • Dividend Forecast Engine
+
+    </div>
+
+    <div>
+
+        • Portfolio Health Framework
+
+    </div>
+
+    <div>
+
+        • Goal-Based Wealth Planning
+
+    </div>
+
+    <br>
+
+    <div>
+
+        © 2026 Jobura Solutions.
+
+        All Rights Reserved.
+
+    </div>
+
+</footer>
+
+{% block extra_js %}
+
+{% endblock %}
+
+</body>
+
+</html>
