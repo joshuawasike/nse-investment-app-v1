@@ -1,0 +1,446 @@
+{% extends "base.html" %}
+
+{% block title %}
+JOBURA WEALTH® | Company Research Centre
+{% endblock %}
+
+{% block content %}
+
+<!-- ========================================================= -->
+<!-- PAGE HEADER -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+    <h1>🔍 Company Research Centre</h1>
+
+    <p>
+
+        JOBURA WEALTH®<br>
+
+        NSE Institutional Wealth Management Platform<br>
+
+        Professional Analytics Suite
+
+    </p>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- SEARCH BAR -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+<h2>Search Listed Companies</h2>
+
+<input
+type="text"
+placeholder="Search company, sector or ticker..."
+style="width:100%;padding:12px;">
+
+</div>
+
+<!-- ========================================================= -->
+<!-- MARKET SUMMARY -->
+<!-- ========================================================= -->
+
+<div class="kpi-grid">
+
+<div class="kpi-card">
+
+<div class="kpi-title">
+
+Companies Covered
+
+</div>
+
+<div class="kpi-value">
+
+{{ market.total_companies|default(64) }}
+
+</div>
+
+</div>
+
+<div class="kpi-card">
+
+<div class="kpi-title">
+
+Sectors Covered
+
+</div>
+
+<div class="kpi-value">
+
+{{ market.sectors|default(11) }}
+
+</div>
+
+</div>
+
+<div class="kpi-card">
+
+<div class="kpi-title">
+
+Average Dividend Yield
+
+</div>
+
+<div class="kpi-value">
+
+{{ market.dividend|default("6.8%") }}
+
+</div>
+
+</div>
+
+<div class="kpi-card">
+
+<div class="kpi-title">
+
+Average P/E Ratio
+
+</div>
+
+<div class="kpi-value">
+
+{{ market.pe|default("9.4") }}
+
+</div>
+
+</div>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- COMPANY RESEARCH TABLE -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+<h2>Institutional Research Database</h2>
+
+<table>
+
+<tr>
+
+<th>Company</th>
+
+<th>Sector</th>
+
+<th>Dividend</th>
+
+<th>ROE</th>
+
+<th>P/E</th>
+
+<th>P/B</th>
+
+<th>ESG</th>
+
+<th>Credit</th>
+
+<th>AI Rating</th>
+
+</tr>
+
+{% for company in companies %}
+
+<tr>
+
+<td>
+
+<b>{{ company.name }}</b>
+
+</td>
+
+<td>
+
+{{ company.sector }}
+
+</td>
+
+<td>
+
+{{ company.dividend }}
+
+</td>
+
+<td>
+
+{{ company.roe }}
+
+</td>
+
+<td>
+
+{{ company.pe }}
+
+</td>
+
+<td>
+
+{{ company.pb }}
+
+</td>
+
+<td>
+
+{{ company.esg }}
+
+</td>
+
+<td>
+
+{{ company.credit }}
+
+</td>
+
+<td>
+
+{{ company.rating }}
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- COMPANY QUALITY SCORES -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+<h2>Company Quality Analytics</h2>
+
+<div class="kpi-grid">
+
+{% for company in companies %}
+
+<div class="kpi-card">
+
+<h3>
+
+{{ company.name }}
+
+</h3>
+
+<b>Sector</b>
+
+<br>
+
+{{ company.sector }}
+
+<br><br>
+
+<b>Quality Score</b>
+
+<br>
+
+{{ company.quality }}
+
+<br><br>
+
+<b>Dividend Sustainability</b>
+
+<br>
+
+{{ company.dividend }}
+
+<br><br>
+
+<b>Institutional Rating</b>
+
+<br>
+
+{{ company.rating }}
+
+</div>
+
+{% endfor %}
+
+</div>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- AI RESEARCH -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+<h2>🤖 JOBURA AI® Research Opinion</h2>
+
+<div class="ai-box">
+
+<h3>
+
+Current Market View
+
+</h3>
+
+<p>
+
+{{ ai.market_view|default(
+"Banking and telecommunications continue to demonstrate strong earnings resilience and attractive dividend potential."
+) }}
+
+</p>
+
+<h3>
+
+Recommended Sector
+
+</h3>
+
+<p>
+
+{{ ai.best_sector|default("Banking") }}
+
+</p>
+
+<h3>
+
+Most Attractive Company
+
+</h3>
+
+<p>
+
+{{ ai.best_company|default("Equity Group Holdings") }}
+
+</p>
+
+<h3>
+
+Investment Strategy
+
+</h3>
+
+<p>
+
+{{ ai.strategy|default(
+"Maintain a diversified portfolio with emphasis on dividend-paying blue-chip companies while selectively increasing exposure to growth opportunities."
+) }}
+
+</p>
+
+</div>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- VALUATION METRICS -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+<h2>Institutional Valuation Framework</h2>
+
+<table>
+
+<tr>
+
+<th>Metric</th>
+
+<th>Description</th>
+
+</tr>
+
+<tr>
+
+<td>P/E Ratio</td>
+
+<td>Measures market price relative to earnings.</td>
+
+</tr>
+
+<tr>
+
+<td>P/B Ratio</td>
+
+<td>Compares market value to book value.</td>
+
+</tr>
+
+<tr>
+
+<td>ROE</td>
+
+<td>Return generated on shareholder equity.</td>
+
+</tr>
+
+<tr>
+
+<td>Dividend Yield</td>
+
+<td>Annual dividend relative to market price.</td>
+
+</tr>
+
+<tr>
+
+<td>ESG Rating</td>
+
+<td>Environmental, Social and Governance assessment.</td>
+
+</tr>
+
+<tr>
+
+<td>Credit Rating</td>
+
+<td>Financial strength assessment.</td>
+
+</tr>
+
+</table>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- FUTURE FEATURES -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+<h2>🚀 Upcoming Research Modules</h2>
+
+<ul>
+
+<li>Financial Statements Explorer</li>
+
+<li>Dividend History Database</li>
+
+<li>Corporate Actions Tracker</li>
+
+<li>Quarterly Earnings Dashboard</li>
+
+<li>Analyst Consensus Ratings</li>
+
+<li>Sector Comparison Engine</li>
+
+<li>Intrinsic Value Calculator</li>
+
+<li>Discounted Cash Flow (DCF) Valuation</li>
+
+<li>Relative Valuation Models</li>
+
+<li>AI Earnings Forecasting</li>
+
+<li>Company News Integration</li>
+
+<li>Watchlist & Alerts</li>
+
+</ul>
+
+</div>
+
+{% endblock %}
