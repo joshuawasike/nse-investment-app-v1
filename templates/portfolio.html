@@ -1,0 +1,326 @@
+{% extends "base.html" %}
+
+{% block title %}
+JOBURA WEALTH® | Portfolio Management
+{% endblock %}
+
+{% block content %}
+
+<!-- ========================================================= -->
+<!-- PAGE HEADER -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+    <h1>💼 Portfolio Management Centre</h1>
+
+    <p>
+        JOBURA WEALTH®<br>
+        NSE Institutional Wealth Management Platform<br>
+        Professional Analytics Suite
+    </p>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- EXECUTIVE SUMMARY -->
+<!-- ========================================================= -->
+
+<div class="kpi-grid">
+
+    <div class="kpi-card">
+        <div class="kpi-title">Portfolio Value</div>
+        <div class="kpi-value counter"
+             data-value="{{ summary.value|default(0) }}">
+            {{ "{:,.0f}".format(summary.value|default(0)) }}
+        </div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-title">Capital Invested</div>
+        <div class="kpi-value counter"
+             data-value="{{ summary.invested|default(0) }}">
+            {{ "{:,.0f}".format(summary.invested|default(0)) }}
+        </div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-title">Dividend Income</div>
+        <div class="kpi-value counter"
+             data-value="{{ summary.dividends|default(0) }}">
+            {{ "{:,.0f}".format(summary.dividends|default(0)) }}
+        </div>
+    </div>
+
+    <div class="kpi-card health-score"
+         data-score="{{ summary.health|default(92) }}">
+
+        <div class="kpi-title">
+            Portfolio Health
+        </div>
+
+        <div class="kpi-value">
+
+            {{ summary.health|default(92) }}%
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- PORTFOLIO ALLOCATION -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+<h2>📊 Institutional Asset Allocation</h2>
+
+<table>
+
+<tr>
+
+<th>Company</th>
+
+<th>Allocation</th>
+
+<th>Investment</th>
+
+<th>Expected Dividend</th>
+
+</tr>
+
+{% for asset in portfolio %}
+
+<tr>
+
+<td>{{ asset.name }}</td>
+
+<td>{{ asset.allocation }}%</td>
+
+<td>
+KES {{ "{:,.0f}".format(asset.kes) }}
+</td>
+
+<td>
+KES {{ "{:,.0f}".format(asset.dividend) }}
+</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- PORTFOLIO PERFORMANCE -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+<h2>📈 Portfolio Performance</h2>
+
+<table>
+
+<tr>
+
+<th>Company</th>
+
+<th>Current Value</th>
+
+<th>Profit</th>
+
+<th>ROI</th>
+
+<th>Risk</th>
+
+</tr>
+
+{% for asset in returns %}
+
+<tr>
+
+<td>
+
+{{ asset.name }}
+
+</td>
+
+<td>
+
+KES {{ "{:,.0f}".format(asset.value) }}
+
+</td>
+
+<td>
+
+KES {{ "{:,.0f}".format(asset.profit) }}
+
+</td>
+
+<td>
+
+{{ asset.roi|round(2) }}%
+
+</td>
+
+<td>
+
+{{ asset.risk_level }}
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- AI ADVISOR -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+<h2>🤖 JOBURA AI® Portfolio Advisor</h2>
+
+<div class="ai-box">
+
+<h3>
+
+Recommendation
+
+</h3>
+
+<p>
+
+{{ ai.recommendation|default("Continue holding the current diversified portfolio.") }}
+
+</p>
+
+<h3>
+
+Risk Assessment
+
+</h3>
+
+<p>
+
+{{ ai.risk|default("LOW") }}
+
+</p>
+
+<h3>
+
+Expected CAGR
+
+</h3>
+
+<p>
+
+{{ ai.cagr|default("16.8%") }}
+
+</p>
+
+<h3>
+
+Suggested Action
+
+</h3>
+
+<p>
+
+{{ ai.action|default("Maintain allocation and reinvest dividends.") }}
+
+</p>
+
+</div>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- PORTFOLIO QUALITY -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+<h2>🏆 Institutional Portfolio Quality</h2>
+
+<div class="kpi-grid">
+
+<div class="kpi-card">
+
+<h3>Diversification</h3>
+
+<h2>{{ quality.diversification|default(94) }}%</h2>
+
+</div>
+
+<div class="kpi-card">
+
+<h3>Dividend Sustainability</h3>
+
+<h2>{{ quality.dividend|default(90) }}%</h2>
+
+</div>
+
+<div class="kpi-card">
+
+<h3>Growth Potential</h3>
+
+<h2>{{ quality.growth|default(89) }}%</h2>
+
+</div>
+
+<div class="kpi-card">
+
+<h3>Overall Rating</h3>
+
+<h2>{{ quality.rating|default("AA+") }}</h2>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- FUTURE MODULE PLACEHOLDERS -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+<h2>🚀 Coming in Future Versions</h2>
+
+<ul>
+
+<li>Interactive Portfolio Allocation Chart</li>
+
+<li>Sector Exposure Analysis</li>
+
+<li>Dividend Calendar</li>
+
+<li>Portfolio Rebalancing</li>
+
+<li>Inflation Adjusted Returns</li>
+
+<li>Monte Carlo Probability Analysis</li>
+
+<li>Retirement Withdrawal Planning</li>
+
+<li>Stress Testing</li>
+
+<li>Efficient Frontier Optimizer</li>
+
+<li>Institutional Benchmark Comparison</li>
+
+</ul>
+
+</div>
+
+{% endblock %}
