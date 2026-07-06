@@ -600,47 +600,38 @@ def estimate_dividend_yields(mode, model):
 
     return yields
     # =========================================================
-    # 📈 DIVIDEND FORECAST ENGINE
-    # =========================================================
-    def forecast_dividend_yield(code, years_elapsed, mode):
+# 📈 DIVIDEND FORECAST ENGINE
+# =========================================================
+def forecast_dividend_yield(code, years_elapsed, mode):
 
-        profile = DIVIDEND_DATABASE.get(code)
+    profile = DIVIDEND_DATABASE.get(code, {})
 
-        if profile is None:
-            return 0.0
+    base = DIVIDEND_BASE.get(code, 0.05)
 
-        base = profile["base_yield"]
-        growth = profile["growth"]
-        quality = profile["quality"]
-        policy = profile["policy"]
+    growth = profile.get("growth", 0.00)
 
-        # compound dividend growth
-        forecast = base * ((1 + growth) ** years_elapsed)
+    stability = profile.get("stability", 0.90)
 
-        # market regime
-        if mode == "bull":
-            forecast *= 1.08
+    payout = profile.get("payout", 0.40)
 
-        elif mode == "bear":
-            forecast *= 0.82
+    # Compound dividend growth
+    forecast = base * ((1 + growth) ** years_elapsed)
 
-        # dividend policy
-        if policy == "progressive":
-            forecast *= 1.05
+    # Market regime
+    if mode == "bull":
+        forecast *= 1.10
 
-        elif policy == "stable":
-            forecast *= 1.00
+    elif mode == "bear":
+        forecast *= 0.80
 
-        elif policy == "cyclical":
-            forecast *= 0.92
+    # Stable companies maintain dividends better
+    forecast *= stability
 
-        elif policy == "suspended":
-            forecast = 0.0
+    # Companies with higher payout ratios generally
+    # distribute more income
+    forecast *= (0.60 + payout)
 
-        # company quality
-        forecast *= quality
-
-        return float(np.clip(forecast, 0.0, 0.18))
+    return float(np.clip(forecast, 0.0, 0.18))
 # =========================================================
 # 🧠 AI ENGINE
 # =========================================================
