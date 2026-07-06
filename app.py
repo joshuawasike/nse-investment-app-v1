@@ -961,57 +961,103 @@ def dividend_health_score(code, stats):
             0.99
         ))
 # =========================================================
-# 🌍 ECONOMIC REGIME ENGINE
+# 🌍 INSTITUTIONAL ECONOMIC REGIME ENGINE V2
 # =========================================================
 
 ECONOMIC_REGIMES = {
 
-    "normal":{
+    # -----------------------------------------------------
+    # NORMAL ECONOMY
+    # -----------------------------------------------------
+    "normal": {
 
-        "drift":1.00,
-        "vol":1.00,
+        # Multiplier applied to historical expected returns
+        "drift": 1.00,
 
-        "sector":{
+        # Absolute monthly return adjustment
+        "alpha": 0.0000,
 
-            "Banking":1.00,
-            "Telecom":1.00,
-            "Consumer":1.00,
-            "Utilities":1.00,
-            "Airline":1.00
+        # Volatility multiplier
+        "vol": 1.00,
+
+        # Dividend adjustment
+        "dividend": 1.00,
+
+        # Corporate earnings adjustment
+        "earnings": 1.00,
+
+        # Sector performance
+        "sector": {
+
+            "Banking":   1.00,
+            "Telecom":   1.00,
+            "Consumer":  1.00,
+            "Utilities": 1.00,
+            "Airline":   1.00
 
         }
 
     },
 
-    "bull":{
+    # -----------------------------------------------------
+    # BULL MARKET
+    # -----------------------------------------------------
+    "bull": {
 
-        "drift":1.25,
-        "vol":0.85,
+        # Historical returns increase slightly
+        "drift": 1.10,
 
-        "sector":{
+        # Extra monthly return boost
+        "alpha": 0.0020,
 
-            "Banking":1.30,
-            "Telecom":1.10,
-            "Consumer":1.15,
-            "Utilities":0.95,
-            "Airline":1.60
+        # Lower volatility
+        "vol": 0.80,
+
+        # Higher dividend growth
+        "dividend": 1.12,
+
+        # Higher earnings
+        "earnings": 1.15,
+
+        "sector": {
+
+            "Banking":   1.20,
+            "Telecom":   1.12,
+            "Consumer":  1.15,
+            "Utilities": 1.00,
+            "Airline":   1.50
 
         }
 
     },
 
-    "bear":{
+    # -----------------------------------------------------
+    # BEAR MARKET
+    # -----------------------------------------------------
+    "bear": {
 
-        "drift":0.60,
-        "vol":1.45,
+        # Slight reduction in historical returns
+        "drift": 0.90,
 
-        "sector":{
+        # Negative monthly return adjustment
+        "alpha": -0.0020,
 
-            "Banking":0.70,
-            "Telecom":0.95,
-            "Consumer":0.80,
-            "Utilities":1.05,
-            "Airline":0.25
+        # Higher volatility
+        "vol": 1.55,
+
+        # Dividend cuts
+        "dividend": 0.82,
+
+        # Earnings contraction
+        "earnings": 0.85,
+
+        "sector": {
+
+            "Banking":   0.75,
+            "Telecom":   0.95,
+            "Consumer":  0.82,
+            "Utilities": 1.05,
+            "Airline":   0.30
 
         }
 
@@ -1019,7 +1065,7 @@ ECONOMIC_REGIMES = {
 
 }
 # =========================================================
-# 🌍 INSTITUTIONAL MARKET GENERATOR V12
+# 🌍 INSTITUTIONAL MARKET GENERATOR V13
 # Historical NSE Monte Carlo Engine
 # =========================================================
 def generate_market(mode, N, drift, vol, momentum):
@@ -1029,7 +1075,7 @@ def generate_market(mode, N, drift, vol, momentum):
     periods = 300
 
     # -----------------------------------------------------
-    # FALLBACK IF NO HISTORICAL DATA
+    # FALLBACK
     # -----------------------------------------------------
     if stats is None:
 
@@ -1047,14 +1093,17 @@ def generate_market(mode, N, drift, vol, momentum):
     cov = stats["cov"].copy()
 
     # -----------------------------------------------------
-    # MATCH OUR NSE UNIVERSE
+    # MATCH NSE UNIVERSE
     # -----------------------------------------------------
     codes = [asset[1] for asset in ASSETS]
 
     available = [
         c for c in codes
-        if c in mu.index
-        and c in cov.index
+        if (
+            c in mu.index and
+            c in sigma.index and
+            c in cov.index
+        )
     ]
 
     if len(available) < 2:
@@ -1066,18 +1115,30 @@ def generate_market(mode, N, drift, vol, momentum):
         )
 
     mu = mu.loc[available]
-    sector_multiplier = []
+    sigma = sigma.loc[available]
+    cov = cov.loc[available, available]
 
+    # -----------------------------------------------------
+    # ECONOMIC REGIME
+    # -----------------------------------------------------
     regime = ECONOMIC_REGIMES.get(
         mode,
         ECONOMIC_REGIMES["normal"]
     )
 
+    # -----------------------------------------------------
+    # SECTOR ADJUSTMENTS
+    # -----------------------------------------------------
+    sector_multiplier = []
+
     for code in available:
 
         profile = DIVIDEND_DATABASE.get(code, {})
 
-        sector = profile.get("sector","Banking")
+        sector = profile.get(
+            "sector",
+            "Banking"
+        )
 
         sector_multiplier.append(
 
@@ -1090,19 +1151,25 @@ def generate_market(mode, N, drift, vol, momentum):
 
     sector_multiplier = np.array(sector_multiplier)
 
-    mu *= sector_multiplier
-    sigma = sigma.loc[available]
-    cov = cov.loc[available, available]
+    # -----------------------------------------------------
+    # EXPECTED RETURNS
+    # -----------------------------------------------------
+    mu = (
+        mu
+        * sector_multiplier
+        * regime["drift"]
+    ) + regime["alpha"]
 
-    # -----------------------------------------------------
-    # REGIME ADJUSTMENTS
-    # -----------------------------------------------------
-    regime = ECONOMIC_REGIMES.get(
-        mode,
-        ECONOMIC_REGIMES["normal"]
+    mu = np.clip(
+        mu,
+        -0.015,
+        0.015
     )
 
-    mu *= regime["drift"]
+    # -----------------------------------------------------
+    # VOLATILITY
+    # -----------------------------------------------------
+    sigma *= np.sqrt(regime["vol"])
 
     cov *= regime["vol"]
 
@@ -1126,7 +1193,7 @@ def generate_market(mode, N, drift, vol, momentum):
         L = np.linalg.cholesky(cov)
 
     # -----------------------------------------------------
-    # FAT TAIL SHOCKS
+    # FAT-TAIL MONTE CARLO
     # -----------------------------------------------------
     shocks = np.random.standard_t(
         df=6,
@@ -1138,36 +1205,83 @@ def generate_market(mode, N, drift, vol, momentum):
     # -----------------------------------------------------
     # MOMENTUM PROCESS
     # -----------------------------------------------------
-    trend = np.zeros_like(correlated)
+    phi = np.clip(momentum, 0.15, 0.95)
 
-    phi = min(0.95, max(0.10, momentum))
+    trend = np.zeros_like(correlated)
 
     for t in range(1, periods):
 
         trend[:, t] = (
-            phi * trend[:, t - 1]
+
+            phi * trend[:, t-1]
+
             + correlated[:, t]
+
         )
 
     # -----------------------------------------------------
-    # EXPECTED RETURNS
+    # FINAL RETURNS
     # -----------------------------------------------------
     R = mu.values[:, None] + trend
 
     # -----------------------------------------------------
-    # VOLATILITY SCALING
+    # MATCH HISTORICAL VOLATILITY
     # -----------------------------------------------------
-    scale = sigma.values[:, None]
+    current_std = np.std(
+        R,
+        axis=1,
+        keepdims=True
+    )
 
-    R *= (scale / np.std(R, axis=1, keepdims=True))
+    current_std[current_std == 0] = 1e-8
+
+    target_std = sigma.values[:, None]
+
+    R *= target_std / current_std
+
+    # -----------------------------------------------------
+    # EXTREME EVENT SIMULATION
+    # -----------------------------------------------------
+    shock_probability = 0.015
+
+    disaster = np.random.rand(
+        len(mu),
+        periods
+    ) < shock_probability
+
+    if mode == "bull":
+
+        disaster_returns = np.random.uniform(
+            -0.04,
+            -0.02,
+            disaster.shape
+        )
+
+    elif mode == "bear":
+
+        disaster_returns = np.random.uniform(
+            -0.12,
+            -0.05,
+            disaster.shape
+        )
+
+    else:
+
+        disaster_returns = np.random.uniform(
+            -0.08,
+            -0.03,
+            disaster.shape
+        )
+
+    R[disaster] += disaster_returns[disaster]
 
     # -----------------------------------------------------
     # SAFETY LIMITS
     # -----------------------------------------------------
     R = np.clip(
         R,
-        -0.12,
-        0.15
+        -0.15,
+        0.18
     )
 
     # -----------------------------------------------------
@@ -1176,9 +1290,13 @@ def generate_market(mode, N, drift, vol, momentum):
     if len(mu) < N:
 
         extra = np.random.normal(
+
             drift,
+
             vol,
-            (N - len(mu), periods)
+
+            (N-len(mu), periods)
+
         )
 
         R = np.vstack([R, extra])
