@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+{% block title %}JOBURA WEALTH® | Settings{% endblock %}
+{% block content %}
+<div class="card">
+<h1>⚙️ Platform Settings</h1>
+<p><strong>JOBURA WEALTH®</strong><br>NSE Institutional Wealth Management Platform</p>
+</div>
+
+<form method="POST" class="card">
+<h2>General</h2>
+<label>Platform Name</label>
+<input type="text" name="platform_name" value="{{ settings.platform_name|default('JOBURA WEALTH®') }}">
+
+<label>Support Email</label>
+<input type="email" name="support_email" value="{{ settings.support_email|default('support@example.com') }}">
+
+<label>Default Currency</label>
+<select name="currency">
+<option>KES</option>
+<option>USD</option>
+<option>EUR</option>
+</select>
+
+<h2>Simulation</h2>
+<label>Default Inflation (%)</label>
+<input type="number" step="0.1" name="inflation" value="{{ settings.inflation|default(5.0) }}">
+
+<label>Default Dividend Growth (%)</label>
+<input type="number" step="0.1" name="dividend_growth" value="{{ settings.dividend_growth|default(6.0) }}">
+
+<h2>Subscriptions</h2>
+<label>Individual Monthly (KES)</label>
+<input type="number" name="ind_month" value="{{ settings.ind_month|default(400) }}">
+
+<label>Institution Monthly (KES)</label>
+<input type="number" name="inst_month" value="{{ settings.inst_month|default(2000) }}">
+
+<div style="margin-top:20px">
+<button type="submit">💾 Save Settings</button>
+</div>
+</form>
+
+<div class="card">
+<h2>System Status</h2>
+<table>
+<tr><th>Module</th><th>Status</th></tr>
+<tr><td>Simulation Engine</td><td>🟢 Active</td></tr>
+<tr><td>AI Advisor</td><td>🟢 Active</td></tr>
+<tr><td>Reporting</td><td>🟢 Active</td></tr>
+<tr><td>Risk Analytics</td><td>🟢 Active</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>Maintenance</h2>
+<a class="btn-warning" href="/backup">Create Backup</a>
+<a class="btn-primary" href="/export/settings">Export Settings</a>
+<a class="btn-danger" href="/restart">Restart Platform</a>
+</div>
+{% endblock %}
