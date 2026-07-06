@@ -1,0 +1,481 @@
+{% extends "base.html" %}
+
+{% block title %}
+JOBURA WEALTH® | Retirement & Wealth Planning Centre
+{% endblock %}
+
+{% block content %}
+
+<!-- ========================================================= -->
+<!-- PAGE HEADER -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+<h1>🏖 Retirement & Wealth Planning Centre</h1>
+
+<p>
+
+<b>JOBURA WEALTH®</b><br>
+
+NSE Institutional Wealth Management Platform<br>
+
+Professional Analytics Suite
+
+</p>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- RETIREMENT SUMMARY -->
+<!-- ========================================================= -->
+
+<div class="kpi-grid">
+
+<div class="kpi-card">
+
+<div class="kpi-title">
+
+Current Portfolio
+
+</div>
+
+<div class="kpi-value">
+
+KES {{ "{:,.0f}".format(retirement.current_value|default(1250000)) }}
+
+</div>
+
+</div>
+
+<div class="kpi-card">
+
+<div class="kpi-title">
+
+Retirement Target
+
+</div>
+
+<div class="kpi-value">
+
+KES {{ "{:,.0f}".format(retirement.target|default(25000000)) }}
+
+</div>
+
+</div>
+
+<div class="kpi-card">
+
+<div class="kpi-title">
+
+Years Remaining
+
+</div>
+
+<div class="kpi-value">
+
+{{ retirement.years_left|default(20) }}
+
+</div>
+
+</div>
+
+<div class="kpi-card">
+
+<div class="kpi-title">
+
+Goal Progress
+
+</div>
+
+<div class="kpi-value">
+
+{{ retirement.progress|default("5%") }}
+
+</div>
+
+</div>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- RETIREMENT PROJECTION -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+<h2>📈 Retirement Projection</h2>
+
+<table>
+
+<tr>
+
+<th>Year</th>
+
+<th>Investment Value</th>
+
+<th>Dividend Income</th>
+
+<th>Total Wealth</th>
+
+</tr>
+
+{% for row in projection %}
+
+<tr>
+
+<td>{{ row.year }}</td>
+
+<td>KES {{ "{:,.0f}".format(row.value) }}</td>
+
+<td>KES {{ "{:,.0f}".format(row.dividends) }}</td>
+
+<td>KES {{ "{:,.0f}".format(row.total) }}</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- MONTHLY CONTRIBUTIONS -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+<h2>💰 Recommended Monthly Contributions</h2>
+
+<table>
+
+<tr>
+
+<th>Target Period</th>
+
+<th>Required Monthly Investment</th>
+
+</tr>
+
+<tr>
+
+<td>5 Years</td>
+
+<td>KES {{ "{:,.0f}".format(retirement.monthly_5|default(315000)) }}</td>
+
+</tr>
+
+<tr>
+
+<td>10 Years</td>
+
+<td>KES {{ "{:,.0f}".format(retirement.monthly_10|default(118000)) }}</td>
+
+</tr>
+
+<tr>
+
+<td>15 Years</td>
+
+<td>KES {{ "{:,.0f}".format(retirement.monthly_15|default(64000)) }}</td>
+
+</tr>
+
+<tr>
+
+<td>20 Years</td>
+
+<td>KES {{ "{:,.0f}".format(retirement.monthly_20|default(38500)) }}</td>
+
+</tr>
+
+</table>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- RETIREMENT INCOME -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+<h2>🏡 Estimated Retirement Income</h2>
+
+<table>
+
+<tr>
+
+<th>Income Source</th>
+
+<th>Monthly Income</th>
+
+</tr>
+
+<tr>
+
+<td>Dividend Income</td>
+
+<td>KES {{ "{:,.0f}".format(retirement.dividend_income|default(145000)) }}</td>
+
+</tr>
+
+<tr>
+
+<td>Portfolio Withdrawal (4% Rule)</td>
+
+<td>KES {{ "{:,.0f}".format(retirement.withdrawal_income|default(83000)) }}</td>
+
+</tr>
+
+<tr>
+
+<td>Total Monthly Income</td>
+
+<td><b>KES {{ "{:,.0f}".format(retirement.total_income|default(228000)) }}</b></td>
+
+</tr>
+
+</table>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- INFLATION ANALYSIS -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+<h2>📊 Inflation Adjustment</h2>
+
+<table>
+
+<tr>
+
+<th>Scenario</th>
+
+<th>Real Portfolio Value</th>
+
+</tr>
+
+<tr>
+
+<td>2% Inflation</td>
+
+<td>KES {{ "{:,.0f}".format(retirement.real_low|default(22100000)) }}</td>
+
+</tr>
+
+<tr>
+
+<td>5% Inflation</td>
+
+<td>KES {{ "{:,.0f}".format(retirement.real_medium|default(18400000)) }}</td>
+
+</tr>
+
+<tr>
+
+<td>8% Inflation</td>
+
+<td>KES {{ "{:,.0f}".format(retirement.real_high|default(15600000)) }}</td>
+
+</tr>
+
+</table>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- WITHDRAWAL STRATEGY -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+<h2>💳 Sustainable Withdrawal Strategy</h2>
+
+<table>
+
+<tr>
+
+<th>Strategy</th>
+
+<th>Annual Withdrawal</th>
+
+<th>Monthly Withdrawal</th>
+
+</tr>
+
+<tr>
+
+<td>3% Conservative</td>
+
+<td>3%</td>
+
+<td>KES 62,500</td>
+
+</tr>
+
+<tr>
+
+<td>4% Standard</td>
+
+<td>4%</td>
+
+<td>KES 83,000</td>
+
+</tr>
+
+<tr>
+
+<td>5% Aggressive</td>
+
+<td>5%</td>
+
+<td>KES 104,000</td>
+
+</tr>
+
+</table>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- AI RETIREMENT ADVISOR -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+<h2>🤖 JOBURA AI® Retirement Advisor</h2>
+
+<div class="ai-box">
+
+<h3>Retirement Readiness</h3>
+
+<p>
+
+{{ ai.readiness|default(
+"Your current investment strategy places you on a healthy long-term path toward retirement. Increasing monthly contributions by 10–15% could significantly improve retirement income."
+) }}
+
+</p>
+
+<h3>Recommendations</h3>
+
+<ul>
+
+<li>Increase monthly contributions whenever income rises.</li>
+
+<li>Reinvest all dividends during the accumulation phase.</li>
+
+<li>Maintain diversification across sectors.</li>
+
+<li>Review your retirement plan annually.</li>
+
+<li>Protect purchasing power by considering inflation.</li>
+
+</ul>
+
+</div>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- RETIREMENT MILESTONES -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+<h2>🎯 Retirement Milestones</h2>
+
+<table>
+
+<tr>
+
+<th>Milestone</th>
+
+<th>Target</th>
+
+<th>Status</th>
+
+</tr>
+
+<tr>
+
+<td>First KES 1 Million</td>
+
+<td>KES 1,000,000</td>
+
+<td>✔ Achieved</td>
+
+</tr>
+
+<tr>
+
+<td>Investment Growth</td>
+
+<td>KES 5,000,000</td>
+
+<td>In Progress</td>
+
+</tr>
+
+<tr>
+
+<td>Financial Independence</td>
+
+<td>KES 15,000,000</td>
+
+<td>Planned</td>
+
+</tr>
+
+<tr>
+
+<td>Retirement Goal</td>
+
+<td>KES 25,000,000</td>
+
+<td>Planned</td>
+
+</tr>
+
+</table>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- FUTURE MODULES -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+<h2>🚀 Future Retirement Planning Features</h2>
+
+<ul>
+
+<li>Family Wealth Planning</li>
+
+<li>Education Funding Planner</li>
+
+<li>Estate Planning Dashboard</li>
+
+<li>Tax-Efficient Withdrawal Planning</li>
+
+<li>Pension Integration</li>
+
+<li>Social Security Income Planning</li>
+
+<li>Healthcare Cost Forecasting</li>
+
+<li>Legacy & Inheritance Planning</li>
+
+<li>Retirement Lifestyle Simulator</li>
+
+<li>AI Retirement Coach</li>
+
+</ul>
+
+</div>
+
+{% endblock %}
