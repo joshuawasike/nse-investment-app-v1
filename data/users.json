@@ -1,0 +1,20 @@
+[
+    {
+        "code": "TXN10001",
+        "phone": "0712345678",
+        "type": "Individual",
+        "plan": "Monthly",
+        "amount": 400,
+        "status": "approved_monthly",
+        "date": "2026-07-07"
+    },
+    {
+        "code": "TXN10002",
+        "phone": "0723456789",
+        "type": "Institutional",
+        "plan": "Yearly",
+        "amount": 18000,
+        "status": "approved_yearly",
+        "date": "2026-07-07"
+    }
+]
