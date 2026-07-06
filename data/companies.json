@@ -1,146 +1,313 @@
 [
     {
         "code": "EQTY",
+        "symbol": "EQTY",
         "name": "Equity Group Holdings PLC",
         "sector": "Banking",
         "industry": "Commercial Banking",
         "exchange": "NSE",
+        "country": "Kenya",
         "currency": "KES",
-        "risk": "Medium",
-        "dividend_yield": 9.1,
-        "roe": 23.4,
-        "pe_ratio": 6.5,
-        "pb_ratio": 1.6,
+
         "market_cap": 185000000000,
+
+        "risk": "Medium",
+        "beta": 0.92,
+        "volatility": 18.4,
+
+        "quality_score": 95,
+        "health_score": 94,
+
         "esg_rating": "A",
         "credit_rating": "AA-",
-        "quality_score": 95,
-        "health_score": 94
+
+        "roe": 23.4,
+        "dividend_yield": 9.1,
+        "dividend_growth": 8.4,
+        "earnings_growth": 12.3,
+
+        "pe_ratio": 6.5,
+        "pb_ratio": 1.6,
+        "book_value": 48.5,
+        "fair_value": 61.0,
+
+        "recommendation": "BUY",
+        "status": "ACTIVE",
+
+        "csv_file": "Equity.csv",
+        "logo": "equity.png"
     },
+
     {
         "code": "KCB",
+        "symbol": "KCB",
         "name": "KCB Group PLC",
         "sector": "Banking",
         "industry": "Commercial Banking",
         "exchange": "NSE",
+        "country": "Kenya",
         "currency": "KES",
-        "risk": "Medium",
-        "dividend_yield": 8.6,
-        "roe": 21.5,
-        "pe_ratio": 5.9,
-        "pb_ratio": 1.4,
+
         "market_cap": 142000000000,
+
+        "risk": "Medium",
+        "beta": 0.95,
+        "volatility": 19.6,
+
+        "quality_score": 93,
+        "health_score": 92,
+
         "esg_rating": "A",
         "credit_rating": "AA",
-        "quality_score": 93,
-        "health_score": 92
+
+        "roe": 21.5,
+        "dividend_yield": 8.6,
+        "dividend_growth": 7.8,
+        "earnings_growth": 11.2,
+
+        "pe_ratio": 5.9,
+        "pb_ratio": 1.4,
+        "book_value": 41.8,
+        "fair_value": 54.2,
+
+        "recommendation": "BUY",
+        "status": "ACTIVE",
+
+        "csv_file": "KCB.csv",
+        "logo": "kcb.png"
     },
+
     {
         "code": "COOP",
+        "symbol": "COOP",
         "name": "Co-operative Bank of Kenya PLC",
         "sector": "Banking",
         "industry": "Commercial Banking",
         "exchange": "NSE",
+        "country": "Kenya",
         "currency": "KES",
-        "risk": "Low",
-        "dividend_yield": 9.3,
-        "roe": 24.2,
-        "pe_ratio": 5.4,
-        "pb_ratio": 1.5,
+
         "market_cap": 98000000000,
+
+        "risk": "Low",
+        "beta": 0.81,
+        "volatility": 14.7,
+
+        "quality_score": 96,
+        "health_score": 96,
+
         "esg_rating": "A+",
         "credit_rating": "AA",
-        "quality_score": 96,
-        "health_score": 96
+
+        "roe": 24.2,
+        "dividend_yield": 9.3,
+        "dividend_growth": 9.2,
+        "earnings_growth": 13.5,
+
+        "pe_ratio": 5.4,
+        "pb_ratio": 1.5,
+        "book_value": 23.4,
+        "fair_value": 31.8,
+
+        "recommendation": "STRONG BUY",
+        "status": "ACTIVE",
+
+        "csv_file": "Coop.csv",
+        "logo": "coop.png"
     },
+
     {
         "code": "SCOM",
+        "symbol": "SCOM",
         "name": "Safaricom PLC",
         "sector": "Telecommunications",
         "industry": "Telecommunications",
         "exchange": "NSE",
+        "country": "Kenya",
         "currency": "KES",
-        "risk": "Low",
-        "dividend_yield": 7.2,
-        "roe": 34.1,
-        "pe_ratio": 15.8,
-        "pb_ratio": 5.1,
+
         "market_cap": 720000000000,
+
+        "risk": "Low",
+        "beta": 0.74,
+        "volatility": 13.2,
+
+        "quality_score": 99,
+        "health_score": 98,
+
         "esg_rating": "AA",
         "credit_rating": "AAA",
-        "quality_score": 99,
-        "health_score": 98
+
+        "roe": 34.1,
+        "dividend_yield": 7.2,
+        "dividend_growth": 10.5,
+        "earnings_growth": 15.8,
+
+        "pe_ratio": 15.8,
+        "pb_ratio": 5.1,
+        "book_value": 10.4,
+        "fair_value": 27.6,
+
+        "recommendation": "BUY",
+        "status": "ACTIVE",
+
+        "csv_file": "Safaricom.csv",
+        "logo": "safaricom.png"
     },
+
     {
         "code": "EABL",
+        "symbol": "EABL",
         "name": "East African Breweries PLC",
         "sector": "Consumer Goods",
         "industry": "Beverages",
         "exchange": "NSE",
+        "country": "Kenya",
         "currency": "KES",
-        "risk": "Medium",
-        "dividend_yield": 5.4,
-        "roe": 28.3,
-        "pe_ratio": 18.7,
-        "pb_ratio": 6.2,
+
         "market_cap": 145000000000,
+
+        "risk": "Medium",
+        "beta": 1.01,
+        "volatility": 20.4,
+
+        "quality_score": 90,
+        "health_score": 89,
+
         "esg_rating": "A",
         "credit_rating": "AA",
-        "quality_score": 90,
-        "health_score": 89
+
+        "roe": 28.3,
+        "dividend_yield": 5.4,
+        "dividend_growth": 6.8,
+        "earnings_growth": 9.4,
+
+        "pe_ratio": 18.7,
+        "pb_ratio": 6.2,
+        "book_value": 35.6,
+        "fair_value": 205.0,
+
+        "recommendation": "HOLD",
+        "status": "ACTIVE",
+
+        "csv_file": "EABL.csv",
+        "logo": "eabl.png"
     },
+
     {
         "code": "KEGN",
+        "symbol": "KEGN",
         "name": "KenGen PLC",
         "sector": "Energy",
         "industry": "Power Generation",
         "exchange": "NSE",
+        "country": "Kenya",
         "currency": "KES",
-        "risk": "Medium",
-        "dividend_yield": 6.8,
-        "roe": 15.7,
-        "pe_ratio": 8.1,
-        "pb_ratio": 1.2,
+
         "market_cap": 74000000000,
+
+        "risk": "Medium",
+        "beta": 0.89,
+        "volatility": 17.5,
+
+        "quality_score": 87,
+        "health_score": 88,
+
         "esg_rating": "AA",
         "credit_rating": "AA-",
-        "quality_score": 87,
-        "health_score": 88
+
+        "roe": 15.7,
+        "dividend_yield": 6.8,
+        "dividend_growth": 5.9,
+        "earnings_growth": 7.3,
+
+        "pe_ratio": 8.1,
+        "pb_ratio": 1.2,
+        "book_value": 8.5,
+        "fair_value": 10.8,
+
+        "recommendation": "BUY",
+        "status": "ACTIVE",
+
+        "csv_file": "KenGen.csv",
+        "logo": "kengen.png"
     },
+
     {
         "code": "NCBA",
+        "symbol": "NCBA",
         "name": "NCBA Group PLC",
         "sector": "Banking",
         "industry": "Commercial Banking",
         "exchange": "NSE",
+        "country": "Kenya",
         "currency": "KES",
-        "risk": "Medium",
-        "dividend_yield": 7.8,
-        "roe": 19.8,
-        "pe_ratio": 6.7,
-        "pb_ratio": 1.3,
+
         "market_cap": 81000000000,
+
+        "risk": "Medium",
+        "beta": 0.94,
+        "volatility": 18.2,
+
+        "quality_score": 90,
+        "health_score": 91,
+
         "esg_rating": "A",
         "credit_rating": "AA-",
-        "quality_score": 90,
-        "health_score": 91
+
+        "roe": 19.8,
+        "dividend_yield": 7.8,
+        "dividend_growth": 7.4,
+        "earnings_growth": 10.8,
+
+        "pe_ratio": 6.7,
+        "pb_ratio": 1.3,
+        "book_value": 29.8,
+        "fair_value": 41.0,
+
+        "recommendation": "BUY",
+        "status": "ACTIVE",
+
+        "csv_file": "NCBA.csv",
+        "logo": "ncba.png"
     },
+
     {
         "code": "KQ",
+        "symbol": "KQ",
         "name": "Kenya Airways PLC",
         "sector": "Transportation",
         "industry": "Airline",
         "exchange": "NSE",
+        "country": "Kenya",
         "currency": "KES",
-        "risk": "High",
-        "dividend_yield": 0.0,
-        "roe": -18.5,
-        "pe_ratio": 0.0,
-        "pb_ratio": 0.5,
+
         "market_cap": 22000000000,
+
+        "risk": "High",
+        "beta": 1.62,
+        "volatility": 36.9,
+
+        "quality_score": 55,
+        "health_score": 52,
+
         "esg_rating": "BBB",
         "credit_rating": "B",
-        "quality_score": 55,
-        "health_score": 52
+
+        "roe": -18.5,
+        "dividend_yield": 0.0,
+        "dividend_growth": 0.0,
+        "earnings_growth": -9.2,
+
+        "pe_ratio": 0.0,
+        "pb_ratio": 0.5,
+        "book_value": 2.6,
+        "fair_value": 3.8,
+
+        "recommendation": "SPECULATIVE",
+        "status": "ACTIVE",
+
+        "csv_file": "KenyaAirways.csv",
+        "logo": "kq.png"
     }
 ]
