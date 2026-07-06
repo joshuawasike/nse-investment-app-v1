@@ -223,45 +223,6 @@ def get_model_assets(model):
 
     return assets    
 # =========================================================
-# 🎯 APPLY MODEL BIAS TO WEIGHTS
-# =========================================================
-def apply_model_bias(weights, model):
-
-    w = np.array(weights, dtype=float)
-
-    # safety fix
-    if len(w) == 0:
-        return w
-
-    if model == "dividend":
-        target = np.array([0.20, 0.18, 0.15, 0.10, 0.15, 0.12, 0.08, 0.02])
-
-    elif model == "growth":
-        target = np.array([0.08, 0.08, 0.08, 0.25, 0.08, 0.08, 0.10, 0.25])
-
-    elif model == "banking":
-        target = np.array([0.25, 0.22, 0.20, 0.05, 0.05, 0.05, 0.15, 0.03])
-
-    elif model == "value":
-        target = np.array([0.08, 0.08, 0.08, 0.05, 0.12, 0.20, 0.12, 0.27])
-
-    elif model == "income":
-        target = np.array([0.10, 0.15, 0.15, 0.10, 0.25, 0.15, 0.08, 0.02])
-
-    else:
-        target = np.ones(len(w))
-
-    # adjust size safety
-    target = target[:len(w)]
-
-    # blend
-    w = (0.3 * w) + (0.7 * target)
-
-    # normalize
-    w = w / np.sum(w)
-
-    return w
-# =========================================================
 # 📊 ASSETS
 # =========================================================
 ASSETS = [
@@ -333,6 +294,9 @@ def optimize_weights(sim, mode="normal"):
     w = w / np.sum(w)
 
     return w
+# =========================================================
+# 🎯 APPLY MODEL BIAS TO WEIGHTS
+# =========================================================
 def apply_model_bias(weights, model):
 
     w = np.array(weights, dtype=float)
@@ -429,27 +393,6 @@ def apply_model_bias(weights, model):
     w = w / np.sum(w)
 
     return w
-def ai_portfolio_advisor(weights, sim, assets):
-    insights = []
-
-    mean = np.mean(sim, axis=1)
-    vol = np.std(sim, axis=1)
-
-    risk = float(np.mean(vol) * 100)
-    score = float(max(0, 100 - risk * 10))
-
-    for i in range(len(weights)):
-        if weights[i] > 0.30:
-            insights.append(f"High allocation: {assets[i][0]}")
-        if vol[i] > np.mean(vol):
-            insights.append(f"High volatility: {assets[i][0]}")
-        if mean[i] < 0:
-            insights.append(f"Weak returns: {assets[i][0]}")
-
-    return {
-        "insights": insights,
-        "score": round(score, 2),
-        "risk": round(risk, 2)
     }
 MODEL_UNIVERSES = {
     "dividend": [0,1,2,3,4,5,6],   # safe banks + blue chips
@@ -459,74 +402,72 @@ MODEL_UNIVERSES = {
     "income":   [3,4,1,0,2]        # dividend-heavy names
 }
 # =========================================================
-# 🌍 MARKET GENERATOR (CLEAN + REGIME CONSISTENT)
+# 🌍 INSTITUTIONAL MARKET GENERATOR (V4)
 # =========================================================
 def generate_market(mode, N, drift, vol, momentum):
 
-    base = np.random.randn(N, 300)
+    periods = 300
 
-    # =====================================================
-    # 📊 REGIME ADJUSTMENT (CORE DRIVER)
-    # =====================================================
-    if mode == "bull":
-        drift *= 1.8
-        vol *= 0.65
-        shock_mult = 0.8
-        bias = 0.004
+    # -----------------------------------------------------
+    # Regime configuration
+    # -----------------------------------------------------
+    REGIME = {
+        "normal": {
+            "drift": 1.00,
+            "vol": 1.00,
+            "bias": 0.0000
+        },
+        "bull": {
+            "drift": 1.45,
+            "vol": 0.75,
+            "bias": 0.0025
+        },
+        "bear": {
+            "drift": 0.55,
+            "vol": 1.60,
+            "bias": -0.0025
+        }
+    }
 
-    elif mode == "bear":
-        drift *= 0.55
-        vol *= 1.6
-        shock_mult = 1.4
-        bias = -0.004
+    cfg = REGIME.get(mode, REGIME["normal"])
 
-    else:
-        shock_mult = 1.0
-        bias = 0.0
-    # =====================================================
-    # 📊 CORE MARKET STRUCTURE
-    # =====================================================
+    drift *= cfg["drift"]
+    vol *= cfg["vol"]
 
-    trend = drift + (base * vol * momentum)
+    # -----------------------------------------------------
+    # Correlated market factor
+    # -----------------------------------------------------
+    market = np.random.normal(0, vol, periods)
 
-    mean_reversion = -0.004 * np.cumsum(base, axis=1)
+    R = np.zeros((N, periods))
 
-    shock = (
-        np.random.standard_t(5, size=(N, 300))
-        * vol
-        * 0.2
-        * shock_mult
-    )
+    for i in range(N):
 
-    R = trend + mean_reversion + shock
+        asset_noise = np.random.normal(0, vol * 0.45, periods)
 
-    # =====================================================
-    # 📊 REGIME ALIGNMENT FIX (CRITICAL STABILITY LAYER)
-    # =====================================================
-    R = R + bias
+        momentum_component = np.cumsum(asset_noise) * 0.00025 * momentum
 
-    # hard safety clamp (prevents cross-model explosions)
-    R = np.clip(R, -0.20, 0.30)
+        fat_tail = (
+            np.random.standard_t(df=5, size=periods)
+            * vol
+            * 0.10
+        )
+
+        R[i] = (
+            drift
+            + cfg["bias"]
+            + 0.70 * market
+            + 0.30 * asset_noise
+            + momentum_component
+            + fat_tail
+        )
+
+    # -----------------------------------------------------
+    # Hard safety limits
+    # -----------------------------------------------------
+    R = np.clip(R, -0.10, 0.12)
 
     return R
-    # =====================================================
-    # 📈 RETURN COMPONENTS
-    # =====================================================
-    trend = drift + (base * vol * momentum)
-    mean_reversion = -0.004 * np.cumsum(base, axis=1)
-    shock = np.random.standard_t(5, size=(N, 300)) * vol * 0.2 * shock_mult
-
-    R = trend + mean_reversion + shock
-
-    # =====================================================
-    # ⚖️ REGIME ALIGNMENT (MUST BE INSIDE FUNCTION)
-    # =====================================================
-    R = R + bias
-
-    # =====================================================
-    # 🛡️ SAFETY CLAMP
-    # =====================================================
-    return np.clip(R, -0.20, 0.30)
 # =========================================================
 # 🧠 AI PORTFOLIO ADVISOR (ADD HERE)
 # =========================================================
