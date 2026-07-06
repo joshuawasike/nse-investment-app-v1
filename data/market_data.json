@@ -1,0 +1,104 @@
+{
+    "market_summary": {
+        "exchange": "Nairobi Securities Exchange",
+        "currency": "KES",
+        "index": "NSE All Share Index",
+        "market_status": "OPEN",
+        "last_updated": "2026-07-07 09:30",
+        "market_sentiment": "Bullish",
+        "market_volatility": "Moderate",
+        "risk_level": "Medium"
+    },
+
+    "indices": [
+        {
+            "name": "NASI",
+            "value": 132.45,
+            "change": 1.25,
+            "change_percent": 0.95
+        },
+        {
+            "name": "NSE 20",
+            "value": 1895.20,
+            "change": 18.42,
+            "change_percent": 0.98
+        },
+        {
+            "name": "NSE 25",
+            "value": 3528.40,
+            "change": 27.18,
+            "change_percent": 0.78
+        }
+    ],
+
+    "market_statistics": {
+        "listed_companies": 64,
+        "advancers": 28,
+        "decliners": 16,
+        "unchanged": 20,
+        "market_cap": 2140000000000,
+        "daily_turnover": 785000000,
+        "shares_traded": 24500000
+    },
+
+    "top_gainers": [
+        {
+            "code": "EQTY",
+            "company": "Equity Group",
+            "change_percent": 5.40
+        },
+        {
+            "code": "COOP",
+            "company": "Co-operative Bank",
+            "change_percent": 4.82
+        },
+        {
+            "code": "SCOM",
+            "company": "Safaricom",
+            "change_percent": 3.94
+        }
+    ],
+
+    "top_losers": [
+        {
+            "code": "KQ",
+            "company": "Kenya Airways",
+            "change_percent": -4.75
+        },
+        {
+            "code": "KEGN",
+            "company": "KenGen",
+            "change_percent": -2.11
+        },
+        {
+            "code": "EABL",
+            "company": "EABL",
+            "change_percent": -1.26
+        }
+    ],
+
+    "interest_rates": {
+        "central_bank_rate": 10.75,
+        "treasury_bill_91": 8.70,
+        "treasury_bill_182": 9.10,
+        "treasury_bill_364": 9.85
+    },
+
+    "inflation": {
+        "current": 4.60,
+        "target": 5.00,
+        "trend": "Stable"
+    },
+
+    "exchange_rates": {
+        "USDKES": 132.50,
+        "EURKES": 155.80,
+        "GBPKES": 181.40
+    },
+
+    "market_outlook": {
+        "short_term": "Positive",
+        "medium_term": "Bullish",
+        "long_term": "Positive"
+    }
+}
