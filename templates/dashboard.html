@@ -1,211 +1,419 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Institutional Alpha Signal Engine</title>
+{% extends "base.html" %}
 
-    <style>
-        body {
-            font-family: Arial;
-            background: #0b0f19;
-            color: #e5e7eb;
-            margin: 0;
-            padding: 20px;
-        }
+{% block title %}
+JOBURA WEALTH® | Executive Dashboard
+{% endblock %}
 
-        h2, h3 {
-            color: #60a5fa;
-        }
+{% block content %}
 
-        .card {
-            background: #111827;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
+<!-- ========================================================= -->
+<!-- PAGE HEADER -->
+<!-- ========================================================= -->
 
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-        }
+<div class="card">
 
-        .metric {
-            background: #1f2937;
-            padding: 10px;
-            border-radius: 8px;
-        }
+    <h2>📊 Executive Dashboard</h2>
 
-        .buy { color: #22c55e; font-weight: bold; }
-        .hold { color: #facc15; font-weight: bold; }
-        .reduce { color: #ef4444; font-weight: bold; }
+    <p>
 
-        .risk-high { color: #ef4444; }
-        .risk-low { color: #22c55e; }
-        .risk-med { color: #facc15; }
+        Welcome to <b>JOBURA WEALTH®</b>
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
+        <br><br>
 
-        th, td {
-            border-bottom: 1px solid #374151;
-            padding: 8px;
-            text-align: left;
-        }
+        NSE Institutional Wealth Management Platform
 
-        th { color: #93c5fd; }
+        <br>
 
-        .box {
-            background: #111827;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
+        Professional Analytics Suite
 
-        .tag {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 6px;
-            background: #1f2937;
-            margin-right: 6px;
-        }
-    </style>
-</head>
+    </p>
 
-<body>
+</div>
 
-<h2>📊 Institutional Alpha Signal Engine (NSE)</h2>
+<!-- ========================================================= -->
+<!-- EXECUTIVE KPI CARDS -->
+<!-- ========================================================= -->
 
-<form method="POST" class="card">
-    <label>Monthly Investment</label><br>
-    <input type="number" name="monthly" required><br><br>
+<div class="kpi-grid">
 
-    <label>Years</label><br>
-    <input type="number" name="years" required><br><br>
+    <div class="kpi-card">
 
-    <button type="submit">Run Engine</button>
+        <div class="kpi-title">
+            Portfolio Health
+        </div>
+
+        <div class="kpi-value">
+            94%
+        </div>
+
+    </div>
+
+    <div class="kpi-card">
+
+        <div class="kpi-title">
+            Market Status
+        </div>
+
+        <div class="kpi-value"
+             id="market-status">
+
+            Loading...
+
+        </div>
+
+    </div>
+
+    <div class="kpi-card">
+
+        <div class="kpi-title">
+            Institutional Rating
+        </div>
+
+        <div class="kpi-value">
+
+            AA+
+
+        </div>
+
+    </div>
+
+    <div class="kpi-card">
+
+        <div class="kpi-title">
+            Live Clock
+        </div>
+
+        <div class="kpi-value"
+             id="live-clock">
+
+            --
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- INVESTMENT TERMINAL -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+<h2>Investment Terminal</h2>
+
+<form method="POST">
+
+<label>
+
+Monthly Investment
+
+</label>
+
+<input
+type="number"
+name="monthly"
+required>
+
+<label>
+
+Investment Years
+
+</label>
+
+<input
+type="number"
+name="years"
+required>
+
+<button>
+
+Run Institutional Simulation
+
+</button>
+
 </form>
 
+</div>
+
+<!-- ========================================================= -->
+<!-- PORTFOLIO ALLOCATION -->
+<!-- ========================================================= -->
+
 {% if portfolio %}
+
 <div class="card">
-<h3>🤖 Strategic Allocation</h3>
+
+<h2>
+
+Strategic Portfolio Allocation
+
+</h2>
 
 {% for p in portfolio %}
-<div class="tag">
-    {{ p.name }} → {{ p.allocation }}%
-</div>
+
+<span class="badge badge-buy">
+
+{{ p.name }}
+
+—
+
+{{ p.allocation }}%
+
+</span>
+
 {% endfor %}
 
 </div>
+
 {% endif %}
 
-{% if scenarios %}
+<!-- ========================================================= -->
+<!-- ALPHA SIGNAL ENGINE -->
+<!-- ========================================================= -->
 
-<h2>⚡ Alpha Signal Trading Desk</h2>
+{% if scenarios %}
 
 {% for scenario, results in scenarios.items() %}
 
 <div class="card">
 
-    <!-- REGIME -->
-    <h3>📊 {{ scenario | upper }} MARKET REGIME</h3>
+<h2>
 
-    <p>📈 Growth Leader: <b>{{ explanation[scenario].growth_best }}</b></p>
-    <p>💰 Dividend Leader: <b>{{ explanation[scenario].dividend_best }}</b></p>
-    <p>🏆 Overall Winner: <b>{{ explanation[scenario].overall_best }}</b></p>
+{{ scenario|upper }}
 
-    <hr>
+Market Regime
 
-    <!-- SIGNAL ENGINE -->
-    <h3>⚡ Alpha Signal Engine</h3>
+</h2>
 
-    <table>
-        <tr>
-            <th>Rank</th>
-            <th>Asset</th>
-            <th>ROI</th>
-            <th>Risk</th>
-            <th>Score</th>
-            <th>Signal</th>
-            <th>Confidence</th>
-        </tr>
+<p>
 
-        {% for r in results %}
-        {% set confidence = (r.score * 100) | abs | round(1) %}
+📈 Growth Leader
 
-        {% if r.score > 1.0 %}
-            {% set signal = "BUY" %}
-        {% elif r.score > 0.2 %}
-            {% set signal = "HOLD" %}
-        {% else %}
-            {% set signal = "REDUCE" %}
-        {% endif %}
+<b>
 
-        <tr>
-            <td>#{{ r.rank }}</td>
-            <td><b>{{ r.name }}</b></td>
-            <td>{{ r.roi | round(2) }}%</td>
+{{ explanation[scenario].growth_best }}
 
-            <td class="
-                {% if r.risk_level == '🔴 HIGH' %}risk-high
-                {% elif r.risk_level == '🟢 LOW' %}risk-low
-                {% else %}risk-med{% endif %}
-            ">
-                {{ r.risk_level }}
-            </td>
+</b>
 
-            <td>{{ r.score | round(4) }}</td>
+</p>
 
-            <td class="
-                {% if signal == 'BUY' %}buy
-                {% elif signal == 'HOLD' %}hold
-                {% else %}reduce{% endif %}
-            ">
-                {{ signal }}
-            </td>
+<p>
 
-            <td>{{ confidence }}%</td>
-        </tr>
-        {% endfor %}
-    </table>
+💰 Dividend Leader
 
-    <hr>
+<b>
 
-    <!-- FULL BREAKDOWN -->
-    <h3>📊 Full Institutional Breakdown</h3>
+{{ explanation[scenario].dividend_best }}
 
-    <div class="grid">
-        {% for r in results %}
-        <div class="metric">
-            <b>#{{ r.rank }} {{ r.name }}</b><br><br>
+</b>
 
-            💰 Invested: {{ r.invested | round(2) }}<br>
-            📈 Value: {{ r.portfolio_value | round(2) }}<br>
-            💵 Dividends: {{ r.dividends | round(2) }}<br>
-            🧮 Return: {{ r.total_return | round(2) }}<br>
-            📊 Profit: {{ r.profit | round(2) }}<br>
-            📉 ROI: {{ r.roi | round(2) }}%<br><br>
+</p>
 
-            ⚠️ Risk:
-            <span class="
-                {% if r.risk_level == '🔴 HIGH' %}risk-high
-                {% elif r.risk_level == '🟢 LOW' %}risk-low
-                {% else %}risk-med{% endif %}
-            ">
-                {{ r.risk_level }}
-            </span>
+<p>
 
-            <br><br>
-            📌 Score: {{ r.score | round(4) }}
-        </div>
-        {% endfor %}
-    </div>
+🏆 Overall Winner
+
+<b>
+
+{{ explanation[scenario].overall_best }}
+
+</b>
+
+</p>
+
+<hr>
+
+<h3>
+
+Institutional Alpha Signals
+
+</h3>
+
+<table>
+
+<tr>
+
+<th>Rank</th>
+
+<th>Company</th>
+
+<th>ROI</th>
+
+<th>Risk</th>
+
+<th>Signal</th>
+
+<th>Confidence</th>
+
+</tr>
+
+{% for r in results %}
+
+{% set confidence=(r.score*100)|abs|round(1) %}
+
+{% if r.score>1 %}
+
+{% set signal="BUY" %}
+
+{% elif r.score>0.2 %}
+
+{% set signal="HOLD" %}
+
+{% else %}
+
+{% set signal="REDUCE" %}
+
+{% endif %}
+
+<tr>
+
+<td>
+
+#{{ r.rank }}
+
+</td>
+
+<td>
+
+{{ r.name }}
+
+</td>
+
+<td>
+
+{{ r.roi|round(2) }}%
+
+</td>
+
+<td>
+
+{{ r.risk_level }}
+
+</td>
+
+<td>
+
+<span class="badge
+
+{% if signal=='BUY' %}
+
+badge-buy
+
+{% elif signal=='HOLD' %}
+
+badge-hold
+
+{% else %}
+
+badge-reduce
+
+{% endif %}
+
+">
+
+{{ signal }}
+
+</span>
+
+</td>
+
+<td>
+
+{{ confidence }}%
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+</div>
+
+<div class="card">
+
+<h3>
+
+Company Performance
+
+</h3>
+
+<div class="kpi-grid">
+
+{% for r in results %}
+
+<div class="kpi-card">
+
+<b>
+
+{{ r.rank }}
+
+.
+
+{{ r.name }}
+
+</b>
+
+<br><br>
+
+Invested
+
+<br>
+
+KES {{ "{:,.0f}".format(r.invested) }}
+
+<br><br>
+
+Portfolio
+
+<br>
+
+KES {{ "{:,.0f}".format(r.portfolio_value) }}
+
+<br><br>
+
+Dividends
+
+<br>
+
+KES {{ "{:,.0f}".format(r.dividends) }}
+
+<br><br>
+
+Profit
+
+<br>
+
+KES {{ "{:,.0f}".format(r.profit) }}
+
+<br><br>
+
+ROI
+
+<br>
+
+{{ r.roi|round(2) }}%
+
+<br><br>
+
+Risk
+
+<br>
+
+{{ r.risk_level }}
 
 </div>
 
 {% endfor %}
+
+</div>
+
+</div>
+
+{% endfor %}
+
 {% endif %}
 
-</body>
-</html>
+{% endblock %}
