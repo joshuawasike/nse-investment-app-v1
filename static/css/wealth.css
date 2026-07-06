@@ -1,0 +1,501 @@
+/* ==========================================================
+   JOBURA WEALTH®
+   NSE Institutional Wealth Management Platform
+   Professional Analytics Suite
+   Version 2026
+========================================================== */
+
+/* ---------- GLOBAL ---------- */
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+html{
+    scroll-behavior:smooth;
+}
+
+body{
+
+    font-family:'Inter', Arial, sans-serif;
+
+    background:#07111F;
+
+    color:#F8FAFC;
+
+    line-height:1.6;
+
+}
+
+/* ---------- LINKS ---------- */
+
+a{
+
+    color:#93C5FD;
+
+    text-decoration:none;
+
+    transition:.25s;
+
+}
+
+a:hover{
+
+    color:white;
+
+}
+
+/* ---------- HEADER ---------- */
+
+.top-header{
+
+    background:#0B1728;
+
+    border-bottom:1px solid #1E293B;
+
+    height:82px;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    padding:0 35px;
+
+    position:sticky;
+
+    top:0;
+
+    z-index:1000;
+
+}
+
+.logo-area h1{
+
+    color:#60A5FA;
+
+    font-size:30px;
+
+    font-weight:700;
+
+}
+
+.subtitle{
+
+    color:#CBD5E1;
+
+    font-size:14px;
+
+}
+
+.header-right{
+
+    text-align:right;
+
+}
+
+.platform-name{
+
+    font-weight:600;
+
+}
+
+.version{
+
+    color:#94A3B8;
+
+    font-size:13px;
+
+}
+
+/* ---------- MAIN LAYOUT ---------- */
+
+.layout{
+
+    display:flex;
+
+    min-height:calc(100vh - 82px);
+
+}
+
+/* ---------- SIDEBAR ---------- */
+
+.sidebar{
+
+    width:260px;
+
+    background:#0D1628;
+
+    border-right:1px solid #1E293B;
+
+    padding:25px;
+
+}
+
+.sidebar h3{
+
+    color:#60A5FA;
+
+    margin-bottom:18px;
+
+}
+
+.sidebar ul{
+
+    list-style:none;
+
+}
+
+.sidebar li{
+
+    margin-bottom:8px;
+
+}
+
+.sidebar a{
+
+    display:block;
+
+    padding:12px;
+
+    border-radius:8px;
+
+    color:#E2E8F0;
+
+    transition:.2s;
+
+}
+
+.sidebar a:hover{
+
+    background:#1E293B;
+
+    color:white;
+
+}
+
+/* ---------- CONTENT ---------- */
+
+.content{
+
+    flex:1;
+
+    padding:30px;
+
+}
+
+/* ---------- CARDS ---------- */
+
+.card{
+
+    background:#111827;
+
+    border:1px solid #1E293B;
+
+    border-radius:12px;
+
+    padding:20px;
+
+    margin-bottom:20px;
+
+    box-shadow:0 6px 15px rgba(0,0,0,.20);
+
+}
+
+.card h2,
+.card h3{
+
+    color:#60A5FA;
+
+    margin-bottom:12px;
+
+}
+
+/* ---------- KPI GRID ---------- */
+
+.kpi-grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+
+    gap:18px;
+
+    margin-bottom:25px;
+
+}
+
+.kpi-card{
+
+    background:#111827;
+
+    border:1px solid #243247;
+
+    border-radius:12px;
+
+    padding:20px;
+
+}
+
+.kpi-title{
+
+    color:#CBD5E1;
+
+    font-size:14px;
+
+}
+
+.kpi-value{
+
+    color:#22C55E;
+
+    font-size:30px;
+
+    font-weight:bold;
+
+    margin-top:10px;
+
+}
+
+/* ---------- TABLES ---------- */
+
+table{
+
+    width:100%;
+
+    border-collapse:collapse;
+
+    margin-top:15px;
+
+}
+
+th{
+
+    background:#0F172A;
+
+    color:#93C5FD;
+
+    padding:12px;
+
+    text-align:left;
+
+}
+
+td{
+
+    padding:12px;
+
+    border-bottom:1px solid #1E293B;
+
+}
+
+tr:hover{
+
+    background:#182234;
+
+}
+
+/* ---------- FORMS ---------- */
+
+input,
+select{
+
+    width:100%;
+
+    padding:12px;
+
+    margin-top:6px;
+
+    margin-bottom:18px;
+
+    border-radius:8px;
+
+    border:1px solid #334155;
+
+    background:#0F172A;
+
+    color:white;
+
+}
+
+input:focus,
+select:focus{
+
+    outline:none;
+
+    border-color:#3B82F6;
+
+}
+
+/* ---------- BUTTON ---------- */
+
+button{
+
+    background:linear-gradient(90deg,#2563EB,#1D4ED8);
+
+    color:white;
+
+    border:none;
+
+    padding:13px 18px;
+
+    border-radius:8px;
+
+    cursor:pointer;
+
+    font-weight:600;
+
+    transition:.25s;
+
+}
+
+button:hover{
+
+    transform:translateY(-2px);
+
+}
+
+/* ---------- STATUS ---------- */
+
+.success{
+
+    color:#22C55E;
+
+}
+
+.warning{
+
+    color:#FACC15;
+
+}
+
+.danger{
+
+    color:#EF4444;
+
+}
+
+.info{
+
+    color:#60A5FA;
+
+}
+
+/* ---------- BADGES ---------- */
+
+.badge{
+
+    display:inline-block;
+
+    padding:5px 12px;
+
+    border-radius:20px;
+
+    font-size:12px;
+
+    font-weight:600;
+
+}
+
+.badge-buy{
+
+    background:#14532D;
+
+    color:#BBF7D0;
+
+}
+
+.badge-hold{
+
+    background:#78350F;
+
+    color:#FDE68A;
+
+}
+
+.badge-reduce{
+
+    background:#7F1D1D;
+
+    color:#FECACA;
+
+}
+
+/* ---------- FOOTER ---------- */
+
+.footer{
+
+    background:#0B1728;
+
+    border-top:1px solid #1E293B;
+
+    text-align:center;
+
+    padding:35px;
+
+    color:#CBD5E1;
+
+    margin-top:40px;
+
+}
+
+.footer strong{
+
+    color:#60A5FA;
+
+}
+
+/* ---------- RESPONSIVE ---------- */
+
+@media (max-width:1000px){
+
+    .layout{
+
+        flex-direction:column;
+
+    }
+
+    .sidebar{
+
+        width:100%;
+
+        border-right:none;
+
+        border-bottom:1px solid #1E293B;
+
+    }
+
+    .top-header{
+
+        flex-direction:column;
+
+        height:auto;
+
+        padding:20px;
+
+        gap:10px;
+
+        text-align:center;
+
+    }
+
+}
+
+@media (max-width:700px){
+
+    .content{
+
+        padding:18px;
+
+    }
+
+    .kpi-grid{
+
+        grid-template-columns:1fr;
+
+    }
+
+}
