@@ -304,10 +304,30 @@ def get_model_assets(model):
     grouped = grouped.sort_values("score", ascending=False).head(len(ASSETS))
 
     # IMPORTANT: keep SAME structure as ASSETS (8 slots always)
-    assets = [
-        (row["CODE"], row["CODE"], float(np.random.uniform(0.04, 0.12)))
-        for _, row in grouped.iterrows()
-    ]
+    # -----------------------------------------------------
+# Company code -> company name
+# -----------------------------------------------------
+COMPANY_NAMES = {
+    "EQTY": "Equity Bank",
+    "KCB": "KCB Group",
+    "COOP": "Co-op Bank",
+    "SCOM": "Safaricom",
+    "EABL": "EABL",
+    "KEGN": "KenGen",
+    "NCBA": "NCBA",
+    "KQ": "Kenya Airways"
+}
+
+assets = [
+
+    (
+        COMPANY_NAMES.get(row["CODE"], row["CODE"]),
+        row["CODE"]
+    )
+
+    for _, row in grouped.iterrows()
+
+]
 
     # PAD to 8 to prevent broadcast errors
     while len(assets) < len(ASSETS):
@@ -315,20 +335,283 @@ def get_model_assets(model):
 
     return assets    
 # =========================================================
+# 💰 DYNAMIC DIVIDEND RESEARCH ENGINE
+# =========================================================
+def estimate_dividend_yields(mode, model):
+
+    MODEL_FACTOR = {
+
+        "dividend": 1.30,
+        "income":   1.20,
+        "banking":  1.10,
+        "value":    0.95,
+        "growth":   0.70
+
+    }
+
+    model_factor = MODEL_FACTOR.get(model, 1.0)
+
+    stats = get_market_stats()
+
+    yields = {}
+
+    for code, profile in DIVIDEND_DATABASE.items():
+
+        y = profile["base_yield"] * model_factor
+
+        if stats is not None:
+
+            try:
+
+                vol = stats["sigma"][code]
+
+                # Stable companies deserve higher sustainable yields
+                y *= max(0.80, 1.15 - (vol * 12))
+
+            except:
+
+                pass
+
+        # Company stability adjustment
+        y *= profile["stability"]
+
+        # Market regime adjustment
+        if mode == "bull":
+
+            y *= 1.10
+
+        elif mode == "bear":
+
+            y *= 0.80
+
+        # Realistic bounds
+        y = np.clip(y, 0.00, 0.15)
+
+        yields[code] = float(y)
+
+    return yields
+# =========================================================
 # 📊 ASSETS
 # =========================================================
 ASSETS = [
-    ("Equity Bank", "EQTY", 0.085),
-    ("KCB Group", "KCB", 0.075),
-    ("Co-op Bank", "COOP", 0.080),
-    ("Safaricom", "SCOM", 0.065),
-    ("EABL", "EABL", 0.060),
-    ("KenGen", "KEGN", 0.070),
-    ("NCBA", "NCBA", 0.055),
-    ("Kenya Airways", "KQ", 0.000),
+    ("Equity Bank","EQTY"),
+    ("KCB Group","KCB"),
+    ("Co-op Bank","COOP"),
+    ("Safaricom","SCOM"),
+    ("EABL","EABL"),
+    ("KenGen","KEGN"),
+    ("NCBA","NCBA"),
+    ("Kenya Airways","KQ")
 ]
 
 N = len(ASSETS)
+# =========================================================
+# 💰 INSTITUTIONAL DIVIDEND RESEARCH DATABASE
+# =========================================================
+DIVIDEND_DATABASE = {
+
+    "EQTY":{
+        "months":[6],
+        "base_yield":0.090,
+        "growth":0.060,
+        "payout":0.45,
+        "stability":0.96,
+        "quality":0.95,
+        "policy":"progressive",
+        "sector":"Banking"
+    },
+
+    "KCB":{
+        "months":[5,11],
+        "base_yield":0.085,
+        "growth":0.055,
+        "payout":0.42,
+        "stability":0.94,
+        "quality":0.93,
+        "policy":"progressive",
+        "sector":"Banking"
+    },
+
+    "COOP":{
+        "months":[6],
+        "base_yield":0.090,
+        "growth":0.070,
+        "payout":0.50,
+        "stability":0.98,
+        "quality":0.96,
+        "policy":"stable",
+        "sector":"Banking"
+    },
+
+    "SCOM":{
+        "months":[4,10],
+        "base_yield":0.065,
+        "growth":0.080,
+        "payout":0.70,
+        "stability":0.99,
+        "quality":0.98,
+        "policy":"progressive",
+        "sector":"Telecom"
+    },
+
+    "EABL":{
+        "months":[7],
+        "base_yield":0.075,
+        "growth":0.040,
+        "payout":0.65,
+        "stability":0.95,
+        "quality":0.92,
+        "policy":"stable",
+        "sector":"Consumer"
+    },
+
+    "KEGN":{
+        "months":[8],
+        "base_yield":0.080,
+        "growth":0.050,
+        "payout":0.55,
+        "stability":0.90,
+        "quality":0.88,
+        "policy":"cyclical",
+        "sector":"Utilities"
+    },
+
+    "NCBA":{
+        "months":[5,11],
+        "base_yield":0.060,
+        "growth":0.050,
+        "payout":0.40,
+        "stability":0.93,
+        "quality":0.90,
+        "policy":"progressive",
+        "sector":"Banking"
+    },
+
+    "KQ":{
+        "months":[],
+        "base_yield":0.000,
+        "growth":0.000,
+        "payout":0.00,
+        "stability":0.20,
+        "quality":0.25,
+        "policy":"suspended",
+        "sector":"Airline"
+    }
+
+}
+# =========================================================
+# 💰 DYNAMIC DIVIDEND ENGINE
+# =========================================================
+
+DIVIDEND_BASE = {
+
+    "EQTY":0.090,
+    "KCB":0.085,
+    "COOP":0.090,
+    "SCOM":0.065,
+    "EABL":0.075,
+    "KEGN":0.080,
+    "NCBA":0.060,
+    "KQ":0.000
+
+}
+
+
+def estimate_dividend_yields(mode, model):
+    MODEL_FACTOR = {
+
+        "dividend":1.30,
+
+        "income":1.20,
+
+        "banking":1.10,
+
+        "value":0.95,
+
+        "growth":0.70
+
+    }
+
+    model_factor = MODEL_FACTOR.get(model, 1.0)
+
+    stats = get_market_stats()
+
+    yields = {}
+
+    for code, base in DIVIDEND_BASE.items():
+
+        y = base * model_factor
+
+        if stats is not None:
+
+            try:
+
+                vol = stats["sigma"][code]
+
+                # Stable companies generally sustain dividends better
+                y *= max(0.80, 1.15 - (vol * 12))
+
+            except:
+
+                pass
+
+        # Market regime adjustments
+        if mode == "bull":
+
+            y *= 1.10
+
+        elif mode == "bear":
+
+            y *= 0.80
+
+        # Keep within realistic limits
+        y = np.clip(y, 0.00, 0.15)
+
+        yields[code] = float(y)
+
+    return yields
+    # =========================================================
+    # 📈 DIVIDEND FORECAST ENGINE
+    # =========================================================
+    def forecast_dividend_yield(code, years_elapsed, mode):
+
+        profile = DIVIDEND_DATABASE.get(code)
+
+        if profile is None:
+            return 0.0
+
+        base = profile["base_yield"]
+        growth = profile["growth"]
+        quality = profile["quality"]
+        policy = profile["policy"]
+
+        # compound dividend growth
+        forecast = base * ((1 + growth) ** years_elapsed)
+
+        # market regime
+        if mode == "bull":
+            forecast *= 1.08
+
+        elif mode == "bear":
+            forecast *= 0.82
+
+        # dividend policy
+        if policy == "progressive":
+            forecast *= 1.05
+
+        elif policy == "stable":
+            forecast *= 1.00
+
+        elif policy == "cyclical":
+            forecast *= 0.92
+
+        elif policy == "suspended":
+            forecast = 0.0
+
+        # company quality
+        forecast *= quality
+
+        return float(np.clip(forecast, 0.0, 0.18))
 # =========================================================
 # 🧠 AI ENGINE
 # =========================================================
@@ -494,72 +777,267 @@ MODEL_UNIVERSES = {
     "income":   [3,4,1,0,2]        # dividend-heavy names
 }
 # =========================================================
-# 🌍 INSTITUTIONAL MARKET GENERATOR (V4)
+# 🏦 DIVIDEND HEALTH ENGINE
+# =========================================================
+def dividend_health_score(code, stats):
+
+    profile = DIVIDEND_DATABASE.get(code, {})
+
+    stability = profile.get("stability", 0.90)
+    quality = profile.get("quality", 0.90)
+
+    if stats is None:
+        return float(np.clip(
+            0.60 * stability + 0.40 * quality,
+            0.20,
+            0.99
+        ))
+
+    try:
+
+        mu = float(stats["mu"][code])
+        sigma = float(stats["sigma"][code])
+
+        score = (
+            0.35 * stability +
+            0.35 * quality +
+            0.20 * np.clip(mu * 30, 0, 1) +
+            0.10 * np.clip(1 - sigma * 20, 0, 1)
+        )
+
+        return float(np.clip(score, 0.20, 0.99))
+
+    except:
+
+        return float(np.clip(
+            0.60 * stability + 0.40 * quality,
+            0.20,
+            0.99
+        ))
+# =========================================================
+# 🌍 ECONOMIC REGIME ENGINE
+# =========================================================
+
+ECONOMIC_REGIMES = {
+
+    "normal":{
+
+        "drift":1.00,
+        "vol":1.00,
+
+        "sector":{
+
+            "Banking":1.00,
+            "Telecom":1.00,
+            "Consumer":1.00,
+            "Utilities":1.00,
+            "Airline":1.00
+
+        }
+
+    },
+
+    "bull":{
+
+        "drift":1.25,
+        "vol":0.85,
+
+        "sector":{
+
+            "Banking":1.30,
+            "Telecom":1.10,
+            "Consumer":1.15,
+            "Utilities":0.95,
+            "Airline":1.60
+
+        }
+
+    },
+
+    "bear":{
+
+        "drift":0.60,
+        "vol":1.45,
+
+        "sector":{
+
+            "Banking":0.70,
+            "Telecom":0.95,
+            "Consumer":0.80,
+            "Utilities":1.05,
+            "Airline":0.25
+
+        }
+
+    }
+
+}
+# =========================================================
+# 🌍 INSTITUTIONAL MARKET GENERATOR V12
+# Historical NSE Monte Carlo Engine
 # =========================================================
 def generate_market(mode, N, drift, vol, momentum):
+
+    stats = get_market_stats()
 
     periods = 300
 
     # -----------------------------------------------------
-    # Regime configuration
+    # FALLBACK IF NO HISTORICAL DATA
     # -----------------------------------------------------
-    REGIME = {
-        "normal": {
-            "drift": 1.00,
-            "vol": 1.00,
-            "bias": 0.0000
-        },
-        "bull": {
-            "drift": 1.45,
-            "vol": 0.75,
-            "bias": 0.0025
-        },
-        "bear": {
-            "drift": 0.55,
-            "vol": 1.60,
-            "bias": -0.0025
-        }
-    }
+    if stats is None:
 
-    cfg = REGIME.get(mode, REGIME["normal"])
-
-    drift *= cfg["drift"]
-    vol *= cfg["vol"]
-
-    # -----------------------------------------------------
-    # Correlated market factor
-    # -----------------------------------------------------
-    market = np.random.normal(0, vol, periods)
-
-    R = np.zeros((N, periods))
-
-    for i in range(N):
-
-        asset_noise = np.random.normal(0, vol * 0.45, periods)
-
-        momentum_component = np.cumsum(asset_noise) * 0.00025 * momentum
-
-        fat_tail = (
-            np.random.standard_t(df=5, size=periods)
-            * vol
-            * 0.10
-        )
-
-        R[i] = (
-            drift
-            + cfg["bias"]
-            + 0.70 * market
-            + 0.30 * asset_noise
-            + momentum_component
-            + fat_tail
+        return np.random.normal(
+            drift,
+            vol,
+            (N, periods)
         )
 
     # -----------------------------------------------------
-    # Hard safety limits
+    # HISTORICAL PARAMETERS
     # -----------------------------------------------------
-    R = np.clip(R, -0.10, 0.12)
+    mu = stats["mu"].copy()
+    sigma = stats["sigma"].copy()
+    cov = stats["cov"].copy()
 
-    return R
+    # -----------------------------------------------------
+    # MATCH OUR NSE UNIVERSE
+    # -----------------------------------------------------
+    codes = [asset[1] for asset in ASSETS]
+
+    available = [
+        c for c in codes
+        if c in mu.index
+        and c in cov.index
+    ]
+
+    if len(available) < 2:
+
+        return np.random.normal(
+            drift,
+            vol,
+            (N, periods)
+        )
+
+    mu = mu.loc[available]
+    sector_multiplier = []
+
+    regime = ECONOMIC_REGIMES.get(
+        mode,
+        ECONOMIC_REGIMES["normal"]
+    )
+
+    for code in available:
+
+        profile = DIVIDEND_DATABASE.get(code, {})
+
+        sector = profile.get("sector","Banking")
+
+        sector_multiplier.append(
+
+            regime["sector"].get(
+                sector,
+                1.0
+            )
+
+        )
+
+    sector_multiplier = np.array(sector_multiplier)
+
+    mu *= sector_multiplier
+    sigma = sigma.loc[available]
+    cov = cov.loc[available, available]
+
+    # -----------------------------------------------------
+    # REGIME ADJUSTMENTS
+    # -----------------------------------------------------
+    regime = ECONOMIC_REGIMES.get(
+        mode,
+        ECONOMIC_REGIMES["normal"]
+    )
+
+    mu *= regime["drift"]
+
+    cov *= regime["vol"]
+
+    # -----------------------------------------------------
+    # POSITIVE DEFINITE COVARIANCE
+    # -----------------------------------------------------
+    cov += np.eye(len(cov)) * 1e-8
+
+    try:
+
+        L = np.linalg.cholesky(cov)
+
+    except np.linalg.LinAlgError:
+
+        eigvals, eigvecs = np.linalg.eigh(cov)
+
+        eigvals[eigvals < 1e-8] = 1e-8
+
+        cov = eigvecs @ np.diag(eigvals) @ eigvecs.T
+
+        L = np.linalg.cholesky(cov)
+
+    # -----------------------------------------------------
+    # FAT TAIL SHOCKS
+    # -----------------------------------------------------
+    shocks = np.random.standard_t(
+        df=6,
+        size=(len(mu), periods)
+    )
+
+    correlated = L @ shocks
+
+    # -----------------------------------------------------
+    # MOMENTUM PROCESS
+    # -----------------------------------------------------
+    trend = np.zeros_like(correlated)
+
+    phi = min(0.95, max(0.10, momentum))
+
+    for t in range(1, periods):
+
+        trend[:, t] = (
+            phi * trend[:, t - 1]
+            + correlated[:, t]
+        )
+
+    # -----------------------------------------------------
+    # EXPECTED RETURNS
+    # -----------------------------------------------------
+    R = mu.values[:, None] + trend
+
+    # -----------------------------------------------------
+    # VOLATILITY SCALING
+    # -----------------------------------------------------
+    scale = sigma.values[:, None]
+
+    R *= (scale / np.std(R, axis=1, keepdims=True))
+
+    # -----------------------------------------------------
+    # SAFETY LIMITS
+    # -----------------------------------------------------
+    R = np.clip(
+        R,
+        -0.12,
+        0.15
+    )
+
+    # -----------------------------------------------------
+    # PAD IF NECESSARY
+    # -----------------------------------------------------
+    if len(mu) < N:
+
+        extra = np.random.normal(
+            drift,
+            vol,
+            (N - len(mu), periods)
+        )
+
+        R = np.vstack([R, extra])
+
+    return R[:N]
 # =========================================================
 # 🧠 AI PORTFOLIO ADVISOR (ADD HERE)
 # =========================================================
@@ -730,7 +1208,16 @@ def simulate(monthly, years, mode, model="dividend"):
 
     dividends = np.zeros(len(weights))
 
-    yields = np.array([a[2] for a in assets])
+    yield_table = estimate_dividend_yields(mode, model)
+    stats = get_market_stats()
+
+    yields = np.array([
+
+        yield_table.get(asset[1],0.05)
+
+        for asset in assets
+
+    ])
     capital = np.zeros(len(weights))
 
     # -----------------------------------------------------
@@ -777,24 +1264,73 @@ def simulate(monthly, years, mode, model="dividend"):
 
         curve.append(nav)
 
-        # Monthly contribution allocated across assets
+        # Monthly contribution
         monthly_alloc = monthly * weights
 
+        # Add new investment
         capital += monthly_alloc
 
+        # Grow each asset using its own return
         asset_returns = R[:, col]
 
         capital *= (1 + asset_returns)
+        current_month = (m % 12) + 1
 
-        # Monthly dividends
-        monthly_dividend = (
-            capital
-            * yields
-            * regime_multiplier
-            / 12
-        )
 
-        dividends += monthly_dividend
+        # -----------------------------------------------------
+        # DIVIDEND PAYMENT ENGINE
+        # -----------------------------------------------------
+        current_month = (m % 12) + 1
+
+        for i, asset in enumerate(assets):
+
+            code = asset[1]
+
+            profile = DIVIDEND_DATABASE.get(code, {})
+
+            payment_months = profile.get("months", [])
+
+            growth = profile.get("growth", 0.00)
+
+            stability = profile.get("stability", 1.00)
+
+            payout = profile.get("payout", 0.00)
+
+            # Only pay dividends in scheduled months
+            if current_month in payment_months:
+
+                # Dividend yield grows over time
+                current_yield = forecast_dividend_yield(
+                    code,
+                    m // 12,
+                    mode
+                )
+
+                # Market regime adjustments
+                if mode == "bull":
+                    current_yield *= 1.10
+
+                elif mode == "bear":
+                    current_yield *= 0.80
+
+                # Company may reduce or skip dividend
+                health = dividend_health_score(code, stats)
+
+                annual_dividend = (
+
+                    capital[i]
+
+                    * current_yield
+
+                    * payout
+
+                    * health
+
+                )
+
+                dividend = annual_dividend / max(len(payment_months), 1)
+
+                dividends[i] += dividend
     # -----------------------------------------------------
     # FINAL VALUES
     # -----------------------------------------------------
