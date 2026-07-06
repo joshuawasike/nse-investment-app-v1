@@ -258,31 +258,44 @@ def get_market_stats():
 
     return MARKET_STATS
 # =========================================================
-# 🧠 MODEL → REAL COMPANY MAPPING (FIXED SAFE VERSION)
+# 🧠 MODEL → REAL COMPANY MAPPING
 # =========================================================
 def get_model_assets(model):
 
     df = get_df()
 
     if df is None or df.empty or "CODE" not in df.columns:
-        return ASSETS[:8]
+        return ASSETS.copy()
 
     df = df.copy()
     df["CODE"] = df["CODE"].astype(str).str.upper().str.strip()
 
-    grouped = df.groupby("CODE")["PREVIOUS"].agg(["mean", "std"]).reset_index()
-    grouped = grouped.dropna()
+    grouped = (
+        df.groupby("CODE")["PREVIOUS"]
+          .agg(["mean", "std"])
+          .reset_index()
+          .dropna()
+    )
 
     grouped["return_score"] = grouped["mean"]
     grouped["risk_score"] = grouped["std"] + 1e-9
-    grouped["sharpe_like"] = grouped["return_score"] / grouped["risk_score"]
+    grouped["sharpe_like"] = (
+        grouped["return_score"] /
+        grouped["risk_score"]
+    )
 
     MODEL_UNIVERSES = {
+
         "dividend": ["EQTY", "KCB", "COOP", "EABL"],
-        "growth":   ["SCOM", "KQ", "NCBA", "KEGN"],
-        "banking":  ["EQTY", "KCB", "COOP", "NCBA"],
-        "value":    ["EABL", "KEGN", "SCOM", "KQ"],
-        "income":   ["EABL", "COOP", "KCB", "SCOM"]
+
+        "growth": ["SCOM", "KQ", "NCBA", "KEGN"],
+
+        "banking": ["EQTY", "KCB", "COOP", "NCBA"],
+
+        "value": ["EABL", "KEGN", "SCOM", "KQ"],
+
+        "income": ["EABL", "COOP", "KCB", "SCOM"]
+
     }
 
     allowed = MODEL_UNIVERSES.get(model, [])
@@ -291,49 +304,65 @@ def get_model_assets(model):
         grouped = grouped[grouped["CODE"].isin(allowed)]
 
     if grouped.empty:
-        grouped = df.groupby("CODE")["PREVIOUS"].agg(["mean", "std"]).reset_index()
-        grouped["return_score"] = grouped["mean"]
-        grouped["risk_score"] = grouped["std"] + 1e-9
-        grouped["sharpe_like"] = grouped["return_score"] / grouped["risk_score"]
+        return ASSETS.copy()
 
-    def bias(code):
-        return 1.2 if code in allowed else 1.0
+    grouped["score"] = grouped["sharpe_like"]
 
-    grouped["score"] = grouped["CODE"].apply(bias) * grouped["sharpe_like"]
-
-    grouped = grouped.sort_values("score", ascending=False).head(len(ASSETS))
-
-    # IMPORTANT: keep SAME structure as ASSETS (8 slots always)
-    # -----------------------------------------------------
-# Company code -> company name
-# -----------------------------------------------------
-COMPANY_NAMES = {
-    "EQTY": "Equity Bank",
-    "KCB": "KCB Group",
-    "COOP": "Co-op Bank",
-    "SCOM": "Safaricom",
-    "EABL": "EABL",
-    "KEGN": "KenGen",
-    "NCBA": "NCBA",
-    "KQ": "Kenya Airways"
-}
-
-assets = [
-
-    (
-        COMPANY_NAMES.get(row["CODE"], row["CODE"]),
-        row["CODE"]
+    grouped = grouped.sort_values(
+        "score",
+        ascending=False
     )
 
-    for _, row in grouped.iterrows()
+    # -----------------------------
+    # Company Names
+    # -----------------------------
+    COMPANY_NAMES = {
 
-]
+        "EQTY": "Equity Bank",
 
-    # PAD to 8 to prevent broadcast errors
-    while len(assets) < len(ASSETS):
-        assets.append(ASSETS[len(assets)])
+        "KCB": "KCB Group",
 
-    return assets    
+        "COOP": "Co-op Bank",
+
+        "SCOM": "Safaricom",
+
+        "EABL": "EABL",
+
+        "KEGN": "KenGen",
+
+        "NCBA": "NCBA",
+
+        "KQ": "Kenya Airways"
+
+    }
+
+    assets = []
+
+    for _, row in grouped.iterrows():
+
+        code = row["CODE"]
+
+        if code in COMPANY_NAMES:
+
+            assets.append(
+                (
+                    COMPANY_NAMES[code],
+                    code
+                )
+            )
+
+    # Always return 8 assets
+    for asset in ASSETS:
+
+        if asset not in assets:
+
+            assets.append(asset)
+
+        if len(assets) == len(ASSETS):
+
+            break
+
+    return assets
 # =========================================================
 # 💰 DYNAMIC DIVIDEND RESEARCH ENGINE
 # =========================================================
