@@ -1,0 +1,497 @@
+{% extends "base.html" %}
+
+{% block title %}
+JOBURA WEALTH® | Risk Management Centre
+{% endblock %}
+
+{% block content %}
+
+<!-- ========================================================= -->
+<!-- PAGE HEADER -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+    <h1>🛡️ Risk Management Centre</h1>
+
+    <p>
+
+        <b>JOBURA WEALTH®</b><br>
+
+        NSE Institutional Wealth Management Platform<br>
+
+        Professional Analytics Suite
+
+    </p>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- EXECUTIVE RISK DASHBOARD -->
+<!-- ========================================================= -->
+
+<div class="kpi-grid">
+
+    <div class="kpi-card">
+
+        <div class="kpi-title">
+
+            Overall Risk Score
+
+        </div>
+
+        <div class="kpi-value">
+
+            {{ risk.score|default("24 / 100") }}
+
+        </div>
+
+    </div>
+
+    <div class="kpi-card">
+
+        <div class="kpi-title">
+
+            Risk Category
+
+        </div>
+
+        <div class="kpi-value">
+
+            {{ risk.level|default("LOW") }}
+
+        </div>
+
+    </div>
+
+    <div class="kpi-card">
+
+        <div class="kpi-title">
+
+            Diversification
+
+        </div>
+
+        <div class="kpi-value">
+
+            {{ risk.diversification|default("91%") }}
+
+        </div>
+
+    </div>
+
+    <div class="kpi-card">
+
+        <div class="kpi-title">
+
+            Portfolio Health
+
+        </div>
+
+        <div class="kpi-value">
+
+            {{ risk.health|default("94%") }}
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- RISK METRICS -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+<h2>📊 Institutional Risk Metrics</h2>
+
+<table>
+
+<tr>
+
+<th>Metric</th>
+
+<th>Value</th>
+
+<th>Assessment</th>
+
+</tr>
+
+<tr>
+
+<td>Portfolio Volatility</td>
+
+<td>{{ risk.volatility|default("18.5%") }}</td>
+
+<td>Moderate</td>
+
+</tr>
+
+<tr>
+
+<td>Maximum Drawdown</td>
+
+<td>{{ risk.drawdown|default("-13.6%") }}</td>
+
+<td>Acceptable</td>
+
+</tr>
+
+<tr>
+
+<td>Sharpe Ratio</td>
+
+<td>{{ risk.sharpe|default("1.82") }}</td>
+
+<td>Excellent</td>
+
+</tr>
+
+<tr>
+
+<td>Sortino Ratio</td>
+
+<td>{{ risk.sortino|default("2.14") }}</td>
+
+<td>Excellent</td>
+
+</tr>
+
+<tr>
+
+<td>Beta</td>
+
+<td>{{ risk.beta|default("0.91") }}</td>
+
+<td>Defensive</td>
+
+</tr>
+
+<tr>
+
+<td>Value at Risk (VaR)</td>
+
+<td>{{ risk.var|default("KES 320,000") }}</td>
+
+<td>Low</td>
+
+</tr>
+
+</table>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- STRESS TEST -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+<h2>⚠️ Portfolio Stress Testing</h2>
+
+<table>
+
+<tr>
+
+<th>Scenario</th>
+
+<th>Expected Change</th>
+
+<th>Risk Level</th>
+
+</tr>
+
+<tr>
+
+<td>Interest Rate Increase</td>
+
+<td>-4.2%</td>
+
+<td>Low</td>
+
+</tr>
+
+<tr>
+
+<td>Economic Slowdown</td>
+
+<td>-8.4%</td>
+
+<td>Medium</td>
+
+</tr>
+
+<tr>
+
+<td>Banking Sector Shock</td>
+
+<td>-11.8%</td>
+
+<td>High</td>
+
+</tr>
+
+<tr>
+
+<td>Market Correction</td>
+
+<td>-15.2%</td>
+
+<td>High</td>
+
+</tr>
+
+<tr>
+
+<td>Strong Bull Market</td>
+
+<td>+24.5%</td>
+
+<td>Opportunity</td>
+
+</tr>
+
+</table>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- SECTOR EXPOSURE -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+<h2>🏦 Sector Risk Exposure</h2>
+
+<table>
+
+<tr>
+
+<th>Sector</th>
+
+<th>Allocation</th>
+
+<th>Risk</th>
+
+</tr>
+
+{% for sector in sectors %}
+
+<tr>
+
+<td>{{ sector.name }}</td>
+
+<td>{{ sector.weight }}</td>
+
+<td>{{ sector.risk }}</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- COMPANY RISK -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+<h2>📈 Company Risk Assessment</h2>
+
+<table>
+
+<tr>
+
+<th>Company</th>
+
+<th>Risk Score</th>
+
+<th>Volatility</th>
+
+<th>Recommendation</th>
+
+</tr>
+
+{% for company in companies %}
+
+<tr>
+
+<td>{{ company.name }}</td>
+
+<td>{{ company.score }}</td>
+
+<td>{{ company.volatility }}</td>
+
+<td>{{ company.recommendation }}</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- AI RISK ADVISOR -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+<h2>🤖 JOBURA AI® Risk Advisor</h2>
+
+<div class="ai-box">
+
+<h3>Overall Assessment</h3>
+
+<p>
+
+{{ ai.assessment|default(
+"The portfolio is well diversified and demonstrates a conservative institutional risk profile with resilient dividend-producing assets."
+) }}
+
+</p>
+
+<h3>Key Risks</h3>
+
+<ul>
+
+<li>{{ ai.risk1|default("High concentration in banking sector.") }}</li>
+
+<li>{{ ai.risk2|default("Market-wide volatility may affect short-term performance.") }}</li>
+
+<li>{{ ai.risk3|default("Interest rate movements should be monitored.") }}</li>
+
+</ul>
+
+<h3>AI Recommendation</h3>
+
+<p>
+
+{{ ai.recommendation|default(
+"Maintain diversification while gradually increasing exposure to defensive and infrastructure-related companies."
+) }}
+
+</p>
+
+</div>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- RISK LIMITS -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+<h2>📋 Institutional Risk Limits</h2>
+
+<table>
+
+<tr>
+
+<th>Limit</th>
+
+<th>Current</th>
+
+<th>Status</th>
+
+</tr>
+
+<tr>
+
+<td>Maximum Single Company Exposure</td>
+
+<td>18%</td>
+
+<td>✔ Within Limit</td>
+
+</tr>
+
+<tr>
+
+<td>Maximum Sector Exposure</td>
+
+<td>38%</td>
+
+<td>✔ Within Limit</td>
+
+</tr>
+
+<tr>
+
+<td>Cash Allocation</td>
+
+<td>6%</td>
+
+<td>✔ Healthy</td>
+
+</tr>
+
+<tr>
+
+<td>Dividend Coverage</td>
+
+<td>92%</td>
+
+<td>✔ Excellent</td>
+
+</tr>
+
+<tr>
+
+<td>Portfolio Liquidity</td>
+
+<td>High</td>
+
+<td>✔ Good</td>
+
+</tr>
+
+</table>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- FUTURE MODULES -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+<h2>🚀 Future Risk Analytics</h2>
+
+<ul>
+
+<li>Value at Risk (VaR) Distribution Charts</li>
+
+<li>Conditional Value at Risk (CVaR)</li>
+
+<li>Portfolio Correlation Matrix</li>
+
+<li>Risk Heat Maps</li>
+
+<li>Scenario Probability Analysis</li>
+
+<li>Currency Risk Assessment</li>
+
+<li>Liquidity Risk Dashboard</li>
+
+<li>Credit Risk Monitoring</li>
+
+<li>ESG Risk Analysis</li>
+
+<li>AI Early Warning System</li>
+
+<li>Real-Time Portfolio Alerts</li>
+
+<li>Automated Risk Rebalancing</li>
+
+</ul>
+
+</div>
+
+{% endblock %}
