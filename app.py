@@ -166,6 +166,98 @@ def get_df():
         df = load_data()
     return df
 # =========================================================
+# 📊 HISTORICAL MARKET STATISTICS ENGINE
+# =========================================================
+def estimate_market_statistics():
+
+    df = get_df().copy()
+
+    if df.empty:
+        return None
+
+    df.columns = df.columns.str.upper()
+
+    df["DATE"] = pd.to_datetime(df["DATE"])
+
+    df["PREVIOUS"] = pd.to_numeric(df["PREVIOUS"], errors="coerce")
+
+    df = df.dropna(subset=["CODE", "DATE", "PREVIOUS"])
+
+    df = df.sort_values(["CODE", "DATE"])
+
+    # ------------------------------------------
+    # DAILY RETURNS
+    # ------------------------------------------
+    df["RETURN"] = (
+        df.groupby("CODE")["PREVIOUS"]
+          .pct_change()
+    )
+
+    df = df.dropna()
+
+    # ------------------------------------------
+    # RETURN MATRIX
+    # ------------------------------------------
+    returns = df.pivot_table(
+        index="DATE",
+        columns="CODE",
+        values="RETURN"
+    )
+
+    # remove nearly empty companies
+    returns = returns.dropna(axis=1, thresh=max(20, len(returns)//4))
+
+    returns = returns.fillna(0)
+
+    # ------------------------------------------
+    # EXPECTED RETURN
+    # ------------------------------------------
+    mu = returns.mean()
+
+    # ------------------------------------------
+    # VOLATILITY
+    # ------------------------------------------
+    sigma = returns.std()
+
+    # ------------------------------------------
+    # COVARIANCE
+    # ------------------------------------------
+    cov = returns.cov()
+
+    # ------------------------------------------
+    # CORRELATION
+    # ------------------------------------------
+    corr = returns.corr()
+
+    return {
+
+        "returns": returns,
+
+        "mu": mu,
+
+        "sigma": sigma,
+
+        "cov": cov,
+
+        "corr": corr
+
+    }
+# =========================================================
+# 📈 CACHE MARKET STATISTICS
+# =========================================================
+MARKET_STATS = None
+
+
+def get_market_stats():
+
+    global MARKET_STATS
+
+    if MARKET_STATS is None:
+
+        MARKET_STATS = estimate_market_statistics()
+
+    return MARKET_STATS
+# =========================================================
 # 🧠 MODEL → REAL COMPANY MAPPING (FIXED SAFE VERSION)
 # =========================================================
 def get_model_assets(model):
@@ -639,6 +731,7 @@ def simulate(monthly, years, mode, model="dividend"):
     dividends = np.zeros(len(weights))
 
     yields = np.array([a[2] for a in assets])
+    capital = np.zeros(len(weights))
 
     # -----------------------------------------------------
     # REGIME DIVIDEND MULTIPLIER
@@ -684,15 +777,16 @@ def simulate(monthly, years, mode, model="dividend"):
 
         curve.append(nav)
 
+        # Monthly contribution allocated across assets
         monthly_alloc = monthly * weights
 
-        # Add this month's investment
         capital += monthly_alloc
 
-        # Grow existing capital using this month's portfolio return
-        capital *= (1 + portfolio_return)
+        asset_returns = R[:, col]
 
-        # Dividends generated this month
+        capital *= (1 + asset_returns)
+
+        # Monthly dividends
         monthly_dividend = (
             capital
             * yields
@@ -706,37 +800,69 @@ def simulate(monthly, years, mode, model="dividend"):
     # -----------------------------------------------------
     final_nav = curve[-1]
 
-    total_dividends = float(np.sum(dividends))
+    total_dividends = float(dividends.sum())
 
     portfolio_value = float(final_nav + total_dividends)
+
+    curve_np = np.array(curve)
+
+    monthly_returns = np.diff(curve_np) / np.maximum(curve_np[:-1], 1)
+
+    annual_return = (portfolio_value / invested) ** (1 / years) - 1
+
+    cagr = annual_return
+
+    volatility = np.std(monthly_returns) * np.sqrt(12)
+
+    sharpe = (
+        annual_return - 0.05
+    ) / max(volatility, 1e-9)
+
+    running_max = np.maximum.accumulate(curve_np)
+
+    drawdown = (curve_np - running_max) / running_max
+
+    max_drawdown = abs(np.min(drawdown))
+
+    inflation = 0.05
+
+    real_value = portfolio_value / ((1 + inflation) ** years)
 
     # -----------------------------------------------------
     # BREAKDOWN
     # -----------------------------------------------------
     monthly_alloc = monthly * weights
 
-    total_capital = monthly_alloc * months
-
     breakdown = []
+
+    asset_values = capital + dividends
 
     for i in range(len(assets)):
 
+        invested_asset = invested * weights[i]
+
         breakdown.append({
 
-            "asset":
-                assets[i][0],
+            "asset": assets[i][0],
 
-            "allocation_pct":
-                round(weights[i] * 100, 2),
+            "allocation_pct": round(weights[i] * 100, 2),
 
-            "capital":
-                float(total_capital[i]),
+            # Amount actually invested into this asset
+            "capital": round(float(invested_asset), 2),
 
-            "dividends":
-                float(dividends[i])
+            # Current value after growth
+            "current_value": round(float(capital[i]), 2),
+
+            # Profit excluding dividends
+            "capital_gain": round(float(capital[i] - invested_asset), 2),
+
+            # Total dividends earned
+            "dividends": round(float(dividends[i]), 2),
+
+            # Final value including dividends
+            "total_return": round(float(asset_values[i]), 2)
 
         })
-
     # -----------------------------------------------------
     # PLAN
     # -----------------------------------------------------
@@ -756,7 +882,32 @@ def simulate(monthly, years, mode, model="dividend"):
                 round(monthly_alloc[i], 2)
 
         })
+        returns_table = []
 
+        for i in range(len(assets)):
+
+            invested_asset = invested * weights[i]
+
+            returns_table.append({
+
+                "asset": assets[i][0],
+
+                "capital": round(invested_asset,2),
+
+                "value": round(float(capital[i]),2),
+
+                "gain": round(float(capital[i]-invested_asset),2),
+
+                "dividends": round(float(dividends[i]),2),
+
+                "total": round(float(capital[i]+dividends[i]),2),
+
+                "annual_return": round(
+                    annual_return*100,
+                    2
+                )
+
+            })
     # -----------------------------------------------------
     # AI
     # -----------------------------------------------------
@@ -771,14 +922,23 @@ def simulate(monthly, years, mode, model="dividend"):
     # -----------------------------------------------------
     summary = {
 
-        "invested":
-            float(invested),
+        "invested": round(float(invested),2),
 
-        "value":
-            float(portfolio_value),
+        "value": round(float(portfolio_value),2),
 
-        "dividends":
-            total_dividends
+        "real_value": round(float(real_value),2),
+
+        "dividends": round(total_dividends,2),
+
+        "annual_return": round(annual_return*100,2),
+
+        "cagr": round(cagr*100,2),
+
+        "volatility": round(volatility*100,2),
+
+        "sharpe": round(sharpe,2),
+
+        "max_drawdown": round(max_drawdown*100,2)
 
     }
 
@@ -797,7 +957,7 @@ def simulate(monthly, years, mode, model="dividend"):
 
         "ai": ai,
 
-        "assets": breakdown
+        "assets": breakdown,
         
         "returns": returns_table
     }
