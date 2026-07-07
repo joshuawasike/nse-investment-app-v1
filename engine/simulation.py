@@ -648,4 +648,40 @@ def simulate(monthly, years, mode, model="dividend"):
         R,
         assets
     )
+summary = {
 
+    "invested": round(float(invested), 2),
+
+    "value": round(float(portfolio_value), 2),
+
+    "real_value": round(float(real_value), 2),
+
+    "dividends": round(total_dividends, 2),
+
+    "annual_return": round(annual_return * 100, 2),
+
+    "cagr": round(cagr * 100, 2),
+
+    "volatility": round(volatility * 100, 2),
+
+    "sharpe": round(sharpe, 2),
+
+    "max_drawdown": round(max_drawdown * 100, 2)
+
+}
+
+return {
+
+    "summary": summary,
+
+    "curve": curve,
+
+    "plan": plan,
+
+    "ai": ai,
+
+    "assets": breakdown,
+
+    "returns": returns_table
+
+}
