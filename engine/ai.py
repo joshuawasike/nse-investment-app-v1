@@ -226,3 +226,26 @@ def generate_message(
         "High-risk portfolio detected. Review allocations "
         "and reduce exposure to volatile securities."
     )
+# =========================================================
+# 🧠 AI PORTFOLIO ADVISOR (ADD HERE)
+# =========================================================
+def ai_portfolio_advisor(weights, R, assets):
+
+    avg_returns = np.mean(R, axis=1)
+    risk = np.std(avg_returns)
+
+    top_idx = int(np.argmax(weights))
+    top_asset = assets[top_idx][0]
+
+    if risk < 0.01:
+        comment = "Low risk environment. Defensive portfolio."
+    elif risk < 0.02:
+        comment = "Moderate risk. Balanced exposure."
+    else:
+        comment = "High volatility. Consider reducing risk."
+
+    return {
+        "top_asset": top_asset,
+        "risk_level": float(risk),
+        "commentary": comment
+    }
