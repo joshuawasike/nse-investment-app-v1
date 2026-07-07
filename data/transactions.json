@@ -1,0 +1,86 @@
+[
+    {
+        "transaction_id": "JW202600001",
+        "date": "2026-01-02 09:15:24",
+        "phone": "254712345678",
+        "customer_name": "Demo User",
+        "transaction_code": "QXA123ABC",
+        "subscription_plan": "Professional Individual",
+        "billing_cycle": "Yearly",
+        "amount": 4000,
+        "currency": "KES",
+        "payment_method": "M-Pesa",
+        "status": "Completed",
+        "license_status": "Active",
+        "expiry_date": "2027-01-02",
+        "remarks": "Annual subscription activated."
+    },
+
+    {
+        "transaction_id": "JW202600002",
+        "date": "2026-01-05 14:42:18",
+        "phone": "254722111222",
+        "customer_name": "ABC SACCO",
+        "transaction_code": "QXA456DEF",
+        "subscription_plan": "Institutional Edition",
+        "billing_cycle": "Monthly",
+        "amount": 2000,
+        "currency": "KES",
+        "payment_method": "M-Pesa",
+        "status": "Completed",
+        "license_status": "Active",
+        "expiry_date": "2026-02-05",
+        "remarks": "Institutional monthly subscription."
+    },
+
+    {
+        "transaction_id": "JW202600003",
+        "date": "2026-01-09 10:05:47",
+        "phone": "254733444555",
+        "customer_name": "Demo Investor",
+        "transaction_code": "QXA789XYZ",
+        "subscription_plan": "Community Edition",
+        "billing_cycle": "Free",
+        "amount": 0,
+        "currency": "KES",
+        "payment_method": "System",
+        "status": "Active",
+        "license_status": "Active",
+        "expiry_date": "",
+        "remarks": "Community Edition account."
+    },
+
+    {
+        "transaction_id": "JW202600004",
+        "date": "2026-01-12 16:22:31",
+        "phone": "254700888999",
+        "customer_name": "XYZ Investments",
+        "transaction_code": "QXA987LMN",
+        "subscription_plan": "Institutional Edition",
+        "billing_cycle": "Yearly",
+        "amount": 18000,
+        "currency": "KES",
+        "payment_method": "Bank Transfer",
+        "status": "Pending",
+        "license_status": "Pending Approval",
+        "expiry_date": "",
+        "remarks": "Awaiting administrator approval."
+    },
+
+    {
+        "transaction_id": "JW202600005",
+        "date": "2026-01-18 11:38:12",
+        "phone": "254701555444",
+        "customer_name": "Sample Client",
+        "transaction_code": "QXA654POI",
+        "subscription_plan": "Professional Individual",
+        "billing_cycle": "Monthly",
+        "amount": 400,
+        "currency": "KES",
+        "payment_method": "M-Pesa",
+        "status": "Expired",
+        "license_status": "Expired",
+        "expiry_date": "2026-02-18",
+        "remarks": "Subscription expired. Renewal required."
+    }
+]
