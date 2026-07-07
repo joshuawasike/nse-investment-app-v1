@@ -303,3 +303,29 @@ def cover():
             "© 2026 Jobura Solutions. All Rights Reserved."
 
     }
+ returns_table = []
+
+        for i in range(len(assets)):
+
+            invested_asset = invested * weights[i]
+
+            returns_table.append({
+
+                "asset": assets[i][0],
+
+                "capital": round(invested_asset,2),
+
+                "value": round(float(capital[i]),2),
+
+                "gain": round(float(capital[i]-invested_asset),2),
+
+                "dividends": round(float(dividends[i]),2),
+
+                "total": round(float(capital[i]+dividends[i]),2),
+
+                "annual_return": round(
+                    annual_return*100,
+                    2
+                )
+
+            })
