@@ -1,0 +1,322 @@
+{% extends "base.html" %}
+
+{% block title %}
+Alpha Signal Engine | JOBURA WEALTH®
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <h1>⚡ Alpha Signal Engine</h1>
+    <p>
+        AI-powered institutional investment signals generated from
+        portfolio analytics, dividend strength, risk assessment,
+        company quality and market regime analysis.
+    </p>
+</div>
+
+<!-- ================= KPI CARDS ================= -->
+
+<div class="dashboard-grid">
+
+    <div class="dashboard-card">
+        <h3>Total Signals</h3>
+        <div class="big-number">
+            {{ total_signals|default(0) }}
+        </div>
+    </div>
+
+    <div class="dashboard-card">
+        <h3>BUY Signals</h3>
+        <div class="big-number positive">
+            {{ buy_count|default(0) }}
+        </div>
+    </div>
+
+    <div class="dashboard-card">
+        <h3>HOLD Signals</h3>
+        <div class="big-number warning">
+            {{ hold_count|default(0) }}
+        </div>
+    </div>
+
+    <div class="dashboard-card">
+        <h3>REDUCE Signals</h3>
+        <div class="big-number negative">
+            {{ reduce_count|default(0) }}
+        </div>
+    </div>
+
+</div>
+
+<!-- ================= MARKET REGIME ================= -->
+
+<div class="content-card">
+
+<h2>Current Market Regime</h2>
+
+<h3>{{ current_regime|default("NORMAL") }}</h3>
+
+<p>
+
+Growth Leader:
+<b>{{ growth_leader|default("N/A") }}</b>
+
+<br><br>
+
+Dividend Leader:
+<b>{{ dividend_leader|default("N/A") }}</b>
+
+<br><br>
+
+Overall Winner:
+<b>{{ overall_leader|default("N/A") }}</b>
+
+</p>
+
+</div>
+
+<!-- ================= SIGNAL TABLE ================= -->
+
+<div class="content-card">
+
+<h2>Institutional Alpha Signals</h2>
+
+<table class="wealth-table">
+
+<thead>
+
+<tr>
+
+<th>Rank</th>
+<th>Company</th>
+<th>Sector</th>
+<th>ROI</th>
+<th>Dividend</th>
+<th>Risk</th>
+<th>Quality</th>
+<th>Signal</th>
+<th>Confidence</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for s in signals %}
+
+<tr>
+
+<td>{{ s.rank }}</td>
+
+<td>
+<b>{{ s.name }}</b>
+</td>
+
+<td>{{ s.sector }}</td>
+
+<td>{{ "%.2f"|format(s.roi) }}%</td>
+
+<td>{{ "%.2f"|format(s.dividend) }}%</td>
+
+<td>{{ s.risk }}</td>
+
+<td>{{ s.quality }}</td>
+
+<td>
+
+{% if s.signal=="BUY" %}
+
+<span class="badge-success">
+BUY
+</span>
+
+{% elif s.signal=="HOLD" %}
+
+<span class="badge-warning">
+HOLD
+</span>
+
+{% else %}
+
+<span class="badge-danger">
+REDUCE
+</span>
+
+{% endif %}
+
+</td>
+
+<td>
+
+{{ s.confidence }}%
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+<!-- ================= AI ADVISOR ================= -->
+
+<div class="content-card">
+
+<h2>AI Investment Commentary</h2>
+
+<div class="ai-panel">
+
+{{ ai_comment|default(
+"Current portfolio analytics indicate a balanced investment environment.
+High-quality banking and telecommunications companies continue to offer
+the strongest combination of dividend income, capital appreciation and
+portfolio stability."
+) }}
+
+</div>
+
+</div>
+
+<!-- ================= TOP OPPORTUNITIES ================= -->
+
+<div class="content-card">
+
+<h2>Top Institutional Opportunities</h2>
+
+<div class="dashboard-grid">
+
+{% for c in top_companies %}
+
+<div class="dashboard-card">
+
+<h3>{{ c.name }}</h3>
+
+<p>
+
+Sector:
+{{ c.sector }}
+
+<br>
+
+Dividend Yield:
+{{ c.dividend }}%
+
+<br>
+
+Quality Score:
+{{ c.quality }}
+
+<br>
+
+Health Score:
+{{ c.health }}
+
+<br>
+
+Recommendation:
+
+<b>
+
+{{ c.signal }}
+
+</b>
+
+</p>
+
+</div>
+
+{% endfor %}
+
+</div>
+
+</div>
+
+<!-- ================= RISK SUMMARY ================= -->
+
+<div class="content-card">
+
+<h2>Risk Distribution</h2>
+
+<table class="wealth-table">
+
+<tr>
+
+<th>Risk Level</th>
+
+<th>Companies</th>
+
+</tr>
+
+<tr>
+
+<td>🟢 Low Risk</td>
+
+<td>{{ low_risk|default(0) }}</td>
+
+</tr>
+
+<tr>
+
+<td>🟡 Medium Risk</td>
+
+<td>{{ medium_risk|default(0) }}</td>
+
+</tr>
+
+<tr>
+
+<td>🔴 High Risk</td>
+
+<td>{{ high_risk|default(0) }}</td>
+
+</tr>
+
+</table>
+
+</div>
+
+<!-- ================= FOOTER ================= -->
+
+<div class="content-card">
+
+<h3>JOBURA WEALTH®</h3>
+
+<p>
+
+NSE Institutional Wealth Management Platform
+
+<br>
+
+Professional Analytics Suite
+
+<br><br>
+
+AI Investment Advisor
+
+•
+
+Institutional Research Centre
+
+•
+
+Risk Analytics Engine
+
+•
+
+Dividend Intelligence
+
+•
+
+Portfolio Optimisation
+
+</p>
+
+</div>
+
+{% endblock %}
