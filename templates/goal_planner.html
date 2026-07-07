@@ -1,0 +1,438 @@
+{% extends "base.html" %}
+
+{% block title %}
+Goal Planner | JOBURA WEALTH®
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <h1>🎯 Wealth Goal Planner</h1>
+
+    <p>
+        Build a disciplined investment strategy by defining your financial
+        objectives, estimating future wealth and determining the monthly
+        investment required to achieve your goals.
+    </p>
+</div>
+
+<!-- ================= GOAL INPUT ================= -->
+
+<div class="content-card">
+
+<h2>Investment Goal</h2>
+
+<form method="POST">
+
+<div class="form-grid">
+
+<div>
+
+<label>Target Wealth (KES)</label>
+
+<input
+type="number"
+name="target"
+placeholder="10000000"
+required>
+
+</div>
+
+<div>
+
+<label>Monthly Investment (KES)</label>
+
+<input
+type="number"
+name="monthly"
+placeholder="25000"
+required>
+
+</div>
+
+<div>
+
+<label>Investment Period (Years)</label>
+
+<input
+type="number"
+name="years"
+placeholder="15"
+required>
+
+</div>
+
+<div>
+
+<label>Expected Annual Return (%)</label>
+
+<input
+type="number"
+step="0.1"
+name="return_rate"
+value="12">
+
+</div>
+
+</div>
+
+<br>
+
+<button class="btn-primary">
+
+🚀 Calculate Wealth Plan
+
+</button>
+
+</form>
+
+</div>
+
+<!-- ================= RESULTS ================= -->
+
+{% if result %}
+
+<div class="dashboard-grid">
+
+<div class="dashboard-card">
+
+<h3>Target Wealth</h3>
+
+<div class="big-number">
+
+KES {{ "{:,.0f}".format(result.target) }}
+
+</div>
+
+</div>
+
+<div class="dashboard-card">
+
+<h3>Total Invested</h3>
+
+<div class="big-number">
+
+KES {{ "{:,.0f}".format(result.invested) }}
+
+</div>
+
+</div>
+
+<div class="dashboard-card">
+
+<h3>Projected Portfolio</h3>
+
+<div class="big-number positive">
+
+KES {{ "{:,.0f}".format(result.future_value) }}
+
+</div>
+
+</div>
+
+<div class="dashboard-card">
+
+<h3>Goal Achievement</h3>
+
+<div class="big-number">
+
+{{ result.progress }}%
+
+</div>
+
+</div>
+
+</div>
+
+{% endif %}
+
+<!-- ================= SAVINGS ROADMAP ================= -->
+
+{% if roadmap %}
+
+<div class="content-card">
+
+<h2>Investment Roadmap</h2>
+
+<table class="wealth-table">
+
+<thead>
+
+<tr>
+
+<th>Year</th>
+<th>Total Invested</th>
+<th>Projected Value</th>
+<th>Annual Growth</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for year in roadmap %}
+
+<tr>
+
+<td>{{ year.year }}</td>
+
+<td>
+
+KES {{ "{:,.0f}".format(year.invested) }}
+
+</td>
+
+<td>
+
+KES {{ "{:,.0f}".format(year.value) }}
+
+</td>
+
+<td>
+
+{{ "%.2f"|format(year.growth) }}%
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+{% endif %}
+
+<!-- ================= RETIREMENT ESTIMATE ================= -->
+
+{% if retirement %}
+
+<div class="content-card">
+
+<h2>Retirement Income Projection</h2>
+
+<table class="wealth-table">
+
+<tr>
+
+<th>Estimated Portfolio Value</th>
+
+<td>
+
+KES {{ "{:,.0f}".format(retirement.portfolio) }}
+
+</td>
+
+</tr>
+
+<tr>
+
+<th>Recommended Annual Withdrawal (4%)</th>
+
+<td>
+
+KES {{ "{:,.0f}".format(retirement.annual_income) }}
+
+</td>
+
+</tr>
+
+<tr>
+
+<th>Estimated Monthly Income</th>
+
+<td>
+
+KES {{ "{:,.0f}".format(retirement.monthly_income) }}
+
+</td>
+
+</tr>
+
+</table>
+
+</div>
+
+{% endif %}
+
+<!-- ================= AI ADVISOR ================= -->
+
+<div class="content-card">
+
+<h2>AI Wealth Advisor</h2>
+
+<div class="ai-panel">
+
+{{ ai_message|default(
+
+"Maintaining consistent monthly investments over the long term is one of the
+most effective ways to build wealth. Diversifying across high-quality dividend
+companies while reinvesting income can significantly improve long-term
+portfolio performance."
+
+) }}
+
+</div>
+
+</div>
+
+<!-- ================= RECOMMENDED STRATEGY ================= -->
+
+<div class="content-card">
+
+<h2>Recommended Investment Strategy</h2>
+
+<table class="wealth-table">
+
+<thead>
+
+<tr>
+
+<th>Investment Model</th>
+<th>Suitable</th>
+<th>Reason</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>Dividend Blue Chip</td>
+
+<td>★★★★★</td>
+
+<td>Excellent for long-term wealth accumulation and passive income.</td>
+
+</tr>
+
+<tr>
+
+<td>Balanced Portfolio</td>
+
+<td>★★★★★</td>
+
+<td>Balances dividend income with capital growth.</td>
+
+</tr>
+
+<tr>
+
+<td>Growth Portfolio</td>
+
+<td>★★★★☆</td>
+
+<td>Suitable for investors with longer investment horizons.</td>
+
+</tr>
+
+<tr>
+
+<td>Value Investing</td>
+
+<td>★★★★☆</td>
+
+<td>Focuses on undervalued quality companies.</td>
+
+</tr>
+
+<tr>
+
+<td>Institutional Portfolio</td>
+
+<td>★★★★★</td>
+
+<td>Ideal for large portfolios requiring diversification.</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+<!-- ================= GOAL STATUS ================= -->
+
+<div class="dashboard-grid">
+
+<div class="dashboard-card">
+
+<h3>Inflation Adjusted</h3>
+
+<div class="big-number">
+
+{{ inflation_adjusted|default("Available After Calculation") }}
+
+</div>
+
+</div>
+
+<div class="dashboard-card">
+
+<h3>Expected CAGR</h3>
+
+<div class="big-number">
+
+{{ expected_cagr|default("12%") }}
+
+</div>
+
+</div>
+
+<div class="dashboard-card">
+
+<h3>Portfolio Health</h3>
+
+<div class="big-number positive">
+
+{{ health_score|default("95") }}
+
+</div>
+
+</div>
+
+<div class="dashboard-card">
+
+<h3>Goal Confidence</h3>
+
+<div class="big-number">
+
+{{ confidence|default("High") }}
+
+</div>
+
+</div>
+
+</div>
+
+<!-- ================= FOOTER ================= -->
+
+<div class="content-card">
+
+<h3>JOBURA WEALTH®</h3>
+
+<p>
+
+NSE Institutional Wealth Management Platform
+
+<br>
+
+Goal-Based Wealth Planning Engine
+
+<br><br>
+
+Helping investors build sustainable long-term wealth through disciplined
+investment planning, portfolio optimisation and AI-powered financial guidance.
+
+</p>
+
+</div>
+
+{% endblock %}
