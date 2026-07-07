@@ -483,8 +483,7 @@ def apply_corporate_actions(capital, code):
         bonus = capital * 0.03
 
     return capital, bonus
-
-   
+  
     # -----------------------------------------------------
     # SUMMARY
     # -----------------------------------------------------
@@ -509,7 +508,6 @@ def apply_corporate_actions(capital, code):
         "max_drawdown": round(max_drawdown*100,2)
 
     }
-
     # -----------------------------------------------------
     # RETURN
     # -----------------------------------------------------
@@ -529,7 +527,6 @@ def apply_corporate_actions(capital, code):
         
         "returns": returns_table
     }
-
 
 # =========================================================
 # 🔐 LOGIN
@@ -747,8 +744,6 @@ def reject(code):
     save_users(users)
 
     return redirect("/admin")
-
-
 # =========================================================
 # 🔄 CANCEL SUBSCRIPTION
 # =========================================================
