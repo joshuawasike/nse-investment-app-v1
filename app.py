@@ -39,7 +39,13 @@ from engine.simulation import simulate_market
 from engine.portfolio import build_portfolio
 from engine.analytics import portfolio_summary
 from engine.ai import investment_advisor
-from engine.research import company_database
+from engine.research import (
+    company_database,
+    ASSETS,
+    DIVIDEND_DATABASE,
+    DIVIDEND_BASE,
+    estimate_dividend_yields
+)
 from engine.risk import portfolio_risk
 from engine.retirement import retirement_projection
 from engine.reports import create_report
@@ -52,7 +58,10 @@ from engine.utils import (
     percent,
     platform
 )
-
+from engine.corporate_actions import (
+    CORPORATE_ACTIONS,
+    apply_corporate_actions
+)
 # ==========================================================
 # FLASK APPLICATION
 # ==========================================================
