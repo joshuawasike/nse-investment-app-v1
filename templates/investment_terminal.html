@@ -1,103 +1,465 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>JOBURA WEALTH® | NSE Institutional Wealth Management Platform</title>
+<title>Jobura NSE Institutional Wealth Management Platform</title>
+
 <style>
-:root{
---bg:#07111F;--panel:#111827;--panel2:#0f172a;--line:#23324d;
---accent:#2563eb;--green:#22c55e;--gold:#f59e0b;--text:#eef2ff;
+body {
+    font-family: Arial;
+    background: #0b0f19;
+    color: #e5e7eb;
+    margin: 0;
 }
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,sans-serif}
-header{background:#0b1728;padding:18px 28px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
-.brand h1{margin:0;color:#60a5fa} .brand h3{margin:4px 0 0;font-weight:400}
-nav a{color:#cbd5e1;text-decoration:none;margin-left:18px}
-.container{max-width:1500px;margin:auto;padding:22px}
-.hero,.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:18px}
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
-.kpi{background:var(--panel2);padding:14px;border-radius:10px}
-.kpi .v{font-size:28px;color:var(--green);font-weight:bold}
-.workflow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-.step{background:var(--panel2);padding:12px;border-radius:10px}
-table{width:100%;border-collapse:collapse}
-th,td{padding:10px;border-bottom:1px solid #2a3a55}th{background:#162133;color:#93c5fd}
-footer{text-align:center;padding:25px;color:#cbd5e1}
+
+.container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 20px;
+}
+
+/* TOP BAR */
+.topbar {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+.topbar a {
+    text-decoration: none;
+    font-weight: bold;
+    color: #60a5fa;
+}
+
+/* STATUS */
+.badge-free { color: gold; font-weight: bold; }
+.badge-premium { color: #22c55e; font-weight: bold; }
+.badge-danger { color: #ef4444; }
+
+/* GRID DASHBOARD */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 15px;
+}
+
+.card {
+    background: #111827;
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid #1f2937;
+}
+
+/* INFO */
+.info-box, .guide-box, .payment-box {
+    padding: 15px;
+    border-radius: 10px;
+    margin-top: 10px;
+}
+
+.info-box {
+    background: #0f172a;
+    border: 1px solid #1e293b;
+}
+
+.guide-box {
+    background: #052e16;
+    border: 1px solid #065f46;
+    color: #bbf7d0;
+}
+
+.payment-box {
+    background: #111827;
+    border: 1px solid #374151;
+}
+
+/* FORM */
+.form-box input,
+.form-box select {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    background: #111827;
+    color: white;
+    border: 1px solid #374151;
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(90deg,#2563eb,#1d4ed8);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+}
+
+/* TABLE */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-family: monospace;
+    background: #0f172a;
+}
+
+th {
+    background: #111827;
+    color: #93c5fd;
+    padding: 10px;
+    text-align: left;
+}
+
+td {
+    padding: 10px;
+    border-bottom: 1px solid #1f2937;
+}
+
+/* AI BOX */
+.ai-box {
+    background: #0f172a;
+    padding: 12px;
+    border-radius: 10px;
+    margin-top: 10px;
+    border-left: 4px solid #60a5fa;
+}
+
+/* PAYMENT GRID */
+.pricing-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.pricing-item {
+    background: #0f172a;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #1e293b;
+}
+
+img {
+    width: 100%;
+    margin-top: 10px;
+    border-radius: 10px;
+}
+.model-grid{
+    display:grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap:10px;
+    margin-bottom:15px;
+}
+
+.model-card{
+    background:#111827;
+    border:1px solid #374151;
+    padding:12px;
+    border-radius:10px;
+    cursor:pointer;
+    transition:0.2s;
+    font-size:13px;
+}
+
+.model-card:hover{
+    transform: scale(1.03);
+    border-color:#60a5fa;
+}
+
+.model-card input{
+    margin-bottom:8px;
+}
+
+.model1{ border-left:4px solid #22c55e; }
+.model2{ border-left:4px solid #3b82f6; }
+.model3{ border-left:4px solid #f59e0b; }
+.model4{ border-left:4px solid #a855f7; }
+.model5{ border-left:4px solid #ef4444; }
 </style>
 </head>
+
 <body>
-<header>
-<div class="brand">
-<h1>JOBURA WEALTH®</h1>
-<h3>NSE Institutional Wealth Management Platform</h3>
-<div>Professional Analytics Suite • Version 2026</div>
-</div>
-<nav>
-<a href="/">Dashboard</a>
-<a href="#">Research</a>
-<a href="#">AI Advisor</a>
-<a href="#">Risk</a>
-<a href="/admin">Admin</a>
-</nav>
-</header>
 
 <div class="container">
 
-<div class="hero">
-<h2>Executive Dashboard</h2>
-<p>A comprehensive institutional investment platform designed for portfolio construction, dividend research, retirement planning, Monte Carlo simulations, institutional risk management and AI-powered investment decision support for the Nairobi Securities Exchange.</p>
+<!-- TOP BAR -->
+<div class="topbar">
+    <a href="/login">Admin Login</a>
+    {% if session.get('admin') %}
+        <a href="/admin">Dashboard</a>
+        <a href="/logout" class="badge-danger">Logout</a>
+    {% endif %}
 </div>
 
-<div class="kpis">
-<div class="kpi"><div>AUM</div><div class="v">KES {{ "{:,.0f}".format(best_model_value|default(0)) }}</div></div>
-<div class="kpi"><div>Portfolio Health</div><div class="v">93/100</div></div>
-<div class="kpi"><div>Institutional Rating</div><div class="v">A+</div></div>
-<div class="kpi"><div>Risk</div><div class="v">Moderate</div></div>
+<!-- HEADER -->
+<div class="info-box">
+<h2>📊 Jobura NSE Capital Terminal V3</h2>
+✔ Portfolio engine<br>
+✔ Bull / Bear / Normal simulation<br>
+✔ Dividend projection<br>
+✔ AI advisor<br>
+✔ Goal system
 </div>
 
+<div class="guide-box">
+<b>How to Use</b><br><br>
+✔ Enter monthly investment<br>
+✔ Enter years<br>
+✔ Run engine<br><br>
+➡ FREE VERSION: Normal only<br>
+🔒 PREMIUM: Full analytics + AI + Goal optimization
+</div>
+
+<!-- PAYMENT -->
+<div class="payment-box">
+<h3>💳 Payment</h3>
+<b>PayBill:</b> 542542<br>
+<b>Account:</b> 31909<br>
+<b>Name:</b> Jobura Solutions<br><br>
+
+<div class="pricing-grid">
+<div class="pricing-item">
+<b>Individual</b><br>
+KES 400/month<br>
+KES 4,000/year
+</div>
+<div class="pricing-item">
+<b>Institutional</b><br>
+KES 2,000/month<br>
+KES 18,000/year
+</div>
+</div>
+</div>
+
+<hr>
+
+{% if not is_premium %}
+<div class="card badge-free">🔒 FREE VERSION ACTIVE (Normal Only)</div>
+{% else %}
+<div class="card badge-premium">✅ PREMIUM ACTIVE</div>
+{% endif %}
+
+<!-- ================= FORM ================= -->
 <div class="card">
-<h2>Investment Workflow</h2>
-<div class="workflow">
-<div class="step"><b>1.</b><br>Select Strategy</div>
-<div class="step"><b>2.</b><br>Enter Capital</div>
-<div class="step"><b>3.</b><br>Run Simulation</div>
-<div class="step"><b>4.</b><br>Review AI Analytics</div>
-</div>
+<h3>🧾 Investment Input Terminal</h3>
+
+<form method="POST" class="form-box">
+
+<!-- ================= MODELS ================= -->
+<h3 style="margin-bottom:10px;">🧠 Investment Models</h3>
+
+<div class="model-grid">
+
+    <label class="model-card model1">
+        <input type="radio" name="model" value="dividend" checked>
+        <b>Model 1</b><br>
+        Dividend Blue Chip
+    </label>
+
+    <label class="model-card model2">
+        <input type="radio" name="model" value="growth">
+        <b>Model 2</b><br>
+        Aggressive Growth
+    </label>
+
+    <label class="model-card model3">
+        <input type="radio" name="model" value="banking">
+        <b>Model 3</b><br>
+        Banking Dominance
+    </label>
+
+    <label class="model-card model4">
+        <input type="radio" name="model" value="value">
+        <b>Model 4</b><br>
+        Value Investing
+    </label>
+
+    <label class="model-card model5">
+        <input type="radio" name="model" value="income">
+        <b>Model 5</b><br>
+        High Dividend Income
+    </label>
+
 </div>
 
-<div class="card">
-<h2>Investment Input</h2>
-<form method="POST">
-<input name="target_amount" placeholder="Target Amount (KES)">
-<input name="monthly" placeholder="Monthly Investment (KES)">
-<input name="years" placeholder="Years">
-<input name="transaction_code" placeholder="Transaction Code">
-<input name="phone" placeholder="Phone">
-<button type="submit">Run Institutional Engine</button>
+<!-- ================= INPUTS ================= -->
+<input type="number" name="target_amount" placeholder="Target Amount (KES)">
+<input name="monthly" placeholder="Monthly Investment (KES)" required>
+<input name="years" placeholder="Years" required>
+<input name="transaction_code" placeholder="Transaction Code" required>
+<input name="phone" placeholder="Phone" required>
+
+<button type="submit">🚀 Run Engine</button>
+
 </form>
-</div>
-
+{% if goal_result %}
 <div class="card">
-<h2>Cross-Model Portfolio Comparison</h2>
+<h3>🎯 Goal Advisory</h3>
+
+<p>Target: KES {{ "{:,.0f}".format(goal_result["target"]) }}</p>
+
+<p>Years needed: {{ goal_result.years_needed }}</p>
+
+<p>Monthly for 5 years: {{ goal_result.monthly_5 }}</p>
+<p>Monthly for 10 years: {{ goal_result.monthly_10 }}</p>
+<p>Monthly for 15 years: {{ goal_result.monthly_15 }}</p>
+</div>
+{% endif %}
+<div class="card">
+<h3>📊 Cross-Model Portfolio Comparison</h3>
+
 <table>
-<tr><th>Model</th><th>Normal</th><th>Bull</th><th>Bear</th></tr>
-{% for model,result in data.items() %}
 <tr>
-<td>{{model}}</td>
-<td>{{ "{:,.0f}".format(result["normal"]["summary"]["value"]|default(0)) }}</td>
-<td>{% if result["bull"] %}{{ "{:,.0f}".format(result["bull"]["summary"]["value"]|default(0)) }}{% endif %}</td>
-<td>{% if result["bear"] %}{{ "{:,.0f}".format(result["bear"]["summary"]["value"]|default(0)) }}{% endif %}</td>
+    <th>Model</th>
+    <th>Normal Value</th>
+    <th>Bull Value</th>
+    <th>Bear Value</th>
 </tr>
+
+{% for model, result in data.items() %}
+
+<tr>
+    <td>{{ model }}</td>
+
+    <!-- NORMAL -->
+    <td>
+        {{ "{:,.0f}".format(result["normal"]["summary"]["value"] | default(0)) }}
+    </td>
+
+    <!-- BULL -->
+    <td>
+        {% if result["bull"] and result["bull"].get("summary") %}
+            {{ "{:,.0f}".format(result["bull"]["summary"]["value"] | default(0)) }}
+        {% else %}
+            N/A
+        {% endif %}
+    </td>
+
+    <!-- BEAR -->
+    <td>
+        {% if result["bear"] and result["bear"].get("summary") %}
+            {{ "{:,.0f}".format(result["bear"]["summary"]["value"] | default(0)) }}
+        {% else %}
+            N/A
+        {% endif %}
+    </td>
+</tr>
+
 {% endfor %}
 </table>
 </div>
+<!-- 🏆 BEST MODEL SUMMARY -->
+<!-- 🏆 BEST MODEL SUMMARY -->
+<div class="card">
+<h3>🏆 Best Performing Model</h3>
 
-<footer>
-<b>JOBURA WEALTH®</b><br>
-NSE Institutional Wealth Management Platform<br>
-Powered by Monte Carlo Simulation Engine • AI Investment Advisor • Risk Analytics Framework • Goal-Based Wealth Planning Engine<br>
-© 2026 Jobura Solutions. All Rights Reserved.
-</footer>
+<p><b>Best Model:</b> {{ best_model_name|default("N/A")|upper }}</p>
+
+<p>
+<b>Value:</b>
+KES {{ "{:,.0f}".format(best_model_value|default(0)) }}
+</p>
+
+</div>
+</div>
+<h3>Model Comparison</h3>
+
+{% if data %}
+
+<div class="grid">
+
+{% for model, result in data.items() %}
+
+<div class="card">
+
+    <h3>{{ model|upper }}</h3>
+
+    {% for scenario_name, scenario in result.items() %}
+
+        {% if scenario %}
+
+        <div class="card" style="margin-top:10px;border-left:4px solid #60a5fa;">
+
+            <h4>{{ scenario_name|upper }} SCENARIO</h4>
+{% if scenario.get("chart") %}
+    <h4>Portfolio Curve</h4>
+    <img src="data:image/png;base64,{{ scenario['chart'] }}" />
+{% endif %}
+
+            <p>
+                <b>Invested:</b><br>
+                KES {{ "{:,.0f}".format(scenario["summary"]["invested"]) }}
+            </p>
+
+            <p>
+                <b>Portfolio Value:</b><br>
+                KES {{ "{:,.0f}".format(scenario["summary"]["value"]) }}
+            </p>
+
+            <p>
+                <b>Dividends:</b><br>
+                KES {{ "{:,.0f}".format(scenario["summary"]["dividends"]) }}
+            </p>
+
+            <p>
+                <b>Risk Score:</b>
+                {{ scenario["ai"].get("risk", scenario["ai"].get("risk_level", "N/A")) }}
+            </p>
+
+{% if scenario_name == "normal" %}
+<h4>Allocation</h4>
+
+<table>
+    <tr>
+        <th>Asset</th>
+        <th>%</th>
+        <th>KES</th>
+    </tr>
+
+    {% for p in scenario["plan"] %}
+    <tr>
+        <td>{{ p["name"] }}</td>
+        <td>{{ p["percent"] }}</td>
+        <td>{{ "{:,.0f}".format(p["kes"]) }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endif %}
+               
+
+            <h4>Returns</h4>
+
+            <table>
+                <tr>
+                    <th>Asset</th>
+                    <th>Value</th>
+                    <th>Dividends</th>
+                </tr>
+
+                {% for r in scenario["returns"] %}
+                <tr>
+                    <td>{{ r["name"] }}</td>
+                    <td>KES {{ "{:,.0f}".format(r["value"]) }}</td>
+                    <td>KES {{ "{:,.0f}".format(r["dividends"]) }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+
+        </div>
+
+        {% endif %}
+
+    {% endfor %}
+
+</div>
+
+{% endfor %}
+
+</div>
+
+{% endif %}
+
 </div>
 </body>
 </html>
