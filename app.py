@@ -2317,8 +2317,12 @@ def index():
             ranking=ranking
         )
 
-    except Exception as e:
-        return f"APP ERROR: {str(e)}"
+    import traceback
+
+    ...
+
+    except Exception:
+        return f"<pre>{traceback.format_exc()}</pre>""
 # =========================================================
 # 🚀 ADMIN ROUTE (FIXED SAFE)
 # =========================================================
