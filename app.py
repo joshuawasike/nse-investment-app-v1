@@ -199,80 +199,15 @@ DEFAULT_MODEL = "Dividend"
 
 CURRENCY = "KES"
 
-# ==========================================================
-# APPLICATION HOME
-# ==========================================================
-
-@app.route("/")
-def home():
-
-    return render_template(
-
-        "dashboard.html",
-
-        app=APP,
-
-        companies=companies,
-
-        market=market,
-
-        user=session.get("user"),
-
-        premium=session.get("premium", False)
-
-    )
-
 @app.route("/companies")
 def company_list():
 
-    files = glob.glob("NSE_data_all_stock_*.csv")
+    companies = company_database()
 
-    if not files:
-        return "No CSV files found"
-
-    names = []
-
-    for f in files:
-        try:
-            temp = pd.read_csv(f)
-
-            temp.columns = temp.columns.astype(str).str.strip().str.upper()
-
-            possible_cols = [
-                "NAME",
-                "COMPANY",
-                "SECURITY",
-                "SYMBOL",
-                "STOCK",
-                "ISSUER"
-            ]
-
-            name_col = None
-
-            for col in temp.columns:
-                if col in possible_cols:
-                    name_col = col
-                    break
-
-            if name_col is None:
-                continue
-
-            names.extend(
-                temp[name_col]
-                .dropna()
-                .astype(str)
-                .str.upper()
-                .str.strip()
-                .tolist()
-            )
-
-        except Exception:
-            continue
-
-    if not names:
+    if not companies:
         return "No valid company names found"
 
-    return "<br>".join(sorted(set(names)))
+    return "<br>".join(companies)
 # ==========================================================
 # SECURITY CONFIGURATION
 # ==========================================================
