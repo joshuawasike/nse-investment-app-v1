@@ -671,17 +671,10 @@ summary = {
 }
 
 return {
-
     "summary": summary,
-
-    "curve": curve,
-
+    "portfolio": breakdown,
+    "returns": returns_table,
     "plan": plan,
-
-    "ai": ai,
-
-    "assets": breakdown,
-
-    "returns": returns_table
-
+    "curve": curve,
+    "advisor": ai
 }
