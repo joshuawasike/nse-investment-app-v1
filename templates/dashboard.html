@@ -1,431 +1,419 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
+{% block title %}
+JOBURA WEALTH® | Executive Dashboard
+{% endblock %}
 
-<meta charset="UTF-8">
+{% block content %}
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- ========================================================= -->
+<!-- PAGE HEADER -->
+<!-- ========================================================= -->
 
-<title>
-JOBURA WEALTH®
-|
-NSE Institutional Wealth Management Platform
-</title>
+<div class="card">
 
-<style>
+    <h2>📊 Executive Dashboard</h2>
 
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-}
+    <p>
 
-body{
+        Welcome to <b>JOBURA WEALTH®</b>
 
-    font-family:Arial, Helvetica, sans-serif;
+        <br><br>
 
-    background:#07111F;
+        NSE Institutional Wealth Management Platform
 
-    color:#F8FAFC;
+        <br>
 
-}
+        Professional Analytics Suite
 
-/* =========================
-HEADER
-========================= */
-
-.header{
-
-    height:80px;
-
-    background:#0B1728;
-
-    border-bottom:1px solid #243247;
-
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:center;
-
-    padding:0 30px;
-
-}
-
-.logo h1{
-
-    color:#60A5FA;
-
-    font-size:30px;
-
-}
-
-.logo h3{
-
-    font-weight:normal;
-
-    color:#CBD5E1;
-
-}
-
-.user{
-
-    text-align:right;
-
-}
-
-.user span{
-
-    color:#22C55E;
-
-}
-
-/* =========================
-LAYOUT
-========================= */
-
-.container{
-
-    display:flex;
-
-    min-height:calc(100vh - 80px);
-
-}
-
-/* =========================
-SIDEBAR
-========================= */
-
-.sidebar{
-
-    width:260px;
-
-    background:#0D1628;
-
-    border-right:1px solid #243247;
-
-    padding:25px;
-
-}
-
-.sidebar h3{
-
-    color:#93C5FD;
-
-    margin-bottom:20px;
-
-}
-
-.sidebar ul{
-
-    list-style:none;
-
-}
-
-.sidebar li{
-
-    padding:12px;
-
-    margin-bottom:8px;
-
-    border-radius:8px;
-
-    transition:0.2s;
-
-}
-
-.sidebar li:hover{
-
-    background:#1E293B;
-
-    cursor:pointer;
-
-}
-
-.sidebar a{
-
-    color:white;
-
-    text-decoration:none;
-
-}
-
-/* =========================
-CONTENT
-========================= */
-
-.content{
-
-    flex:1;
-
-    padding:25px;
-
-}
-
-/* =========================
-WELCOME
-========================= */
-
-.welcome{
-
-    background:#111827;
-
-    border:1px solid #243247;
-
-    padding:25px;
-
-    border-radius:15px;
-
-    margin-bottom:20px;
-
-}
-
-.welcome h2{
-
-    color:#60A5FA;
-
-}
-
-.welcome p{
-
-    margin-top:10px;
-
-    line-height:1.7;
-
-}
-
-/* =========================
-EXECUTIVE CARDS
-========================= */
-
-.cards{
-
-    display:grid;
-
-    grid-template-columns:repeat(4,1fr);
-
-    gap:15px;
-
-}
-
-.card{
-
-    background:#111827;
-
-    border:1px solid #243247;
-
-    border-radius:12px;
-
-    padding:20px;
-
-}
-
-.card h4{
-
-    color:#CBD5E1;
-
-}
-
-.value{
-
-    font-size:30px;
-
-    margin-top:10px;
-
-    color:#22C55E;
-
-    font-weight:bold;
-
-}
-
-@media(max-width:1000px){
-
-.cards{
-
-grid-template-columns:repeat(2,1fr);
-
-}
-
-.sidebar{
-
-display:none;
-
-}
-
-}
-
-</style>
-
-</head>
-
-<body>
-
-<!-- ====================================== -->
-<!-- HEADER -->
-<!-- ====================================== -->
-
-<div class="header">
-
-<div class="logo">
-
-<h1>JOBURA WEALTH®</h1>
-
-<h3>NSE Institutional Wealth Management Platform</h3>
+    </p>
 
 </div>
 
-<div class="user">
+<!-- ========================================================= -->
+<!-- EXECUTIVE KPI CARDS -->
+<!-- ========================================================= -->
 
-<b>Professional Analytics Suite</b>
+<div class="kpi-grid">
 
-<br>
+    <div class="kpi-card">
 
-Version 2026
+        <div class="kpi-title">
+            Portfolio Health
+        </div>
 
-<br><br>
+        <div class="kpi-value">
+            94%
+        </div>
 
-{% if session.get("admin") %}
+    </div>
 
-<span>Administrator Logged In</span>
+    <div class="kpi-card">
+
+        <div class="kpi-title">
+            Market Status
+        </div>
+
+        <div class="kpi-value"
+             id="market-status">
+
+            Loading...
+
+        </div>
+
+    </div>
+
+    <div class="kpi-card">
+
+        <div class="kpi-title">
+            Institutional Rating
+        </div>
+
+        <div class="kpi-value">
+
+            AA+
+
+        </div>
+
+    </div>
+
+    <div class="kpi-card">
+
+        <div class="kpi-title">
+            Live Clock
+        </div>
+
+        <div class="kpi-value"
+             id="live-clock">
+
+            --
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- INVESTMENT TERMINAL -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+<h2>Investment Terminal</h2>
+
+<form method="POST">
+
+<label>
+
+Monthly Investment
+
+</label>
+
+<input
+type="number"
+name="monthly"
+required>
+
+<label>
+
+Investment Years
+
+</label>
+
+<input
+type="number"
+name="years"
+required>
+
+<button>
+
+Run Institutional Simulation
+
+</button>
+
+</form>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- PORTFOLIO ALLOCATION -->
+<!-- ========================================================= -->
+
+{% if portfolio %}
+
+<div class="card">
+
+<h2>
+
+Strategic Portfolio Allocation
+
+</h2>
+
+{% for p in portfolio %}
+
+<span class="badge badge-buy">
+
+{{ p.name }}
+
+—
+
+{{ p.allocation }}%
+
+</span>
+
+{% endfor %}
+
+</div>
 
 {% endif %}
 
-</div>
+<!-- ========================================================= -->
+<!-- ALPHA SIGNAL ENGINE -->
+<!-- ========================================================= -->
 
-</div>
+{% if scenarios %}
 
-<!-- ====================================== -->
+{% for scenario, results in scenarios.items() %}
 
-<div class="container">
+<div class="card">
 
-<!-- ====================================== -->
-<!-- SIDEBAR -->
-<!-- ====================================== -->
+<h2>
 
-<div class="sidebar">
+{{ scenario|upper }}
 
-<h3>Navigation</h3>
+Market Regime
 
-<ul>
-
-<li><a href="/">🏠 Dashboard</a></li>
-
-<li><a href="#">📈 Portfolio</a></li>
-
-<li><a href="#">🧠 AI Advisor</a></li>
-
-<li><a href="#">🎯 Goal Planner</a></li>
-
-<li><a href="#">⚠ Risk Centre</a></li>
-
-<li><a href="#">🏦 Company Research</a></li>
-
-<li><a href="#">📊 Reports</a></li>
-
-<li><a href="/admin">⚙ Administration</a></li>
-
-</ul>
-
-</div>
-
-<!-- ====================================== -->
-<!-- MAIN CONTENT -->
-<!-- ====================================== -->
-
-<div class="content">
-
-<div class="welcome">
-
-<h2>Executive Dashboard</h2>
+</h2>
 
 <p>
 
-Welcome to
+📈 Growth Leader
 
-<b>JOBURA WEALTH®</b> —
+<b>
 
-NSE Institutional Wealth Management Platform.
+{{ explanation[scenario].growth_best }}
 
-This platform provides institutional-grade portfolio construction, wealth planning, dividend forecasting, AI-assisted investment analysis, risk management, and multi-scenario market simulation for investors in the Nairobi Securities Exchange.
+</b>
 
 </p>
 
+<p>
+
+💰 Dividend Leader
+
+<b>
+
+{{ explanation[scenario].dividend_best }}
+
+</b>
+
+</p>
+
+<p>
+
+🏆 Overall Winner
+
+<b>
+
+{{ explanation[scenario].overall_best }}
+
+</b>
+
+</p>
+
+<hr>
+
+<h3>
+
+Institutional Alpha Signals
+
+</h3>
+
+<table>
+
+<tr>
+
+<th>Rank</th>
+
+<th>Company</th>
+
+<th>ROI</th>
+
+<th>Risk</th>
+
+<th>Signal</th>
+
+<th>Confidence</th>
+
+</tr>
+
+{% for r in results %}
+
+{% set confidence=(r.score*100)|abs|round(1) %}
+
+{% if r.score>1 %}
+
+{% set signal="BUY" %}
+
+{% elif r.score>0.2 %}
+
+{% set signal="HOLD" %}
+
+{% else %}
+
+{% set signal="REDUCE" %}
+
+{% endif %}
+
+<tr>
+
+<td>
+
+#{{ r.rank }}
+
+</td>
+
+<td>
+
+{{ r.name }}
+
+</td>
+
+<td>
+
+{{ r.roi|round(2) }}%
+
+</td>
+
+<td>
+
+{{ r.risk_level }}
+
+</td>
+
+<td>
+
+<span class="badge
+
+{% if signal=='BUY' %}
+
+badge-buy
+
+{% elif signal=='HOLD' %}
+
+badge-hold
+
+{% else %}
+
+badge-reduce
+
+{% endif %}
+
+">
+
+{{ signal }}
+
+</span>
+
+</td>
+
+<td>
+
+{{ confidence }}%
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
 </div>
-
-<!-- ====================================== -->
-<!-- KPI CARDS -->
-<!-- ====================================== -->
-
-<div class="cards">
 
 <div class="card">
 
-<h4>Portfolio Value</h4>
+<h3>
 
-<div class="value">
+Company Performance
 
-KES
+</h3>
 
-{{ "{:,.0f}".format(best_model_value|default(0)) }}
+<div class="kpi-grid">
 
-</div>
+{% for r in results %}
 
-</div>
+<div class="kpi-card">
 
-<div class="card">
+<b>
 
-<h4>Portfolio Health</h4>
+{{ r.rank }}
 
-<div class="value">
+.
 
-94%
+{{ r.name }}
 
-</div>
-
-</div>
-
-<div class="card">
-
-<h4>Institutional Rating</h4>
-
-<div class="value">
-
-AA+
-
-</div>
-
-</div>
-
-<div class="card">
-
-<h4>Risk Level</h4>
-
-<div class="value">
-
-Moderate
-
-</div>
-
-</div>
-
-</div>
+</b>
 
 <br><br>
 
-<!-- STOP HERE -->
+Invested
 
-<!--
-NEXT SECTION
+<br>
 
-Investment Terminal
+KES {{ "{:,.0f}".format(r.invested) }}
 
--->
+<br><br>
+
+Portfolio
+
+<br>
+
+KES {{ "{:,.0f}".format(r.portfolio_value) }}
+
+<br><br>
+
+Dividends
+
+<br>
+
+KES {{ "{:,.0f}".format(r.dividends) }}
+
+<br><br>
+
+Profit
+
+<br>
+
+KES {{ "{:,.0f}".format(r.profit) }}
+
+<br><br>
+
+ROI
+
+<br>
+
+{{ r.roi|round(2) }}%
+
+<br><br>
+
+Risk
+
+<br>
+
+{{ r.risk_level }}
+
+</div>
+
+{% endfor %}
 
 </div>
 
 </div>
 
-</body>
+{% endfor %}
 
-</html>
+{% endif %}
+
+{% endblock %}
