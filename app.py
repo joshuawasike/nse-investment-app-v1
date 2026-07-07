@@ -1,20 +1,199 @@
-from datetime import datetime 
-from flask import Flask, render_template, request, redirect, session
-import pandas as pd
-import numpy as np
-import glob
-import matplotlib
-import json
+# ==========================================================
+# JOBURA WEALTH®
+# NSE Institutional Wealth Management Platform
+# Professional Analytics Suite
+# Version 2026
+# ==========================================================
+
+from flask import (
+    Flask,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    session,
+    flash,
+    jsonify
+)
+
 import os
-import io
+import json
+import random
 import base64
+import io
+
+import numpy as np
+import pandas as pd
+
+import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+from datetime import datetime
+
+# ==========================================================
+# ENGINE MODULES
+# ==========================================================
+
+from engine.simulation import simulate_market
+from engine.portfolio import build_portfolio
+from engine.analytics import portfolio_summary
+from engine.ai import investment_advisor
+from engine.research import company_database
+from engine.risk import portfolio_risk
+from engine.retirement import retirement_projection
+from engine.reports import create_report
+
+from engine.utils import (
+    load_json,
+    save_json,
+    today,
+    money,
+    percent,
+    platform
+)
+
+# ==========================================================
+# FLASK APPLICATION
+# ==========================================================
+
 app = Flask(__name__)
-app.secret_key = "jobura_secure_secure_v3"
+
+app.secret_key = "JOBURA_WEALTH_2026"
+
+# ==========================================================
+# PROJECT PATHS
+# ==========================================================
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+DATA_DIR = os.path.join(BASE_DIR, "data")
+
+TEMPLATE_DIR = os.path.join(BASE_DIR, "templates")
+
+STATIC_DIR = os.path.join(BASE_DIR, "static")
+
+# ==========================================================
+# JSON DATABASE FILES
+# ==========================================================
+
+USERS_FILE = "users.json"
+
+COMPANIES_FILE = "companies.json"
+
+DIVIDENDS_FILE = "dividends.json"
+
+MARKET_FILE = "market_data.json"
+
+MODELS_FILE = "portfolio_models.json"
+
+SECTORS_FILE = "sectors.json"
+
+AI_RULES_FILE = "ai_rules.json"
+
+RISK_FILE = "risk_profiles.json"
+
+ECONOMY_FILE = "economic_indicators.json"
+
+SUBSCRIPTIONS_FILE = "subscriptions.json"
+
+TRANSACTIONS_FILE = "transactions.json"
+
+# ==========================================================
+# LOAD DATABASES
+# ==========================================================
+
+companies = load_json(
+    os.path.join(DATA_DIR, COMPANIES_FILE)
+)
+
+users = load_json(
+    os.path.join(DATA_DIR, USERS_FILE)
+)
+
+dividends = load_json(
+    os.path.join(DATA_DIR, DIVIDENDS_FILE)
+)
+
+market = load_json(
+    os.path.join(DATA_DIR, MARKET_FILE)
+)
+
+portfolio_models = load_json(
+    os.path.join(DATA_DIR, MODELS_FILE)
+)
+
+sectors = load_json(
+    os.path.join(DATA_DIR, SECTORS_FILE)
+)
+
+ai_rules = load_json(
+    os.path.join(DATA_DIR, AI_RULES_FILE)
+)
+
+risk_profiles = load_json(
+    os.path.join(DATA_DIR, RISK_FILE)
+)
+
+economic = load_json(
+    os.path.join(DATA_DIR, ECONOMY_FILE)
+)
+
+subscriptions = load_json(
+    os.path.join(DATA_DIR, SUBSCRIPTIONS_FILE)
+)
+
+transactions = load_json(
+    os.path.join(DATA_DIR, TRANSACTIONS_FILE)
+)
+
+# ==========================================================
+# PLATFORM INFORMATION
+# ==========================================================
+
+APP = platform()
+
+# ==========================================================
+# GLOBAL SETTINGS
+# ==========================================================
+
+COMMUNITY_PLAN = "Community Edition"
+
+PROFESSIONAL_PLAN = "Professional Edition"
+
+INSTITUTIONAL_PLAN = "Institutional Edition"
+
+DEFAULT_MARKET = "Normal"
+
+DEFAULT_MODEL = "Dividend"
+
+CURRENCY = "KES"
+
+# ==========================================================
+# APPLICATION HOME
+# ==========================================================
+
+@app.route("/")
+def home():
+
+    return render_template(
+
+        "dashboard.html",
+
+        app=APP,
+
+        companies=companies,
+
+        market=market,
+
+        user=session.get("user"),
+
+        premium=session.get("premium", False)
+
+    )
+
 @app.route("/companies")
-def companies():
+def company_list():
 
     files = glob.glob("NSE_data_all_stock_*.csv")
 
@@ -27,13 +206,19 @@ def companies():
         try:
             temp = pd.read_csv(f)
 
-            # normalize column names
             temp.columns = temp.columns.astype(str).str.strip().str.upper()
 
-            # possible name columns (VERY IMPORTANT FIX)
-            possible_cols = ["NAME", "COMPANY", "SECURITY", "SYMBOL", "STOCK", "ISSUER"]
+            possible_cols = [
+                "NAME",
+                "COMPANY",
+                "SECURITY",
+                "SYMBOL",
+                "STOCK",
+                "ISSUER"
+            ]
 
             name_col = None
+
             for col in temp.columns:
                 if col in possible_cols:
                     name_col = col
@@ -58,367 +243,82 @@ def companies():
         return "No valid company names found"
 
     return "<br>".join(sorted(set(names)))
-# =========================================================
-# 🔐 CONFIG
-# =========================================================
+# ==========================================================
+# SECURITY CONFIGURATION
+# ==========================================================
+
 ADMIN_PASSWORD = "Jobura@542542"
-DB_FILE = "users.json"
 
-# =========================================================
-# 📦 SAFE USER SYSTEM
-# =========================================================
+USERS_PATH = os.path.join(DATA_DIR, USERS_FILE)
+
+# ==========================================================
+# USER MANAGEMENT
+# ==========================================================
+
 def load_users():
-    if not os.path.exists(DB_FILE):
-        with open(DB_FILE, "w") as f:
-            json.dump([], f)
-        return []
-
-    try:
-        with open(DB_FILE, "r") as f:
-            data = json.load(f)
-
-        if not isinstance(data, list):
-            return []
-
-        return [u for u in data if isinstance(u, dict)]
-
-    except:
-        return []
+    return load_json(USERS_PATH)
 
 
 def save_users(users):
-    try:
-        with open(DB_FILE, "w") as f:
-            json.dump(users, f, indent=4)
-    except:
-        pass
+    save_json(USERS_PATH, users)
 
 
 def is_active(user):
+
+    if not isinstance(user, dict):
+        return False
+
+    status = user.get("status", "").lower()
+
     return (
-        isinstance(user, dict)
-        and "status" in user
-        and (
-            "monthly" in user.get("status", "")
-            or "yearly" in user.get("status", "")
-        )
+        "monthly" in status
+        or
+        "yearly" in status
+        or
+        "professional" in status
+        or
+        "institutional" in status
     )
 
-# =========================================================
-# 💳 PAYMENT INFO
-# =========================================================
+# ==========================================================
+# PAYMENT CONFIGURATION
+# ==========================================================
+
 PAYMENT_INFO = {
+
     "paybill": "542542",
-    "account_number": "31909",
-    "account_name": "Jobura Solutions"
+
+    "account": "31909",
+
+    "business_name": "Jobura Solutions",
+
+    "currency": "KES"
+
 }
 
-# =========================================================
-# 💰 PRICING CONFIG (ADD THIS HERE)
-# =========================================================
+# ==========================================================
+# SUBSCRIPTION PRICING
+# ==========================================================
+
 PRICING = {
-    "monthly": 400,
-    "yearly": 4000
+
+    "Community": {
+        "monthly": 0,
+        "yearly": 0
+    },
+
+    "Professional": {
+        "monthly": 400,
+        "yearly": 4000
+    },
+
+    "Institutional": {
+        "monthly": 2000,
+        "yearly": 18000
+    }
+
 }
 
-# =========================================================
-# 📊 DATA ENGINE
-# =========================================================
-df = None
-
-def load_data():
-
-    df_local = pd.DataFrame(columns=["Code", "Date", "Previous"])
-    files = glob.glob("data/nse_csv/*.csv")
-
-    for file in files:
-        try:
-            temp = pd.read_csv(file)
-
-            # normalize columns
-            temp.columns = temp.columns.astype(str).str.strip().str.upper()
-
-            # only keep safe columns if they exist
-            keep = [c for c in ["CODE", "DATE", "PREVIOUS"] if c in temp.columns]
-
-            if len(keep) == 0:
-                continue
-
-            temp = temp[keep]
-
-            df_local = pd.concat([df_local, temp], ignore_index=True)
-
-        except Exception:
-            continue
-
-    # FINAL CLEANING
-    if not df_local.empty:
-        df_local["DATE"] = pd.to_datetime(df_local["DATE"], errors="coerce")
-        df_local["PREVIOUS"] = pd.to_numeric(df_local["PREVIOUS"], errors="coerce")
-        df_local = df_local.dropna()
-
-    return df_local
-
-
-def get_df():
-    global df
-    if df is None:
-        df = load_data()
-    return df
-# =========================================================
-# 📊 HISTORICAL MARKET STATISTICS ENGINE
-# =========================================================
-def estimate_market_statistics():
-
-    df = get_df().copy()
-
-    if df.empty:
-        return None
-
-    df.columns = df.columns.str.upper()
-
-    df["DATE"] = pd.to_datetime(df["DATE"])
-
-    df["PREVIOUS"] = pd.to_numeric(df["PREVIOUS"], errors="coerce")
-
-    df = df.dropna(subset=["CODE", "DATE", "PREVIOUS"])
-
-    df = df.sort_values(["CODE", "DATE"])
-
-    # ------------------------------------------
-    # DAILY RETURNS
-    # ------------------------------------------
-    df["RETURN"] = (
-        df.groupby("CODE")["PREVIOUS"]
-          .pct_change()
-    )
-
-    df = df.dropna()
-
-    # ------------------------------------------
-    # RETURN MATRIX
-    # ------------------------------------------
-    returns = df.pivot_table(
-        index="DATE",
-        columns="CODE",
-        values="RETURN"
-    )
-
-    # remove nearly empty companies
-    returns = returns.dropna(axis=1, thresh=max(20, len(returns)//4))
-
-    returns = returns.fillna(0)
-
-    # ------------------------------------------
-    # EXPECTED RETURN
-    # ------------------------------------------
-    mu = returns.mean()
-
-    # ------------------------------------------
-    # VOLATILITY
-    # ------------------------------------------
-    sigma = returns.std()
-
-    # ------------------------------------------
-    # COVARIANCE
-    # ------------------------------------------
-    cov = returns.cov()
-
-    # ------------------------------------------
-    # CORRELATION
-    # ------------------------------------------
-    corr = returns.corr()
-
-    return {
-
-        "returns": returns,
-
-        "mu": mu,
-
-        "sigma": sigma,
-
-        "cov": cov,
-
-        "corr": corr
-
-    }
-# =========================================================
-# 📈 CACHE MARKET STATISTICS
-# =========================================================
-MARKET_STATS = None
-
-
-def get_market_stats():
-
-    global MARKET_STATS
-
-    if MARKET_STATS is None:
-
-        MARKET_STATS = estimate_market_statistics()
-
-    return MARKET_STATS
-# =========================================================
-# 🧠 MODEL → REAL COMPANY MAPPING
-# =========================================================
-def get_model_assets(model):
-
-    df = get_df()
-
-    if df is None or df.empty or "CODE" not in df.columns:
-        return ASSETS.copy()
-
-    df = df.copy()
-    df["CODE"] = df["CODE"].astype(str).str.upper().str.strip()
-
-    grouped = (
-        df.groupby("CODE")["PREVIOUS"]
-          .agg(["mean", "std"])
-          .reset_index()
-          .dropna()
-    )
-
-    grouped["return_score"] = grouped["mean"]
-    grouped["risk_score"] = grouped["std"] + 1e-9
-    grouped["sharpe_like"] = (
-        grouped["return_score"] /
-        grouped["risk_score"]
-    )
-
-    MODEL_UNIVERSES = {
-
-        "dividend": ["EQTY", "KCB", "COOP", "EABL"],
-
-        "growth": ["SCOM", "KQ", "NCBA", "KEGN"],
-
-        "banking": ["EQTY", "KCB", "COOP", "NCBA"],
-
-        "value": ["EABL", "KEGN", "SCOM", "KQ"],
-
-        "income": ["EABL", "COOP", "KCB", "SCOM"]
-
-    }
-
-    allowed = MODEL_UNIVERSES.get(model, [])
-
-    if allowed:
-        grouped = grouped[grouped["CODE"].isin(allowed)]
-
-    if grouped.empty:
-        return ASSETS.copy()
-
-    grouped["score"] = grouped["sharpe_like"]
-
-    grouped = grouped.sort_values(
-        "score",
-        ascending=False
-    )
-
-    # -----------------------------
-    # Company Names
-    # -----------------------------
-    COMPANY_NAMES = {
-
-        "EQTY": "Equity Bank",
-
-        "KCB": "KCB Group",
-
-        "COOP": "Co-op Bank",
-
-        "SCOM": "Safaricom",
-
-        "EABL": "EABL",
-
-        "KEGN": "KenGen",
-
-        "NCBA": "NCBA",
-
-        "KQ": "Kenya Airways"
-
-    }
-
-    assets = []
-
-    for _, row in grouped.iterrows():
-
-        code = row["CODE"]
-
-        if code in COMPANY_NAMES:
-
-            assets.append(
-                (
-                    COMPANY_NAMES[code],
-                    code
-                )
-            )
-
-    # Always return 8 assets
-    for asset in ASSETS:
-
-        if asset not in assets:
-
-            assets.append(asset)
-
-        if len(assets) == len(ASSETS):
-
-            break
-
-    return assets
-# =========================================================
-# 💰 DYNAMIC DIVIDEND RESEARCH ENGINE
-# =========================================================
-def estimate_dividend_yields(mode, model):
-
-    MODEL_FACTOR = {
-
-        "dividend": 1.30,
-        "income":   1.20,
-        "banking":  1.10,
-        "value":    0.95,
-        "growth":   0.70
-
-    }
-
-    model_factor = MODEL_FACTOR.get(model, 1.0)
-
-    stats = get_market_stats()
-
-    yields = {}
-
-    for code, profile in DIVIDEND_DATABASE.items():
-
-        y = profile["base_yield"] * model_factor
-
-        if stats is not None:
-
-            try:
-
-                vol = stats["sigma"][code]
-
-                # Stable companies deserve higher sustainable yields
-                y *= max(0.80, 1.15 - (vol * 12))
-
-            except:
-
-                pass
-
-        # Company stability adjustment
-        y *= profile["stability"]
-
-        # Market regime adjustment
-        if mode == "bull":
-
-            y *= 1.10
-
-        elif mode == "bear":
-
-            y *= 0.80
-
-        # Realistic bounds
-        y = np.clip(y, 0.00, 0.15)
-
-        yields[code] = float(y)
-
-    return yields
 # =========================================================
 # 📊 ASSETS
 # =========================================================
@@ -2317,12 +2217,8 @@ def index():
             ranking=ranking
         )
 
-    import traceback
-
-    ...
-
-    except Exception:
-        return f"<pre>{traceback.format_exc()}</pre>""
+    except Exception as e:
+        return f"APP ERROR: {str(e)}"
 # =========================================================
 # 🚀 ADMIN ROUTE (FIXED SAFE)
 # =========================================================
