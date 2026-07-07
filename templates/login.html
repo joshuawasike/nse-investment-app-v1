@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}
+JOBURA WEALTH® | Secure Login
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <h1>🔐 Secure Platform Access</h1>
+    <p>
+        Access the JOBURA WEALTH® NSE Institutional Wealth Management Platform.
+    </p>
+</div>
+
+<div class="login-wrapper">
+
+    <div class="login-card">
+
+        <div class="login-logo">
+            <h2>JOBURA WEALTH®</h2>
+            <p>NSE Institutional Wealth Management Platform</p>
+        </div>
+
+        <form method="POST">
+
+            <div class="form-group">
+                <label>Phone Number</label>
+                <input
+                    type="text"
+                    name="phone"
+                    placeholder="e.g. 0712345678"
+                    required>
+            </div>
+
+            <div class="form-group">
+                <label>Transaction Code</label>
+                <input
+                    type="text"
+                    name="transaction_code"
+                    placeholder="Payment Transaction Code"
+                    required>
+            </div>
+
+            <button class="primary-btn">
+                Login
+            </button>
+
+        </form>
+
+        <hr>
+
+        <div class="license-info">
+
+            <h3>Professional Licensing</h3>
+
+            <table>
+
+                <tr>
+                    <td>Community Edition</td>
+                    <td>Free</td>
+                </tr>
+
+                <tr>
+                    <td>Professional Individual</td>
+                    <td>KES 400 / Month</td>
+                </tr>
+
+                <tr>
+                    <td>Professional Annual</td>
+                    <td>KES 4,000 / Year</td>
+                </tr>
+
+                <tr>
+                    <td>Institutional Monthly</td>
+                    <td>KES 2,000 / Month</td>
+                </tr>
+
+                <tr>
+                    <td>Institutional Annual</td>
+                    <td>KES 18,000 / Year</td>
+                </tr>
+
+            </table>
+
+        </div>
+
+    </div>
+
+    <div class="security-card">
+
+        <h2>Platform Security</h2>
+
+        <ul>
+
+            <li>✓ Secure User Authentication</li>
+
+            <li>✓ Investment Data Encryption</li>
+
+            <li>✓ Institutional Access Control</li>
+
+            <li>✓ Portfolio Privacy Protection</li>
+
+            <li>✓ AI Recommendation Engine</li>
+
+            <li>✓ Wealth Analytics Suite</li>
+
+            <li>✓ Risk Monitoring Framework</li>
+
+            <li>✓ Goal-Based Wealth Planning</li>
+
+        </ul>
+
+        <hr>
+
+        <h3>Available Modules</h3>
+
+        <div class="module-list">
+
+            <span class="module-tag">Dashboard</span>
+
+            <span class="module-tag">Investment Terminal</span>
+
+            <span class="module-tag">Portfolio Manager</span>
+
+            <span class="module-tag">Research Centre</span>
+
+            <span class="module-tag">Risk Analytics</span>
+
+            <span class="module-tag">Retirement Planning</span>
+
+            <span class="module-tag">Alpha Signals</span>
+
+            <span class="module-tag">Reports</span>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
