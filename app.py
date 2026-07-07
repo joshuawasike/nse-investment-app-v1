@@ -485,12 +485,7 @@ def apply_corporate_actions(capital, code):
     return capital, bonus
 
     
-MODEL_UNIVERSES = {
-    "dividend": [0,1,2,3,4,5,6],   # safe banks + blue chips
-    "growth":   [7,5,6,1,2,3,4],   # includes KQ aggressively
-    "banking":  [0,1,2,6,3],       # only banks + safaricom
-    "value":    [5,6,7,4],         # cyclical + recovery stocks
-    "income":   [3,4,1,0,2]        # dividend-heavy names
+
 }
 # =========================================================
 # 🏦 DIVIDEND HEALTH ENGINE
