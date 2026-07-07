@@ -485,39 +485,7 @@ def apply_corporate_actions(capital, code):
     return capital, bonus
 
 
-# =========================================================
-# 📈 DIVIDEND FORECAST ENGINE
-# =========================================================
-def forecast_dividend_yield(code, years_elapsed, mode):
 
-    profile = DIVIDEND_DATABASE.get(code, {})
-
-    base = DIVIDEND_BASE.get(code, 0.05)
-
-    growth = profile.get("growth", 0.00)
-
-    stability = profile.get("stability", 0.90)
-
-    payout = profile.get("payout", 0.40)
-
-    # Compound dividend growth
-    forecast = base * ((1 + growth) ** years_elapsed)
-
-    # Market regime
-    if mode == "bull":
-        forecast *= 1.10
-
-    elif mode == "bear":
-        forecast *= 0.80
-
-    # Stable companies maintain dividends better
-    forecast *= stability
-
-    # Companies with higher payout ratios generally
-    # distribute more income
-    forecast *= (0.60 + payout)
-
-    return float(np.clip(forecast, 0.0, 0.18))
 # =========================================================
 # 🧠 AI ENGINE
 # =========================================================
