@@ -1,0 +1,142 @@
+{
+    "version": "2026.1",
+    "platform": "JOBURA WEALTH® NSE Institutional Wealth Management Platform",
+
+    "risk_profiles": {
+        "Conservative": {
+            "max_equity": 50,
+            "preferred_sectors": [
+                "Banking",
+                "Telecommunications",
+                "Energy"
+            ],
+            "avoid": [
+                "Transportation"
+            ],
+            "target_dividend": 7.0,
+            "max_portfolio_risk": "Low"
+        },
+
+        "Balanced": {
+            "max_equity": 70,
+            "preferred_sectors": [
+                "Banking",
+                "Telecommunications",
+                "Consumer Goods",
+                "Energy"
+            ],
+            "avoid": [],
+            "target_dividend": 6.0,
+            "max_portfolio_risk": "Medium"
+        },
+
+        "Aggressive": {
+            "max_equity": 100,
+            "preferred_sectors": [
+                "Banking",
+                "Telecommunications",
+                "Consumer Goods",
+                "Energy",
+                "Transportation"
+            ],
+            "avoid": [],
+            "target_dividend": 4.0,
+            "max_portfolio_risk": "High"
+        }
+    },
+
+    "portfolio_health_scoring": {
+        "quality_score_weight": 0.35,
+        "health_score_weight": 0.25,
+        "dividend_weight": 0.15,
+        "roe_weight": 0.15,
+        "risk_weight": 0.10
+    },
+
+    "risk_levels": {
+        "Low": {
+            "score": 1,
+            "description": "Stable earnings with consistent dividends."
+        },
+        "Medium": {
+            "score": 2,
+            "description": "Moderate volatility with long-term growth potential."
+        },
+        "High": {
+            "score": 3,
+            "description": "High volatility and speculative returns."
+        }
+    },
+
+    "investment_rules": {
+        "minimum_companies": 4,
+        "maximum_companies": 10,
+        "maximum_single_asset": 30,
+        "minimum_sector_diversification": 3,
+        "rebalance_every_months": 6
+    },
+
+    "buy_rules": {
+        "minimum_quality_score": 90,
+        "minimum_health_score": 90,
+        "minimum_dividend": 5,
+        "minimum_roe": 18
+    },
+
+    "hold_rules": {
+        "minimum_quality_score": 75,
+        "minimum_health_score": 75
+    },
+
+    "sell_rules": {
+        "maximum_risk": "High",
+        "maximum_pe": 25,
+        "minimum_health_score": 60
+    },
+
+    "retirement_rules": {
+        "preferred_models": [
+            "income",
+            "dividend"
+        ],
+        "minimum_dividend": 7,
+        "withdrawal_rate": 4
+    },
+
+    "goal_planning": {
+        "expected_annual_return": 12,
+        "inflation": 5,
+        "salary_growth": 6
+    },
+
+    "market_regimes": {
+        "Bull": {
+            "expected_return": 18,
+            "volatility": 20
+        },
+        "Normal": {
+            "expected_return": 12,
+            "volatility": 15
+        },
+        "Bear": {
+            "expected_return": -6,
+            "volatility": 30
+        }
+    },
+
+    "institutional_ratings": {
+        "AAA": 95,
+        "AA": 90,
+        "A": 85,
+        "BBB": 75,
+        "BB": 65,
+        "B": 55
+    },
+
+    "ai_messages": {
+        "excellent": "Portfolio quality is exceptional. Continue accumulating strategically.",
+        "good": "Portfolio remains healthy. Monitor valuation and rebalance periodically.",
+        "average": "Portfolio performance is acceptable. Diversification improvements are recommended.",
+        "poor": "Risk is elevated. Review asset allocation immediately."
+    }
+}
