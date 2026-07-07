@@ -105,3 +105,301 @@ def dashboard():
       "largest":largest_companies(5),
       "value":value_companies(5)
     }
+    # =========================================================
+# 📊 DATA ENGINE
+# =========================================================
+df = None
+
+def load_data():
+
+    df_local = pd.DataFrame(columns=["Code", "Date", "Previous"])
+    files = glob.glob("data/nse_csv/*.csv")
+
+    for file in files:
+        try:
+            temp = pd.read_csv(file)
+
+            # normalize columns
+            temp.columns = temp.columns.astype(str).str.strip().str.upper()
+
+            # only keep safe columns if they exist
+            keep = [c for c in ["CODE", "DATE", "PREVIOUS"] if c in temp.columns]
+
+            if len(keep) == 0:
+                continue
+
+            temp = temp[keep]
+
+            df_local = pd.concat([df_local, temp], ignore_index=True)
+
+        except Exception:
+            continue
+
+    # FINAL CLEANING
+    if not df_local.empty:
+        df_local["DATE"] = pd.to_datetime(df_local["DATE"], errors="coerce")
+        df_local["PREVIOUS"] = pd.to_numeric(df_local["PREVIOUS"], errors="coerce")
+        df_local = df_local.dropna()
+
+    return df_local
+
+
+def get_df():
+    global df
+    if df is None:
+        df = load_data()
+    return df
+# =========================================================
+# 📊 HISTORICAL MARKET STATISTICS ENGINE
+# =========================================================
+def estimate_market_statistics():
+
+    df = get_df().copy()
+
+    if df.empty:
+        return None
+
+    df.columns = df.columns.str.upper()
+
+    df["DATE"] = pd.to_datetime(df["DATE"])
+
+    df["PREVIOUS"] = pd.to_numeric(df["PREVIOUS"], errors="coerce")
+
+    df = df.dropna(subset=["CODE", "DATE", "PREVIOUS"])
+
+    df = df.sort_values(["CODE", "DATE"])
+
+    # ------------------------------------------
+    # DAILY RETURNS
+    # ------------------------------------------
+    df["RETURN"] = (
+        df.groupby("CODE")["PREVIOUS"]
+          .pct_change()
+    )
+
+    df = df.dropna()
+
+    # ------------------------------------------
+    # RETURN MATRIX
+    # ------------------------------------------
+    returns = df.pivot_table(
+        index="DATE",
+        columns="CODE",
+        values="RETURN"
+    )
+
+    # remove nearly empty companies
+    returns = returns.dropna(axis=1, thresh=max(20, len(returns)//4))
+
+    returns = returns.fillna(0)
+
+    # ------------------------------------------
+    # EXPECTED RETURN
+    # ------------------------------------------
+    mu = returns.mean()
+
+    # ------------------------------------------
+    # VOLATILITY
+    # ------------------------------------------
+    sigma = returns.std()
+
+    # ------------------------------------------
+    # COVARIANCE
+    # ------------------------------------------
+    cov = returns.cov()
+
+    # ------------------------------------------
+    # CORRELATION
+    # ------------------------------------------
+    corr = returns.corr()
+
+    return {
+
+        "returns": returns,
+
+        "mu": mu,
+
+        "sigma": sigma,
+
+        "cov": cov,
+
+        "corr": corr
+
+    }
+# =========================================================
+# 📈 CACHE MARKET STATISTICS
+# =========================================================
+MARKET_STATS = None
+
+
+def get_market_stats():
+
+    global MARKET_STATS
+
+    if MARKET_STATS is None:
+
+        MARKET_STATS = estimate_market_statistics()
+
+    return MARKET_STATS
+# =========================================================
+# 🧠 MODEL → REAL COMPANY MAPPING
+# =========================================================
+def get_model_assets(model):
+
+    df = get_df()
+
+    if df is None or df.empty or "CODE" not in df.columns:
+        return ASSETS.copy()
+
+    df = df.copy()
+    df["CODE"] = df["CODE"].astype(str).str.upper().str.strip()
+
+    grouped = (
+        df.groupby("CODE")["PREVIOUS"]
+          .agg(["mean", "std"])
+          .reset_index()
+          .dropna()
+    )
+
+    grouped["return_score"] = grouped["mean"]
+    grouped["risk_score"] = grouped["std"] + 1e-9
+    grouped["sharpe_like"] = (
+        grouped["return_score"] /
+        grouped["risk_score"]
+    )
+
+    MODEL_UNIVERSES = {
+
+        "dividend": ["EQTY", "KCB", "COOP", "EABL"],
+
+        "growth": ["SCOM", "KQ", "NCBA", "KEGN"],
+
+        "banking": ["EQTY", "KCB", "COOP", "NCBA"],
+
+        "value": ["EABL", "KEGN", "SCOM", "KQ"],
+
+        "income": ["EABL", "COOP", "KCB", "SCOM"]
+
+    }
+
+    allowed = MODEL_UNIVERSES.get(model, [])
+
+    if allowed:
+        grouped = grouped[grouped["CODE"].isin(allowed)]
+
+    if grouped.empty:
+        return ASSETS.copy()
+
+    grouped["score"] = grouped["sharpe_like"]
+
+    grouped = grouped.sort_values(
+        "score",
+        ascending=False
+    )
+
+    # -----------------------------
+    # Company Names
+    # -----------------------------
+    COMPANY_NAMES = {
+
+        "EQTY": "Equity Bank",
+
+        "KCB": "KCB Group",
+
+        "COOP": "Co-op Bank",
+
+        "SCOM": "Safaricom",
+
+        "EABL": "EABL",
+
+        "KEGN": "KenGen",
+
+        "NCBA": "NCBA",
+
+        "KQ": "Kenya Airways"
+
+    }
+
+    assets = []
+
+    for _, row in grouped.iterrows():
+
+        code = row["CODE"]
+
+        if code in COMPANY_NAMES:
+
+            assets.append(
+                (
+                    COMPANY_NAMES[code],
+                    code
+                )
+            )
+
+    # Always return 8 assets
+    for asset in ASSETS:
+
+        if asset not in assets:
+
+            assets.append(asset)
+
+        if len(assets) == len(ASSETS):
+
+            break
+
+    return assets
+# =========================================================
+# 💰 DYNAMIC DIVIDEND RESEARCH ENGINE
+# =========================================================
+def estimate_dividend_yields(mode, model):
+
+    MODEL_FACTOR = {
+
+        "dividend": 1.30,
+        "income":   1.20,
+        "banking":  1.10,
+        "value":    0.95,
+        "growth":   0.70
+
+    }
+
+    model_factor = MODEL_FACTOR.get(model, 1.0)
+
+    stats = get_market_stats()
+
+    yields = {}
+
+    for code, profile in DIVIDEND_DATABASE.items():
+
+        y = profile["base_yield"] * model_factor
+
+        if stats is not None:
+
+            try:
+
+                vol = stats["sigma"][code]
+
+                # Stable companies deserve higher sustainable yields
+                y *= max(0.80, 1.15 - (vol * 12))
+
+            except:
+
+                pass
+
+        # Company stability adjustment
+        y *= profile["stability"]
+
+        # Market regime adjustment
+        if mode == "bull":
+
+            y *= 1.10
+
+        elif mode == "bear":
+
+            y *= 0.80
+
+        # Realistic bounds
+        y = np.clip(y, 0.00, 0.15)
+
+        yields[code] = float(y)
+
+    return yields
