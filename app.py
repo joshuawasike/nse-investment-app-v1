@@ -483,51 +483,7 @@ def apply_corporate_actions(capital, code):
         bonus = capital * 0.03
 
     return capital, bonus
-  
-    # -----------------------------------------------------
-    # SUMMARY
-    # -----------------------------------------------------
-    summary = {
-
-        "invested": round(float(invested),2),
-
-        "value": round(float(portfolio_value),2),
-
-        "real_value": round(float(real_value),2),
-
-        "dividends": round(total_dividends,2),
-
-        "annual_return": round(annual_return*100,2),
-
-        "cagr": round(cagr*100,2),
-
-        "volatility": round(volatility*100,2),
-
-        "sharpe": round(sharpe,2),
-
-        "max_drawdown": round(max_drawdown*100,2)
-
-    }
-    # -----------------------------------------------------
-    # RETURN
-    # -----------------------------------------------------
-    return {
-
-        "summary": summary,
-
-        "chart": chart(curve),
-
-        "plan": plan,
-
-        "curve": curve,
-
-        "ai": ai,
-
-        "assets": breakdown,
-        
-        "returns": returns_table
-    }
-
+     
 # =========================================================
 # 🔐 LOGIN
 # =========================================================
