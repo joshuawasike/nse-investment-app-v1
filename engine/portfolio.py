@@ -584,3 +584,22 @@ def institutional_allocator(sim, mode):
             2
 
         ),
+# -----------------------------------------------------
+    # PLAN
+    # -----------------------------------------------------
+    plan = []
+
+    for i in range(len(assets)):
+
+        plan.append({
+
+            "name":
+                assets[i][0],
+
+            "percent":
+                round(weights[i] * 100, 2),
+
+            "kes":
+                round(monthly_alloc[i], 2)
+
+        })
