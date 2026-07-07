@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JOBURA WEALTH® | NSE Institutional Wealth Management Platform</title>
+<style>
+:root{
+--bg:#07111F;--panel:#111827;--panel2:#0f172a;--line:#23324d;
+--accent:#2563eb;--green:#22c55e;--gold:#f59e0b;--text:#eef2ff;
+}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,sans-serif}
+header{background:#0b1728;padding:18px 28px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.brand h1{margin:0;color:#60a5fa} .brand h3{margin:4px 0 0;font-weight:400}
+nav a{color:#cbd5e1;text-decoration:none;margin-left:18px}
+.container{max-width:1500px;margin:auto;padding:22px}
+.hero,.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:18px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+.kpi{background:var(--panel2);padding:14px;border-radius:10px}
+.kpi .v{font-size:28px;color:var(--green);font-weight:bold}
+.workflow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.step{background:var(--panel2);padding:12px;border-radius:10px}
+table{width:100%;border-collapse:collapse}
+th,td{padding:10px;border-bottom:1px solid #2a3a55}th{background:#162133;color:#93c5fd}
+footer{text-align:center;padding:25px;color:#cbd5e1}
+</style>
+</head>
+<body>
+<header>
+<div class="brand">
+<h1>JOBURA WEALTH®</h1>
+<h3>NSE Institutional Wealth Management Platform</h3>
+<div>Professional Analytics Suite • Version 2026</div>
+</div>
+<nav>
+<a href="/">Dashboard</a>
+<a href="#">Research</a>
+<a href="#">AI Advisor</a>
+<a href="#">Risk</a>
+<a href="/admin">Admin</a>
+</nav>
+</header>
+
+<div class="container">
+
+<div class="hero">
+<h2>Executive Dashboard</h2>
+<p>A comprehensive institutional investment platform designed for portfolio construction, dividend research, retirement planning, Monte Carlo simulations, institutional risk management and AI-powered investment decision support for the Nairobi Securities Exchange.</p>
+</div>
+
+<div class="kpis">
+<div class="kpi"><div>AUM</div><div class="v">KES {{ "{:,.0f}".format(best_model_value|default(0)) }}</div></div>
+<div class="kpi"><div>Portfolio Health</div><div class="v">93/100</div></div>
+<div class="kpi"><div>Institutional Rating</div><div class="v">A+</div></div>
+<div class="kpi"><div>Risk</div><div class="v">Moderate</div></div>
+</div>
+
+<div class="card">
+<h2>Investment Workflow</h2>
+<div class="workflow">
+<div class="step"><b>1.</b><br>Select Strategy</div>
+<div class="step"><b>2.</b><br>Enter Capital</div>
+<div class="step"><b>3.</b><br>Run Simulation</div>
+<div class="step"><b>4.</b><br>Review AI Analytics</div>
+</div>
+</div>
+
+<div class="card">
+<h2>Investment Input</h2>
+<form method="POST">
+<input name="target_amount" placeholder="Target Amount (KES)">
+<input name="monthly" placeholder="Monthly Investment (KES)">
+<input name="years" placeholder="Years">
+<input name="transaction_code" placeholder="Transaction Code">
+<input name="phone" placeholder="Phone">
+<button type="submit">Run Institutional Engine</button>
+</form>
+</div>
+
+<div class="card">
+<h2>Cross-Model Portfolio Comparison</h2>
+<table>
+<tr><th>Model</th><th>Normal</th><th>Bull</th><th>Bear</th></tr>
+{% for model,result in data.items() %}
+<tr>
+<td>{{model}}</td>
+<td>{{ "{:,.0f}".format(result["normal"]["summary"]["value"]|default(0)) }}</td>
+<td>{% if result["bull"] %}{{ "{:,.0f}".format(result["bull"]["summary"]["value"]|default(0)) }}{% endif %}</td>
+<td>{% if result["bear"] %}{{ "{:,.0f}".format(result["bear"]["summary"]["value"]|default(0)) }}{% endif %}</td>
+</tr>
+{% endfor %}
+</table>
+</div>
+
+<footer>
+<b>JOBURA WEALTH®</b><br>
+NSE Institutional Wealth Management Platform<br>
+Powered by Monte Carlo Simulation Engine • AI Investment Advisor • Risk Analytics Framework • Goal-Based Wealth Planning Engine<br>
+© 2026 Jobura Solutions. All Rights Reserved.
+</footer>
+</div>
+</body>
+</html>
