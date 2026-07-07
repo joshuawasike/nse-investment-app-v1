@@ -811,3 +811,74 @@ DIVIDEND_DATABASE = {
     }
 
 }
+# =========================================================
+# 💰 DYNAMIC DIVIDEND ENGINE
+# =========================================================
+
+DIVIDEND_BASE = {
+
+    "EQTY":0.090,
+    "KCB":0.085,
+    "COOP":0.090,
+    "SCOM":0.065,
+    "EABL":0.075,
+    "KEGN":0.080,
+    "NCBA":0.060,
+    "KQ":0.000
+
+}
+
+
+def estimate_dividend_yields(mode, model):
+    MODEL_FACTOR = {
+
+        "dividend":1.30,
+
+        "income":1.20,
+
+        "banking":1.10,
+
+        "value":0.95,
+
+        "growth":0.70
+
+    }
+
+    model_factor = MODEL_FACTOR.get(model, 1.0)
+
+    stats = get_market_stats()
+
+    yields = {}
+
+    for code, base in DIVIDEND_BASE.items():
+
+        y = base * model_factor
+
+        if stats is not None:
+
+            try:
+
+                vol = stats["sigma"][code]
+
+                # Stable companies generally sustain dividends better
+                y *= max(0.80, 1.15 - (vol * 12))
+
+            except:
+
+                pass
+
+        # Market regime adjustments
+        if mode == "bull":
+
+            y *= 1.10
+
+        elif mode == "bear":
+
+            y *= 0.80
+
+        # Keep within realistic limits
+        y = np.clip(y, 0.00, 0.15)
+
+        yields[code] = float(y)
+
+    return yields
