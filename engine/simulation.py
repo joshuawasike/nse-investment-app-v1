@@ -394,3 +394,87 @@ def generate_market(mode, N, drift, vol, momentum):
         R = np.vstack([R, extra])
 
     return R[:N]
+    # =========================================================
+# 🧠 PATH SIMULATION (MISSING FUNCTION FIX)
+# =========================================================
+def simulate_paths(R, mode):
+
+    REGIME = {
+        "normal": {"mu": 0.0025, "vol": 1.0},
+        "bull":   {"mu": 0.0055, "vol": 1.2},
+        "bear":   {"mu": -0.0035, "vol": 1.3},
+    }
+
+    cfg = REGIME.get(mode, REGIME["normal"])
+    N = R.shape[0]
+    T = R.shape[1]
+
+    sim = []
+
+    for i in range(N):
+        base_vol = np.std(R[i]) + 1e-9
+        series = []
+
+        for t in range(T):
+            shock = np.random.standard_t(5) * base_vol * cfg["vol"]
+            step = R[i][t] + cfg["mu"] + shock
+
+            if mode == "bear":
+                step = np.clip(step, -0.05, 0.01)
+
+            series.append(step)
+
+        sim.append(series)
+
+    return np.array(sim)
+# =========================================================
+# 📈 FULL INSTITUTIONAL SIMULATION ENGINE V11
+# =========================================================
+def simulate(monthly, years, mode, model="dividend"):
+
+    # -----------------------------------------------------
+    # MODEL CONFIGURATION
+    # -----------------------------------------------------
+    MODEL_PARAMS = {
+        "dividend": (0.0035, 0.012, 0.60),
+        "growth":   (0.0060, 0.022, 1.10),
+        "banking":  (0.0045, 0.016, 0.80),
+        "value":    (0.0040, 0.015, 0.75),
+        "income":   (0.0038, 0.013, 0.70),
+    }
+
+    drift, vol, momentum = MODEL_PARAMS.get(
+        model,
+        MODEL_PARAMS["dividend"]
+    )
+
+    # -----------------------------------------------------
+    # MARKET
+    # -----------------------------------------------------
+    R_full = generate_market(
+        mode,
+        len(ASSETS),
+        drift,
+        vol,
+        momentum
+    )
+
+    # -----------------------------------------------------
+    # SELECT MODEL ASSETS
+    # -----------------------------------------------------
+    assets = get_model_assets(model)
+
+    names = [a[0] for a in ASSETS]
+    selected = [a[0] for a in assets]
+
+    idx = [
+        names.index(n)
+        for n in selected
+        if n in names
+    ]
+
+    if len(idx) == 0:
+        idx = list(range(len(ASSETS)))
+        assets = ASSETS
+
+    R = R_full[idx]
