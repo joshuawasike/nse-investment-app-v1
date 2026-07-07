@@ -530,34 +530,7 @@ def apply_corporate_actions(capital, code):
         
         "returns": returns_table
     }
-# =========================================================
-# 📊 CHART
-# =========================================================
-def chart(curve):
-    fig, ax = plt.subplots(figsize=(10, 5))
 
-    fig.patch.set_facecolor("#0b0f19")
-    ax.set_facecolor("#0b0f19")
-
-    x = np.arange(len(curve))
-    y = np.array(curve)
-
-    ax.plot(x, y, color="#60a5fa", linewidth=2)
-    ax.fill_between(x, y, color="#60a5fa", alpha=0.15)
-
-    ax.tick_params(colors="white")
-    ax.spines["bottom"].set_color("#334155")
-    ax.spines["left"].set_color("#334155")
-    ax.spines["top"].set_color("#0b0f19")
-    ax.spines["right"].set_color("#0b0f19")
-
-    buf = io.BytesIO()
-    fig.savefig(buf, format="png", bbox_inches="tight", dpi=120)
-    buf.seek(0)
-
-    plt.close(fig)
-
-    return base64.b64encode(buf.read()).decode()
 
 # =========================================================
 # 🔐 LOGIN
