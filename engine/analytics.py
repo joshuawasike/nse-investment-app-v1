@@ -218,3 +218,35 @@ def dividend_health_score(code, stats):
             0.20,
             0.99
         ))
+ # -------------------------------
+        # Institutional Analytics
+        # -------------------------------
+        "dividend_yield": analytics["yield"],
+
+        "dividend_growth": analytics["growth"],
+
+        "dividend_health": analytics["health"],
+
+        "quality_score": analytics["quality"],
+
+        "stability_score": analytics["stability"],
+
+        "estimated_income": analytics["income"],
+
+        "beta": analytics["beta"],
+
+        "policy": analytics["policy"],
+
+        "sector": analytics["sector"],
+
+        "roe": analytics["roe"],
+
+        "pe": analytics["pe"],
+
+        "pb": analytics["pb"],
+
+        "credit": analytics["credit"],
+
+        "esg": analytics["esg"]
+
+    })
