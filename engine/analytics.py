@@ -114,3 +114,69 @@ def portfolio_summary(portfolio,invested,value,dividends,years,returns=None,hist
         "sector_allocation":sector_allocation(portfolio),
         "institutional_rating":institutional_rating(health)
     }
+    # =========================================================
+# INSTITUTIONAL COMPANY ANALYTICS
+# =========================================================
+def company_analytics(code, capital):
+
+    profile = DIVIDEND_DATABASE.get(code, {})
+
+    dividend_yield = profile.get("base_yield",0)
+
+    growth = profile.get("growth",0)
+
+    quality = profile.get("quality",0)
+
+    payout = profile.get("payout",0)
+
+    stability = profile.get("stability",0)
+
+    beta = profile.get("beta",1)
+
+    income = capital * dividend_yield
+
+    health = (
+
+        quality*40 +
+
+        stability*30 +
+
+        (1-beta)*20 +
+
+        (1-payout)*10
+
+    )
+
+    health = max(0,min(100,health))
+
+    return{
+
+        "yield":round(dividend_yield*100,2),
+
+        "growth":round(growth*100,2),
+
+        "quality":round(quality*100,1),
+
+        "stability":round(stability*100,1),
+
+        "health":round(health,1),
+
+        "income":round(income,2),
+
+        "beta":beta,
+
+        "policy":profile.get("policy"),
+
+        "sector":profile.get("sector"),
+
+        "roe":round(profile.get("roe",0)*100,1),
+
+        "pe":profile.get("pe"),
+
+        "pb":profile.get("pb"),
+
+        "credit":profile.get("credit"),
+
+        "esg":profile.get("esg")
+
+    }
