@@ -1,0 +1,145 @@
+{
+    "country": "Kenya",
+    "currency": "KES",
+    "last_updated": "2026-01-01",
+
+    "macroeconomic_indicators": {
+        "gdp_growth": {
+            "value": 5.4,
+            "unit": "%",
+            "status": "Positive"
+        },
+
+        "inflation_rate": {
+            "value": 5.2,
+            "unit": "%",
+            "status": "Moderate"
+        },
+
+        "central_bank_rate": {
+            "value": 10.50,
+            "unit": "%",
+            "status": "Restrictive"
+        },
+
+        "treasury_bill_91": {
+            "value": 10.25,
+            "unit": "%"
+        },
+
+        "treasury_bond_10yr": {
+            "value": 13.10,
+            "unit": "%"
+        },
+
+        "exchange_rate_usd": {
+            "value": 132.50,
+            "unit": "KES/USD"
+        },
+
+        "unemployment_rate": {
+            "value": 5.8,
+            "unit": "%"
+        },
+
+        "public_debt_gdp": {
+            "value": 67.2,
+            "unit": "%"
+        },
+
+        "current_account_balance": {
+            "value": -4.2,
+            "unit": "% GDP"
+        },
+
+        "foreign_reserves_months": {
+            "value": 4.8,
+            "unit": "Months"
+        }
+    },
+
+    "market_sentiment": {
+        "overall": "Bullish",
+        "confidence_score": 78,
+        "volatility": "Moderate"
+    },
+
+    "sector_outlook": [
+        {
+            "sector": "Banking",
+            "outlook": "Positive",
+            "score": 92,
+            "reason": "Strong earnings and resilient balance sheets."
+        },
+        {
+            "sector": "Telecommunications",
+            "outlook": "Positive",
+            "score": 95,
+            "reason": "Stable cash flows and continued digital growth."
+        },
+        {
+            "sector": "Consumer Goods",
+            "outlook": "Neutral",
+            "score": 82,
+            "reason": "Moderate consumer spending."
+        },
+        {
+            "sector": "Energy",
+            "outlook": "Positive",
+            "score": 88,
+            "reason": "Increasing electricity demand."
+        },
+        {
+            "sector": "Transportation",
+            "outlook": "High Risk",
+            "score": 60,
+            "reason": "Fuel costs and global economic uncertainty."
+        }
+    ],
+
+    "investment_environment": {
+        "equities": "Attractive",
+        "fixed_income": "Attractive",
+        "real_estate": "Moderate",
+        "cash": "Neutral"
+    },
+
+    "ai_interpretation": {
+        "bull": "Macroeconomic conditions support long-term equity accumulation.",
+        "normal": "Balanced investment strategy recommended.",
+        "bear": "Increase defensive allocation and focus on quality dividend stocks."
+    },
+
+    "forecast": {
+        "next_12_months": {
+            "expected_market_return": 12.5,
+            "expected_dividend_growth": 6.2,
+            "expected_gdp_growth": 5.6,
+            "expected_inflation": 5.0
+        },
+
+        "next_5_years": {
+            "annual_market_return": 13.5,
+            "annual_dividend_growth": 7.1,
+            "economic_outlook": "Positive"
+        }
+    },
+
+    "risk_alerts": [
+        {
+            "title": "Inflation Risk",
+            "severity": "Medium",
+            "description": "Persistent inflation could reduce real investment returns."
+        },
+        {
+            "title": "Interest Rate Risk",
+            "severity": "Medium",
+            "description": "Higher interest rates may pressure equity valuations."
+        },
+        {
+            "title": "Currency Risk",
+            "severity": "Low",
+            "description": "Exchange-rate movements may affect foreign investors."
+        }
+    ]
+}
