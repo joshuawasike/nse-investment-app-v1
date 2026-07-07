@@ -487,45 +487,7 @@ def apply_corporate_actions(capital, code):
 
 
 
-# =========================================================
-# 🏦 INSTITUTIONAL ALLOCATOR V4
-# =========================================================
-def institutional_allocator(sim, mode):
 
-    mean = np.mean(sim, axis=1)
-    vol = np.std(sim, axis=1) + 1e-9
-
-    sharpe = mean / vol
-
-    score = sharpe.copy()
-
-    # =====================================================
-    # REGIME TILTS
-    # =====================================================
-    if mode == "bull":
-        score = score * 1.25 + mean * 15
-
-    elif mode == "bear":
-        score = score * 0.70 - vol * 4
-
-    else:
-        score = score * 1.00
-
-    # =====================================================
-    # SOFTMAX WEIGHTS
-    # =====================================================
-    score = score - np.max(score)
-
-    weights = np.exp(score)
-    weights = weights / np.sum(weights)
-
-    # =====================================================
-    # CONCENTRATION LIMITS
-    # =====================================================
-    weights = np.clip(weights, 0.05, 0.35)
-    weights = weights / np.sum(weights)
-
-    return weights
 # =========================================================
 # 🧠 PATH SIMULATION (MISSING FUNCTION FIX)
 # =========================================================
