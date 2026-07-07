@@ -484,7 +484,6 @@ def apply_corporate_actions(capital, code):
 
     return capital, bonus
 
-          
    
     # -----------------------------------------------------
     # SUMMARY
@@ -554,39 +553,7 @@ def login():
 def logout():
     session.clear()
     return redirect("/login")
-# =========================================================
-# 🎯 GOAL PLANNER
-# =========================================================
-def years_to_goal(monthly, target, annual_return=0.10):
 
-    if monthly <= 0 or target <= 0:
-        return None
-
-    monthly_rate = annual_return / 12
-
-    balance = 0
-    months = 0
-
-    while balance < target and months < 1200:
-        balance = balance * (1 + monthly_rate) + monthly
-        months += 1
-
-    return round(months / 12, 1)
-
-
-def monthly_for_goal(target, years, annual_return=0.10):
-
-    if target <= 0 or years <= 0:
-        return None
-
-    r = annual_return / 12
-    n = years * 12
-
-    factor = ((1 + r) ** n - 1) / r
-
-    monthly = target / factor
-
-    return round(monthly, 0)
 # =========================================================
 # 🌐 MAIN ROUTE
 # =========================================================
