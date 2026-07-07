@@ -1,199 +1,20 @@
-# ==========================================================
-# JOBURA WEALTH®
-# NSE Institutional Wealth Management Platform
-# Professional Analytics Suite
-# Version 2026
-# ==========================================================
-
-from flask import (
-    Flask,
-    render_template,
-    request,
-    redirect,
-    url_for,
-    session,
-    flash,
-    jsonify
-)
-
-import os
-import json
-import random
-import base64
-import io
-
-import numpy as np
+from datetime import datetime 
+from flask import Flask, render_template, request, redirect, session
 import pandas as pd
-
+import numpy as np
+import glob
 import matplotlib
+import json
+import os
+import io
+import base64
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-from datetime import datetime
-
-# ==========================================================
-# ENGINE MODULES
-# ==========================================================
-
-from engine.simulation import simulate_market
-from engine.portfolio import build_portfolio
-from engine.analytics import portfolio_summary
-from engine.ai import investment_advisor
-from engine.research import company_database
-from engine.risk import portfolio_risk
-from engine.retirement import retirement_projection
-from engine.reports import create_report
-
-from engine.utils import (
-    load_json,
-    save_json,
-    today,
-    money,
-    percent,
-    platform
-)
-
-# ==========================================================
-# FLASK APPLICATION
-# ==========================================================
-
 app = Flask(__name__)
-
-app.secret_key = "JOBURA_WEALTH_2026"
-
-# ==========================================================
-# PROJECT PATHS
-# ==========================================================
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-DATA_DIR = os.path.join(BASE_DIR, "data")
-
-TEMPLATE_DIR = os.path.join(BASE_DIR, "templates")
-
-STATIC_DIR = os.path.join(BASE_DIR, "static")
-
-# ==========================================================
-# JSON DATABASE FILES
-# ==========================================================
-
-USERS_FILE = "users.json"
-
-COMPANIES_FILE = "companies.json"
-
-DIVIDENDS_FILE = "dividends.json"
-
-MARKET_FILE = "market_data.json"
-
-MODELS_FILE = "portfolio_models.json"
-
-SECTORS_FILE = "sectors.json"
-
-AI_RULES_FILE = "ai_rules.json"
-
-RISK_FILE = "risk_profiles.json"
-
-ECONOMY_FILE = "economic_indicators.json"
-
-SUBSCRIPTIONS_FILE = "subscriptions.json"
-
-TRANSACTIONS_FILE = "transactions.json"
-
-# ==========================================================
-# LOAD DATABASES
-# ==========================================================
-
-companies = load_json(
-    os.path.join(DATA_DIR, COMPANIES_FILE)
-)
-
-users = load_json(
-    os.path.join(DATA_DIR, USERS_FILE)
-)
-
-dividends = load_json(
-    os.path.join(DATA_DIR, DIVIDENDS_FILE)
-)
-
-market = load_json(
-    os.path.join(DATA_DIR, MARKET_FILE)
-)
-
-portfolio_models = load_json(
-    os.path.join(DATA_DIR, MODELS_FILE)
-)
-
-sectors = load_json(
-    os.path.join(DATA_DIR, SECTORS_FILE)
-)
-
-ai_rules = load_json(
-    os.path.join(DATA_DIR, AI_RULES_FILE)
-)
-
-risk_profiles = load_json(
-    os.path.join(DATA_DIR, RISK_FILE)
-)
-
-economic = load_json(
-    os.path.join(DATA_DIR, ECONOMY_FILE)
-)
-
-subscriptions = load_json(
-    os.path.join(DATA_DIR, SUBSCRIPTIONS_FILE)
-)
-
-transactions = load_json(
-    os.path.join(DATA_DIR, TRANSACTIONS_FILE)
-)
-
-# ==========================================================
-# PLATFORM INFORMATION
-# ==========================================================
-
-APP = platform()
-
-# ==========================================================
-# GLOBAL SETTINGS
-# ==========================================================
-
-COMMUNITY_PLAN = "Community Edition"
-
-PROFESSIONAL_PLAN = "Professional Edition"
-
-INSTITUTIONAL_PLAN = "Institutional Edition"
-
-DEFAULT_MARKET = "Normal"
-
-DEFAULT_MODEL = "Dividend"
-
-CURRENCY = "KES"
-
-# ==========================================================
-# APPLICATION HOME
-# ==========================================================
-
-@app.route("/")
-def home():
-
-    return render_template(
-
-        "dashboard.html",
-
-        app=APP,
-
-        companies=companies,
-
-        market=market,
-
-        user=session.get("user"),
-
-        premium=session.get("premium", False)
-
-    )
-
+app.secret_key = "jobura_secure_secure_v3"
 @app.route("/companies")
-def company_list():
+def companies():
 
     files = glob.glob("NSE_data_all_stock_*.csv")
 
@@ -206,19 +27,13 @@ def company_list():
         try:
             temp = pd.read_csv(f)
 
+            # normalize column names
             temp.columns = temp.columns.astype(str).str.strip().str.upper()
 
-            possible_cols = [
-                "NAME",
-                "COMPANY",
-                "SECURITY",
-                "SYMBOL",
-                "STOCK",
-                "ISSUER"
-            ]
+            # possible name columns (VERY IMPORTANT FIX)
+            possible_cols = ["NAME", "COMPANY", "SECURITY", "SYMBOL", "STOCK", "ISSUER"]
 
             name_col = None
-
             for col in temp.columns:
                 if col in possible_cols:
                     name_col = col
@@ -243,81 +58,69 @@ def company_list():
         return "No valid company names found"
 
     return "<br>".join(sorted(set(names)))
-# ==========================================================
-# SECURITY CONFIGURATION
-# ==========================================================
-
+# =========================================================
+# 🔐 CONFIG
+# =========================================================
 ADMIN_PASSWORD = "Jobura@542542"
+DB_FILE = "users.json"
 
-USERS_PATH = os.path.join(DATA_DIR, USERS_FILE)
-
-# ==========================================================
-# USER MANAGEMENT
-# ==========================================================
-
+# =========================================================
+# 📦 SAFE USER SYSTEM
+# =========================================================
 def load_users():
-    return load_json(USERS_PATH)
+    if not os.path.exists(DB_FILE):
+        with open(DB_FILE, "w") as f:
+            json.dump([], f)
+        return []
+
+    try:
+        with open(DB_FILE, "r") as f:
+            data = json.load(f)
+
+        if not isinstance(data, list):
+            return []
+
+        return [u for u in data if isinstance(u, dict)]
+
+    except:
+        return []
 
 
 def save_users(users):
-    save_json(USERS_PATH, users)
+    try:
+        with open(DB_FILE, "w") as f:
+            json.dump(users, f, indent=4)
+    except:
+        pass
 
 
 def is_active(user):
-
-    if not isinstance(user, dict):
-        return False
-
-    status = user.get("status", "").lower()
-
     return (
-        "monthly" in status
-        or
-        "yearly" in status
-        or
-        "professional" in status
-        or
-        "institutional" in status
+        isinstance(user, dict)
+        and "status" in user
+        and (
+            "monthly" in user.get("status", "")
+            or "yearly" in user.get("status", "")
+        )
     )
 
-# ==========================================================
-# PAYMENT CONFIGURATION
-# ==========================================================
-
+# =========================================================
+# 💳 PAYMENT INFO
+# =========================================================
 PAYMENT_INFO = {
-
     "paybill": "542542",
-
-    "account": "31909",
-
-    "business_name": "Jobura Solutions",
-
-    "currency": "KES"
-
+    "account_number": "31909",
+    "account_name": "Jobura Solutions"
 }
 
-# ==========================================================
-# SUBSCRIPTION PRICING
-# ==========================================================
-
+# =========================================================
+# 💰 PRICING CONFIG (ADD THIS HERE)
+# =========================================================
 PRICING = {
-
-    "Community": {
-        "monthly": 0,
-        "yearly": 0
-    },
-
-    "Professional": {
-        "monthly": 400,
-        "yearly": 4000
-    },
-
-    "Institutional": {
-        "monthly": 2000,
-        "yearly": 18000
-    }
-
+    "monthly": 400,
+    "yearly": 4000
 }
+
 # =========================================================
 # 📊 DATA ENGINE
 # =========================================================
