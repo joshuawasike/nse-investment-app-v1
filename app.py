@@ -486,45 +486,8 @@ def apply_corporate_actions(capital, code):
 
     
 
-}
-# =========================================================
-# 🏦 DIVIDEND HEALTH ENGINE
-# =========================================================
-def dividend_health_score(code, stats):
 
-    profile = DIVIDEND_DATABASE.get(code, {})
 
-    stability = profile.get("stability", 0.90)
-    quality = profile.get("quality", 0.90)
-
-    if stats is None:
-        return float(np.clip(
-            0.60 * stability + 0.40 * quality,
-            0.20,
-            0.99
-        ))
-
-    try:
-
-        mu = float(stats["mu"][code])
-        sigma = float(stats["sigma"][code])
-
-        score = (
-            0.35 * stability +
-            0.35 * quality +
-            0.20 * np.clip(mu * 30, 0, 1) +
-            0.10 * np.clip(1 - sigma * 20, 0, 1)
-        )
-
-        return float(np.clip(score, 0.20, 0.99))
-
-    except:
-
-        return float(np.clip(
-            0.60 * stability + 0.40 * quality,
-            0.20,
-            0.99
-        ))
 # =========================================================
 # 🌍 INSTITUTIONAL ECONOMIC REGIME ENGINE V2
 # =========================================================
