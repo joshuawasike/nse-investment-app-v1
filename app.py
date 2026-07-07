@@ -5,6 +5,10 @@
 # Version 2026
 # ==========================================================
 
+# ==========================================================
+# FLASK
+# ==========================================================
+
 from flask import (
     Flask,
     render_template,
@@ -16,11 +20,22 @@ from flask import (
     jsonify
 )
 
+# ==========================================================
+# STANDARD LIBRARIES
+# ==========================================================
+
 import os
+import io
 import json
+import glob
 import random
 import base64
-import io
+
+from datetime import datetime
+
+# ==========================================================
+# DATA SCIENCE
+# ==========================================================
 
 import numpy as np
 import pandas as pd
@@ -29,25 +44,35 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-from datetime import datetime
-
 # ==========================================================
 # ENGINE MODULES
 # ==========================================================
 
 from engine.simulation import simulate_market
+
 from engine.portfolio import build_portfolio
+
 from engine.analytics import portfolio_summary
+
 from engine.ai import investment_advisor
+
 from engine.research import (
     company_database,
     ASSETS,
     DIVIDEND_DATABASE,
     DIVIDEND_BASE,
+    load_data,
+    get_df,
+    estimate_market_statistics,
+    get_market_stats,
+    get_model_assets,
     estimate_dividend_yields
 )
+
 from engine.risk import portfolio_risk
+
 from engine.retirement import retirement_projection
+
 from engine.reports import create_report
 
 from engine.utils import (
@@ -57,10 +82,6 @@ from engine.utils import (
     money,
     percent,
     platform
-)
-from engine.corporate_actions import (
-    CORPORATE_ACTIONS,
-    apply_corporate_actions
 )
 # ==========================================================
 # FLASK APPLICATION
@@ -463,72 +484,7 @@ def apply_corporate_actions(capital, code):
 
     return capital, bonus
 
-# =========================================================
-# INSTITUTIONAL COMPANY ANALYTICS
-# =========================================================
-def company_analytics(code, capital):
 
-    profile = DIVIDEND_DATABASE.get(code, {})
-
-    dividend_yield = profile.get("base_yield",0)
-
-    growth = profile.get("growth",0)
-
-    quality = profile.get("quality",0)
-
-    payout = profile.get("payout",0)
-
-    stability = profile.get("stability",0)
-
-    beta = profile.get("beta",1)
-
-    income = capital * dividend_yield
-
-    health = (
-
-        quality*40 +
-
-        stability*30 +
-
-        (1-beta)*20 +
-
-        (1-payout)*10
-
-    )
-
-    health = max(0,min(100,health))
-
-    return{
-
-        "yield":round(dividend_yield*100,2),
-
-        "growth":round(growth*100,2),
-
-        "quality":round(quality*100,1),
-
-        "stability":round(stability*100,1),
-
-        "health":round(health,1),
-
-        "income":round(income,2),
-
-        "beta":beta,
-
-        "policy":profile.get("policy"),
-
-        "sector":profile.get("sector"),
-
-        "roe":round(profile.get("roe",0)*100,1),
-
-        "pe":profile.get("pe"),
-
-        "pb":profile.get("pb"),
-
-        "credit":profile.get("credit"),
-
-        "esg":profile.get("esg")
-
-    }
 # =========================================================
 # 📈 DIVIDEND FORECAST ENGINE
 # =========================================================
