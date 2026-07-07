@@ -7,7 +7,10 @@ Institutional Reporting Engine
 """
 
 from datetime import datetime
+from engine.reports import chart
 
+result = simulate(monthly, years, mode, model)
+result["chart"] = chart(result["curve"])
 
 # ==========================================================
 # Currency Formatting
