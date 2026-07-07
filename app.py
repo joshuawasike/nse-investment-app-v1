@@ -486,63 +486,7 @@ def apply_corporate_actions(capital, code):
 
 
 
-# =========================================================
-# 🧠 AI ENGINE
-# =========================================================
-def optimize_weights(sim, mode="normal"):
 
-    n = sim.shape[0]
-
-    mean = np.mean(sim, axis=1)
-    vol = np.std(sim, axis=1) + 1e-9
-    downside = np.mean(np.minimum(sim, 0), axis=1)
-
-    # =========================================================
-    # RISK PARITY
-    # =========================================================
-    inv_vol = 1.0 / vol
-    rp_weights = inv_vol / np.sum(inv_vol)
-
-    # =========================================================
-    # ALPHA SCORE (SAFE DYNAMIC VERSION)
-    # =========================================================
-    safe_ratio = mean / (vol + 1e-9)
-    score = safe_ratio - (1.1 * np.abs(downside))
-
-    # NO FIXED INDEXING LIKE score[7]
-    alpha = np.tanh(score * 2.0)
-    alpha_weights = np.exp(alpha - np.max(alpha))
-    alpha_weights = alpha_weights / np.sum(alpha_weights)
-
-    # =========================================================
-    # HYBRID
-    # =========================================================
-    w = 0.55 * rp_weights + 0.45 * alpha_weights
-
-    # =========================================================
-    # REGIME TILT (SAFE)
-    # =========================================================
-    if mode == "bull":
-        w *= 1.05
-    elif mode == "bear":
-        w *= 0.95
-
-    # =========================================================
-    # NORMALIZATION
-    # =========================================================
-    w = np.maximum(w, 1e-6)
-    w = w / np.sum(w)
-
-    # =========================================================
-    # DYNAMIC CLIP (NO FIXED SIZE ARRAYS)
-    # =========================================================
-    MIN = np.full(n, 0.03)
-    MAX = np.full(n, 0.40)
-
-    w = np.clip(w, MIN, MAX)
-    w = w / np.sum(w)
-
-    return w
 # =========================================================
 # 🎯 APPLY MODEL BIAS TO WEIGHTS
 # =========================================================
