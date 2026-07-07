@@ -443,3 +443,21 @@ def forecast_dividend_yield(code, years_elapsed, mode):
         "value":    [5,6,7,4],         # cyclical + recovery stocks
         "income":   [3,4,1,0,2]        # dividend-heavy names
      }
+    def company_database():
+
+    files = glob.glob("NSE_data_all_stock_*.csv")
+
+    names = []
+
+    for f in files:
+
+        try:
+            temp = pd.read_csv(f)
+
+            ...
+            names.extend(...)
+
+        except Exception:
+            pass
+
+    return sorted(set(names))
