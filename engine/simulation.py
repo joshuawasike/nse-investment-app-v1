@@ -640,4 +640,12 @@ def simulate(monthly, years, mode, model="dividend"):
 
     real_value = portfolio_value / ((1 + inflation) ** years)
 
-    
+     # -----------------------------------------------------
+    # AI
+    # -----------------------------------------------------
+    ai = ai_portfolio_advisor(
+        weights,
+        R,
+        assets
+    )
+
