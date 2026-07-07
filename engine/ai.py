@@ -249,3 +249,5 @@ def ai_portfolio_advisor(weights, R, assets):
         "risk_level": float(risk),
         "commentary": comment
     }
+def ai_portfolio_advisor(weights, R, assets):
+    ...
