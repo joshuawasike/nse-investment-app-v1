@@ -1,0 +1,152 @@
+{
+    "platform": "JOBURA WEALTH®",
+    "version": "2026 Professional Edition",
+    "currency": "KES",
+
+    "plans": [
+        {
+            "id": "community",
+            "name": "Community Edition",
+            "description": "Entry-level investment platform for individual investors.",
+            "price_monthly": 0,
+            "price_yearly": 0,
+            "max_portfolios": 1,
+            "support": "Community",
+            "features": [
+                "Normal Market Simulation",
+                "Basic Portfolio Engine",
+                "Dividend Projection",
+                "Goal Planner",
+                "Basic Company Research",
+                "Limited Reports"
+            ]
+        },
+
+        {
+            "id": "individual",
+            "name": "Professional Individual",
+            "description": "Designed for serious retail investors.",
+            "price_monthly": 400,
+            "price_yearly": 4000,
+            "max_portfolios": 10,
+            "support": "Email Support",
+            "features": [
+                "Bull Market Simulation",
+                "Bear Market Simulation",
+                "Monte Carlo Simulation",
+                "Portfolio Health Score",
+                "AI Investment Advisor",
+                "Dividend Forecast",
+                "Risk Analytics",
+                "Retirement Planning",
+                "Unlimited Reports",
+                "Research Centre"
+            ]
+        },
+
+        {
+            "id": "institutional",
+            "name": "Institutional Edition",
+            "description": "Designed for pension funds, SACCOs, banks, fund managers and wealth advisors.",
+            "price_monthly": 2000,
+            "price_yearly": 18000,
+            "max_portfolios": 999,
+            "support": "Priority Support",
+            "features": [
+                "Unlimited Portfolio Analysis",
+                "Institutional Dashboard",
+                "Advanced AI Advisor",
+                "Monte Carlo Engine",
+                "Risk Analytics",
+                "Sector Allocation Optimizer",
+                "Retirement Income Models",
+                "Corporate Actions Engine",
+                "Economic Dashboard",
+                "Professional Reports",
+                "Institutional Research Centre",
+                "Portfolio Rebalancing",
+                "Unlimited Simulations"
+            ]
+        },
+
+        {
+            "id": "enterprise",
+            "name": "Enterprise Edition",
+            "description": "Large institutions requiring custom deployment.",
+            "price_monthly": 0,
+            "price_yearly": 0,
+            "custom_pricing": true,
+            "support": "Dedicated Account Manager",
+            "features": [
+                "Everything in Institutional Edition",
+                "Multi-user Access",
+                "API Integration",
+                "Custom Branding",
+                "Dedicated Database",
+                "Cloud Deployment",
+                "On-premise Installation",
+                "Priority AI Processing",
+                "Executive Reporting",
+                "Dedicated Training"
+            ]
+        }
+    ],
+
+    "payment_information": {
+        "business_name": "Jobura Solutions",
+        "paybill": "542542",
+        "account_number": "31909"
+    },
+
+    "trial": {
+        "enabled": true,
+        "days": 14
+    },
+
+    "license_validation": {
+        "grace_period_days": 5,
+        "allow_offline_days": 7
+    },
+
+    "feature_access": {
+        "community": {
+            "ai_advisor": false,
+            "research": true,
+            "goal_planner": true,
+            "risk_dashboard": false,
+            "retirement_planner": false,
+            "reports": true,
+            "admin_dashboard": false
+        },
+
+        "individual": {
+            "ai_advisor": true,
+            "research": true,
+            "goal_planner": true,
+            "risk_dashboard": true,
+            "retirement_planner": true,
+            "reports": true,
+            "admin_dashboard": false
+        },
+
+        "institutional": {
+            "ai_advisor": true,
+            "research": true,
+            "goal_planner": true,
+            "risk_dashboard": true,
+            "retirement_planner": true,
+            "reports": true,
+            "admin_dashboard": true
+        },
+
+        "enterprise": {
+            "ai_advisor": true,
+            "research": true,
+            "goal_planner": true,
+            "risk_dashboard": true,
+            "retirement_planner": true,
+            "reports": true,
+            "admin_dashboard": true
+        }
+    }
+}
