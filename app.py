@@ -488,25 +488,7 @@ def apply_corporate_actions(capital, code):
 
    
        
-    # -----------------------------------------------------
-    # PLAN
-    # -----------------------------------------------------
-    plan = []
-
-    for i in range(len(assets)):
-
-        plan.append({
-
-            "name":
-                assets[i][0],
-
-            "percent":
-                round(weights[i] * 100, 2),
-
-            "kes":
-                round(monthly_alloc[i], 2)
-
-        })
+    
         returns_table = []
 
         for i in range(len(assets)):
