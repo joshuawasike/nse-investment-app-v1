@@ -1,3 +1,6 @@
+import numpy as np
+import pandas as pd
+import glob
 {% extends "base.html" %}
 
 {% block title %}
@@ -444,3 +447,367 @@ Investment Strategy
 </div>
 
 {% endblock %}
+# =========================================================
+# 📊 ASSETS
+# =========================================================
+ASSETS = [
+    ("Equity Bank","EQTY"),
+    ("KCB Group","KCB"),
+    ("Co-op Bank","COOP"),
+    ("Safaricom","SCOM"),
+    ("EABL","EABL"),
+    ("KenGen","KEGN"),
+    ("NCBA","NCBA"),
+    ("Kenya Airways","KQ")
+]
+
+N = len(ASSETS)
+# =========================================================
+# 💰 INSTITUTIONAL DIVIDEND RESEARCH DATABASE V2
+# =========================================================
+
+DIVIDEND_DATABASE = {
+
+    # =====================================================
+    # EQUITY BANK
+    # =====================================================
+    "EQTY":{
+
+        "company":"Equity Bank",
+        "sector":"Banking",
+
+        "months":[6],
+
+        "base_yield":0.090,
+        "growth":0.060,
+        "payout":0.45,
+        "stability":0.96,
+        "quality":0.95,
+        "policy":"progressive",
+
+        "beta":0.92,
+        "roe":0.23,
+        "eps_growth":0.14,
+
+        "pe":6.8,
+        "pb":1.50,
+
+        "market_cap":255_000_000_000,
+
+        "credit":"A",
+
+        "esg":82,
+
+        "risk":"Low",
+
+        "currency":"KES"
+
+    },
+
+    # =====================================================
+    # KCB GROUP
+    # =====================================================
+    "KCB":{
+
+        "company":"KCB Group",
+        "sector":"Banking",
+
+        "months":[5,11],
+
+        "base_yield":0.085,
+        "growth":0.055,
+        "payout":0.42,
+        "stability":0.94,
+        "quality":0.93,
+        "policy":"progressive",
+
+        "beta":0.94,
+        "roe":0.21,
+        "eps_growth":0.11,
+
+        "pe":7.2,
+        "pb":1.30,
+
+        "market_cap":215_000_000_000,
+
+        "credit":"A",
+
+        "esg":79,
+
+        "risk":"Low",
+
+        "currency":"KES"
+
+    },
+
+    # =====================================================
+    # CO-OPERATIVE BANK
+    # =====================================================
+    "COOP":{
+
+        "company":"Co-operative Bank",
+
+        "sector":"Banking",
+
+        "months":[6],
+
+        "base_yield":0.090,
+
+        "growth":0.070,
+
+        "payout":0.50,
+
+        "stability":0.98,
+
+        "quality":0.96,
+
+        "policy":"stable",
+
+        "beta":0.88,
+
+        "roe":0.20,
+
+        "eps_growth":0.12,
+
+        "pe":5.9,
+
+        "pb":1.20,
+
+        "market_cap":145_000_000_000,
+
+        "credit":"A-",
+
+        "esg":83,
+
+        "risk":"Low",
+
+        "currency":"KES"
+
+    },
+
+    # =====================================================
+    # SAFARICOM
+    # =====================================================
+    "SCOM":{
+
+        "company":"Safaricom PLC",
+
+        "sector":"Telecom",
+
+        "months":[4,10],
+
+        "base_yield":0.065,
+
+        "growth":0.080,
+
+        "payout":0.70,
+
+        "stability":0.99,
+
+        "quality":0.98,
+
+        "policy":"progressive",
+
+        "beta":0.75,
+
+        "roe":0.31,
+
+        "eps_growth":0.16,
+
+        "pe":14.5,
+
+        "pb":6.10,
+
+        "market_cap":720_000_000_000,
+
+        "credit":"AA",
+
+        "esg":91,
+
+        "risk":"Very Low",
+
+        "currency":"KES"
+
+    },
+
+    # =====================================================
+    # EABL
+    # =====================================================
+    "EABL":{
+
+        "company":"East African Breweries",
+
+        "sector":"Consumer",
+
+        "months":[7],
+
+        "base_yield":0.075,
+
+        "growth":0.040,
+
+        "payout":0.65,
+
+        "stability":0.95,
+
+        "quality":0.92,
+
+        "policy":"stable",
+
+        "beta":0.86,
+
+        "roe":0.27,
+
+        "eps_growth":0.08,
+
+        "pe":12.1,
+
+        "pb":4.00,
+
+        "market_cap":150_000_000_000,
+
+        "credit":"AA-",
+
+        "esg":84,
+
+        "risk":"Medium",
+
+        "currency":"KES"
+
+    },
+
+    # =====================================================
+    # KENGEN
+    # =====================================================
+    "KEGN":{
+
+        "company":"KenGen",
+
+        "sector":"Utilities",
+
+        "months":[8],
+
+        "base_yield":0.080,
+
+        "growth":0.050,
+
+        "payout":0.55,
+
+        "stability":0.90,
+
+        "quality":0.88,
+
+        "policy":"cyclical",
+
+        "beta":0.68,
+
+        "roe":0.14,
+
+        "eps_growth":0.09,
+
+        "pe":5.6,
+
+        "pb":0.90,
+
+        "market_cap":95_000_000_000,
+
+        "credit":"BBB+",
+
+        "esg":87,
+
+        "risk":"Low",
+
+        "currency":"KES"
+
+    },
+
+    # =====================================================
+    # NCBA
+    # =====================================================
+    "NCBA":{
+
+        "company":"NCBA Group",
+
+        "sector":"Banking",
+
+        "months":[5,11],
+
+        "base_yield":0.060,
+
+        "growth":0.050,
+
+        "payout":0.40,
+
+        "stability":0.93,
+
+        "quality":0.90,
+
+        "policy":"progressive",
+
+        "beta":0.98,
+
+        "roe":0.18,
+
+        "eps_growth":0.10,
+
+        "pe":6.5,
+
+        "pb":1.10,
+
+        "market_cap":85_000_000_000,
+
+        "credit":"A-",
+
+        "esg":78,
+
+        "risk":"Medium",
+
+        "currency":"KES"
+
+    },
+
+    # =====================================================
+    # KENYA AIRWAYS
+    # =====================================================
+    "KQ":{
+
+        "company":"Kenya Airways",
+
+        "sector":"Airline",
+
+        "months":[],
+
+        "base_yield":0.000,
+
+        "growth":0.000,
+
+        "payout":0.00,
+
+        "stability":0.20,
+
+        "quality":0.25,
+
+        "policy":"suspended",
+
+        "beta":1.80,
+
+        "roe":-0.10,
+
+        "eps_growth":0.18,
+
+        "pe":None,
+
+        "pb":0.40,
+
+        "market_cap":28_000_000_000,
+
+        "credit":"B",
+
+        "esg":62,
+
+        "risk":"Very High",
+
+        "currency":"KES"
+
+    }
+
+}
