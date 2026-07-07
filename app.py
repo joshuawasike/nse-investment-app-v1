@@ -484,18 +484,7 @@ def apply_corporate_actions(capital, code):
 
     return capital, bonus
 
-
-
-
-    # -----------------------------------------------------
-    # PORTFOLIO WEIGHTS
-    # -----------------------------------------------------
-    weights = institutional_allocator(R, mode)
-    weights = apply_model_bias(weights, model)
-
-    if len(weights) > len(assets):
-        weights = weights[:len(assets)]
-        weights = weights / np.sum(weights)
+ 
 
     # -----------------------------------------------------
     # SIMULATION SETTINGS
@@ -659,55 +648,7 @@ def apply_corporate_actions(capital, code):
 
     real_value = portfolio_value / ((1 + inflation) ** years)
 
-    # -----------------------------------------------------
-    # BREAKDOWN
-    # -----------------------------------------------------
-    monthly_alloc = monthly * weights
-
-    breakdown = []
-
-    asset_values = capital + dividends
-
-    for i in range(len(assets)):
-
-        invested_asset = invested * weights[i]
-
-        code = assets[i][1]
-
-        analytics = company_analytics(
-            code,
-            capital[i]
-        )
-
-        breakdown.append({
-
-        # -------------------------------
-        # Basic Portfolio Information
-        # -------------------------------
-        "asset": assets[i][0],
-
-        "code": code,
-
-        "allocation_pct": round(weights[i] * 100, 2),
-
-        "capital": round(float(invested_asset), 2),
-
-        "current_value": round(float(capital[i]), 2),
-
-        "capital_gain": round(
-            float(capital[i] - invested_asset),
-            2
-        ),
-
-        "dividends": round(
-            float(dividends[i]),
-            2
-        ),
-
-        "total_return": round(
-            float(asset_values[i]),
-            2
-        ),
+    
 
         # -------------------------------
         # Institutional Analytics
