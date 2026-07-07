@@ -1,0 +1,277 @@
+"""
+=========================================================
+JOBURA WEALTH®
+NSE Institutional Wealth Management Platform
+
+Portfolio Construction Engine
+
+This module builds institutional investment portfolios
+based on investment strategy.
+
+Supported Models
+
+• Dividend Blue Chip
+• Aggressive Growth
+• Banking Dominance
+• Value Investing
+• High Dividend Income
+
+=========================================================
+"""
+
+import json
+
+
+# ==========================================================
+# LOAD COMPANY DATABASE
+# ==========================================================
+
+def load_companies():
+
+    with open("data/companies.json", "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+# ==========================================================
+# INVESTMENT MODELS
+# ==========================================================
+
+PORTFOLIO_MODELS = {
+
+    "dividend": [
+        "EQTY",
+        "COOP",
+        "KCB",
+        "SCOM"
+    ],
+
+    "growth": [
+        "SCOM",
+        "EQTY",
+        "NCBA",
+        "EABL"
+    ],
+
+    "banking": [
+        "EQTY",
+        "KCB",
+        "COOP",
+        "NCBA"
+    ],
+
+    "value": [
+        "EQTY",
+        "COOP",
+        "KEGN",
+        "KCB"
+    ],
+
+    "income": [
+        "COOP",
+        "EQTY",
+        "KCB",
+        "KEGN"
+    ]
+
+}
+
+
+# ==========================================================
+# MODEL DESCRIPTION
+# ==========================================================
+
+MODEL_DESCRIPTION = {
+
+    "dividend":
+        "Focuses on stable dividend-paying companies.",
+
+    "growth":
+        "Focuses on long-term capital appreciation.",
+
+    "banking":
+        "Concentrated exposure to the banking sector.",
+
+    "value":
+        "Targets undervalued companies with strong fundamentals.",
+
+    "income":
+        "Designed for investors seeking regular passive income."
+
+}
+
+
+# ==========================================================
+# BUILD PORTFOLIO
+# ==========================================================
+
+def build_portfolio(model="dividend"):
+
+    companies = load_companies()
+
+    codes = PORTFOLIO_MODELS.get(
+        model,
+        PORTFOLIO_MODELS["dividend"]
+    )
+
+    portfolio = []
+
+    for company in companies:
+
+        if company["code"] in codes:
+
+            portfolio.append(company)
+
+    return portfolio
+
+
+# ==========================================================
+# EQUAL WEIGHT ALLOCATION
+# ==========================================================
+
+def equal_weight(portfolio):
+
+    weight = round(100 / len(portfolio), 2)
+
+    allocation = []
+
+    for company in portfolio:
+
+        allocation.append({
+
+            "code": company["code"],
+
+            "name": company["name"],
+
+            "weight": weight
+
+        })
+
+    return allocation
+
+
+# ==========================================================
+# CAPITAL ALLOCATION
+# ==========================================================
+
+def allocate_capital(monthly, allocation):
+
+    plan = []
+
+    for asset in allocation:
+
+        plan.append({
+
+            "code": asset["code"],
+
+            "name": asset["name"],
+
+            "weight": asset["weight"],
+
+            "monthly_amount":
+                round(monthly * asset["weight"] / 100, 2)
+
+        })
+
+    return plan
+
+
+# ==========================================================
+# PORTFOLIO SUMMARY
+# ==========================================================
+
+def portfolio_summary(portfolio):
+
+    sectors = {}
+
+    average_quality = 0
+    average_health = 0
+    average_dividend = 0
+
+    for company in portfolio:
+
+        sector = company["sector"]
+
+        sectors[sector] = sectors.get(sector, 0) + 1
+
+        average_quality += company["quality_score"]
+        average_health += company["health_score"]
+        average_dividend += company["dividend_yield"]
+
+    n = len(portfolio)
+
+    return {
+
+        "companies": n,
+
+        "sectors": sectors,
+
+        "quality_score":
+            round(average_quality / n, 1),
+
+        "health_score":
+            round(average_health / n, 1),
+
+        "average_dividend":
+            round(average_dividend / n, 2)
+
+    }
+
+
+# ==========================================================
+# PORTFOLIO RATING
+# ==========================================================
+
+def portfolio_rating(score):
+
+    if score >= 95:
+        return "★★★★★ Elite"
+
+    if score >= 90:
+        return "★★★★☆ Excellent"
+
+    if score >= 80:
+        return "★★★★ Good"
+
+    if score >= 70:
+        return "★★★ Moderate"
+
+    return "★★ High Risk"
+
+
+# ==========================================================
+# BUILD COMPLETE MODEL
+# ==========================================================
+
+def create_portfolio(model, monthly):
+
+    portfolio = build_portfolio(model)
+
+    allocation = equal_weight(portfolio)
+
+    investment_plan = allocate_capital(
+        monthly,
+        allocation
+    )
+
+    summary = portfolio_summary(portfolio)
+
+    summary["rating"] = portfolio_rating(
+        summary["health_score"]
+    )
+
+    return {
+
+        "portfolio": portfolio,
+
+        "allocation": allocation,
+
+        "plan": investment_plan,
+
+        "summary": summary,
+
+        "model": model,
+
+        "description":
+            MODEL_DESCRIPTION.get(model, "")
+
+    }
