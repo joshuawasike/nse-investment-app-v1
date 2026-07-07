@@ -1,0 +1,130 @@
+{
+    "profiles": [
+        {
+            "id": "conservative",
+            "name": "Conservative Investor",
+            "description": "Focuses on capital preservation and stable dividend income with minimal volatility.",
+            "risk_score": 20,
+            "investment_horizon": "3-10 Years",
+            "expected_return": 10.0,
+            "expected_volatility": 8.0,
+            "recommended_models": [
+                "income",
+                "dividend"
+            ],
+            "asset_allocation": {
+                "Banking": 40,
+                "Telecommunications": 25,
+                "Energy": 20,
+                "Consumer Goods": 10,
+                "Cash": 5
+            },
+            "preferred_dividend_yield": 7.0,
+            "max_single_asset": 25,
+            "rebalance_months": 12
+        },
+
+        {
+            "id": "balanced",
+            "name": "Balanced Investor",
+            "description": "Balances income generation with long-term capital appreciation.",
+            "risk_score": 50,
+            "investment_horizon": "5-15 Years",
+            "expected_return": 12.0,
+            "expected_volatility": 14.0,
+            "recommended_models": [
+                "dividend",
+                "growth",
+                "value"
+            ],
+            "asset_allocation": {
+                "Banking": 30,
+                "Telecommunications": 20,
+                "Consumer Goods": 20,
+                "Energy": 15,
+                "Transportation": 10,
+                "Cash": 5
+            },
+            "preferred_dividend_yield": 6.0,
+            "max_single_asset": 30,
+            "rebalance_months": 6
+        },
+
+        {
+            "id": "aggressive",
+            "name": "Aggressive Investor",
+            "description": "Targets maximum capital growth and accepts higher market volatility.",
+            "risk_score": 80,
+            "investment_horizon": "10+ Years",
+            "expected_return": 16.0,
+            "expected_volatility": 25.0,
+            "recommended_models": [
+                "growth",
+                "banking",
+                "value"
+            ],
+            "asset_allocation": {
+                "Banking": 30,
+                "Telecommunications": 20,
+                "Consumer Goods": 20,
+                "Energy": 15,
+                "Transportation": 15
+            },
+            "preferred_dividend_yield": 4.5,
+            "max_single_asset": 35,
+            "rebalance_months": 3
+        },
+
+        {
+            "id": "retirement",
+            "name": "Retirement Income",
+            "description": "Designed for investors seeking stable passive income after retirement.",
+            "risk_score": 25,
+            "investment_horizon": "Lifetime Income",
+            "expected_return": 9.0,
+            "expected_volatility": 7.0,
+            "recommended_models": [
+                "income",
+                "dividend"
+            ],
+            "asset_allocation": {
+                "Banking": 35,
+                "Telecommunications": 30,
+                "Energy": 20,
+                "Consumer Goods": 10,
+                "Cash": 5
+            },
+            "preferred_dividend_yield": 8.0,
+            "max_single_asset": 25,
+            "rebalance_months": 12
+        },
+
+        {
+            "id": "institutional",
+            "name": "Institutional Portfolio",
+            "description": "Optimized for pension funds, SACCOs, insurance companies, and institutional asset managers.",
+            "risk_score": 45,
+            "investment_horizon": "Long-Term",
+            "expected_return": 13.0,
+            "expected_volatility": 12.0,
+            "recommended_models": [
+                "dividend",
+                "growth",
+                "banking",
+                "value",
+                "income"
+            ],
+            "asset_allocation": {
+                "Banking": 30,
+                "Telecommunications": 20,
+                "Consumer Goods": 15,
+                "Energy": 15,
+                "Transportation": 10,
+                "Cash": 10
+            },
+            "preferred_dividend_yield": 6.5,
+            "max_single_asset": 20,
+            "rebalance_months": 6
+        }
+    ]
+}
