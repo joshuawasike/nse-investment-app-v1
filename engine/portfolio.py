@@ -1,605 +1,812 @@
-"""
-=========================================================
-JOBURA WEALTH®
-NSE Institutional Wealth Management Platform
+# =========================================================
+# JOBURA WEALTH®
+# PORTFOLIO ENGINE
+# Institutional Portfolio Construction
+# =========================================================
 
-Portfolio Construction Engine
+import numpy as np
 
-This module builds institutional investment portfolios
-based on investment strategy.
+from engine.research import (
+    DIVIDEND_DATABASE,
+    estimate_dividend_yields
+)
+# =========================================================
+# PORTFOLIO CONSTRAINTS
+# =========================================================
 
-Supported Models
+MIN_WEIGHT = 0.03
+MAX_WEIGHT = 0.40
 
-• Dividend Blue Chip
-• Aggressive Growth
-• Banking Dominance
-• Value Investing
-• High Dividend Income
+REBALANCE_PERIOD = 12
+# =========================================================
+# COMPANY ANALYTICS
+# =========================================================
 
-=========================================================
-"""
+def company_analytics(code, capital):
 
-import json
+    profile = DIVIDEND_DATABASE.get(code, {})
 
+    dividend_yield = profile.get("base_yield", 0.0)
+    growth = profile.get("growth", 0.0)
+    quality = profile.get("quality", 0.0)
+    payout = profile.get("payout", 0.0)
+    stability = profile.get("stability", 0.0)
+    beta = profile.get("beta", 1.0)
 
-# ==========================================================
-# LOAD COMPANY DATABASE
-# ==========================================================
+    income = capital * dividend_yield
 
-def load_companies():
-
-    with open("data/companies.json", "r", encoding="utf-8") as f:
-        return json.load(f)
-
-
-# ==========================================================
-# INVESTMENT MODELS
-# ==========================================================
-
-PORTFOLIO_MODELS = {
-
-    "dividend": [
-        "EQTY",
-        "COOP",
-        "KCB",
-        "SCOM"
-    ],
-
-    "growth": [
-        "SCOM",
-        "EQTY",
-        "NCBA",
-        "EABL"
-    ],
-
-    "banking": [
-        "EQTY",
-        "KCB",
-        "COOP",
-        "NCBA"
-    ],
-
-    "value": [
-        "EQTY",
-        "COOP",
-        "KEGN",
-        "KCB"
-    ],
-
-    "income": [
-        "COOP",
-        "EQTY",
-        "KCB",
-        "KEGN"
-    ]
-
-}
-
-
-# ==========================================================
-# MODEL DESCRIPTION
-# ==========================================================
-
-MODEL_DESCRIPTION = {
-
-    "dividend":
-        "Focuses on stable dividend-paying companies.",
-
-    "growth":
-        "Focuses on long-term capital appreciation.",
-
-    "banking":
-        "Concentrated exposure to the banking sector.",
-
-    "value":
-        "Targets undervalued companies with strong fundamentals.",
-
-    "income":
-        "Designed for investors seeking regular passive income."
-
-}
-
-
-# ==========================================================
-# BUILD PORTFOLIO
-# ==========================================================
-
-def build_portfolio(model="dividend"):
-
-    companies = load_companies()
-
-    codes = PORTFOLIO_MODELS.get(
-        model,
-        PORTFOLIO_MODELS["dividend"]
+    health = (
+        quality * 40
+        + stability * 30
+        + (1 - beta) * 20
+        + (1 - payout) * 10
     )
 
-    portfolio = []
+    health = np.clip(health, 0, 100)
 
-    for company in companies:
+    return {
 
-        if company["code"] in codes:
+        "yield": round(dividend_yield * 100, 2),
 
-            portfolio.append(company)
+        "growth": round(growth * 100, 2),
 
-    return portfolio
+        "quality": round(quality * 100, 1),
 
+        "stability": round(stability * 100, 1),
 
-# ==========================================================
-# EQUAL WEIGHT ALLOCATION
-# ==========================================================
+        "health": round(float(health), 1),
 
-def equal_weight(portfolio):
+        "income": round(float(income), 2),
 
-    weight = round(100 / len(portfolio), 2)
+        "beta": beta,
 
-    allocation = []
+        "policy": profile.get("policy"),
 
-    for company in portfolio:
+        "sector": profile.get("sector"),
 
-        allocation.append({
+        "roe": round(profile.get("roe", 0) * 100, 1),
 
-            "code": company["code"],
+        "pe": profile.get("pe"),
 
-            "name": company["name"],
+        "pb": profile.get("pb"),
 
-            "weight": weight
+        "credit": profile.get("credit"),
+
+        "esg": profile.get("esg")
+
+    }
+    # =========================================================
+# PORTFOLIO CONSTRUCTION ENGINE
+# =========================================================
+
+def build_portfolio(
+    assets,
+    weights,
+    capital,
+    dividends,
+    invested,
+    annual_return
+):
+    """
+    Builds the institutional portfolio breakdown.
+    """
+
+    breakdown = []
+
+    asset_values = capital + dividends
+
+    for i, asset in enumerate(assets):
+
+        code = asset[1]
+
+        analytics = company_analytics(
+            code,
+            capital[i]
+        )
+
+        invested_asset = invested * weights[i]
+
+        breakdown.append({
+
+            # -----------------------------------
+            # Identity
+            # -----------------------------------
+            "asset": asset[0],
+            "code": code,
+
+            # -----------------------------------
+            # Allocation
+            # -----------------------------------
+            "allocation_pct": round(weights[i] * 100, 2),
+
+            # -----------------------------------
+            # Investment
+            # -----------------------------------
+            "capital": round(float(invested_asset), 2),
+
+            "current_value": round(float(capital[i]), 2),
+
+            "capital_gain": round(
+                float(capital[i] - invested_asset),
+                2
+            ),
+
+            # -----------------------------------
+            # Income
+            # -----------------------------------
+            "dividends": round(
+                float(dividends[i]),
+                2
+            ),
+
+            "total_return": round(
+                float(asset_values[i]),
+                2
+            ),
+
+            # -----------------------------------
+            # Institutional Analytics
+            # -----------------------------------
+            "dividend_yield": analytics["yield"],
+
+            "dividend_growth": analytics["growth"],
+
+            "dividend_health": analytics["health"],
+
+            "quality_score": analytics["quality"],
+
+            "stability_score": analytics["stability"],
+
+            "estimated_income": analytics["income"],
+
+            "beta": analytics["beta"],
+
+            "policy": analytics["policy"],
+
+            "sector": analytics["sector"],
+
+            "roe": analytics["roe"],
+
+            "pe": analytics["pe"],
+
+            "pb": analytics["pb"],
+
+            "credit": analytics["credit"],
+
+            "esg": analytics["esg"],
+
+            "annual_return": round(
+                annual_return * 100,
+                2
+            )
 
         })
 
-    return allocation
+    return breakdown
+    # =========================================================
+# PORTFOLIO BREAKDOWN TABLE
+# =========================================================
 
+def build_portfolio_breakdown(
+    assets,
+    weights,
+    capital,
+    dividends,
+    invested,
+    company_analytics
+):
+    """
+    Builds the institutional asset table shown
+    in the dashboard.
 
-# ==========================================================
-# CAPITAL ALLOCATION
-# ==========================================================
+    Returns
+    -------
+    list
+        List of dictionaries.
+    """
 
-def allocate_capital(monthly, allocation):
+    breakdown = []
+
+    asset_values = capital + dividends
+
+    for i, asset in enumerate(assets):
+
+        invested_asset = invested * weights[i]
+
+        code = asset[1]
+
+        analytics = company_analytics(
+            code,
+            capital[i]
+        )
+
+        breakdown.append({
+
+            # -----------------------------------
+            # Identity
+            # -----------------------------------
+            "asset": asset[0],
+            "code": code,
+
+            # -----------------------------------
+            # Allocation
+            # -----------------------------------
+            "allocation_pct": round(
+                weights[i] * 100,
+                2
+            ),
+
+            # -----------------------------------
+            # Capital
+            # -----------------------------------
+            "capital": round(
+                float(invested_asset),
+                2
+            ),
+
+            "current_value": round(
+                float(capital[i]),
+                2
+            ),
+
+            "capital_gain": round(
+                float(capital[i] - invested_asset),
+                2
+            ),
+
+            # -----------------------------------
+            # Income
+            # -----------------------------------
+            "dividends": round(
+                float(dividends[i]),
+                2
+            ),
+
+            "total_return": round(
+                float(asset_values[i]),
+                2
+            ),
+
+            # -----------------------------------
+            # Institutional Analytics
+            # -----------------------------------
+            "dividend_yield":
+                analytics["yield"],
+
+            "dividend_growth":
+                analytics["growth"],
+
+            "dividend_health":
+                analytics["health"],
+
+            "quality_score":
+                analytics["quality"],
+
+            "stability_score":
+                analytics["stability"],
+
+            "estimated_income":
+                analytics["income"],
+
+            "beta":
+                analytics["beta"],
+
+            "policy":
+                analytics["policy"],
+
+            "sector":
+                analytics["sector"],
+
+            "roe":
+                analytics["roe"],
+
+            "pe":
+                analytics["pe"],
+
+            "pb":
+                analytics["pb"],
+
+            "credit":
+                analytics["credit"],
+
+            "esg":
+                analytics["esg"]
+
+        })
+
+    return breakdown
+    # =========================================================
+# MONTHLY INVESTMENT PLAN
+# =========================================================
+
+def build_monthly_plan(
+    assets,
+    weights,
+    monthly
+):
+    """
+    Monthly allocation plan.
+    """
+
+    monthly_alloc = monthly * weights
 
     plan = []
 
-    for asset in allocation:
+    for i, asset in enumerate(assets):
 
         plan.append({
 
-            "code": asset["code"],
+            "name": asset[0],
 
-            "name": asset["name"],
+            "percent": round(
+                weights[i] * 100,
+                2
+            ),
 
-            "weight": asset["weight"],
-
-            "monthly_amount":
-                round(monthly * asset["weight"] / 100, 2)
+            "kes": round(
+                monthly_alloc[i],
+                2
+            )
 
         })
 
     return plan
-
-
-# ==========================================================
-# PORTFOLIO SUMMARY
-# ==========================================================
-
-def portfolio_summary(portfolio):
-
-    sectors = {}
-
-    average_quality = 0
-    average_health = 0
-    average_dividend = 0
-
-    for company in portfolio:
-
-        sector = company["sector"]
-
-        sectors[sector] = sectors.get(sector, 0) + 1
-
-        average_quality += company["quality_score"]
-        average_health += company["health_score"]
-        average_dividend += company["dividend_yield"]
-
-    n = len(portfolio)
-
-    return {
-
-        "companies": n,
-
-        "sectors": sectors,
-
-        "quality_score":
-            round(average_quality / n, 1),
-
-        "health_score":
-            round(average_health / n, 1),
-
-        "average_dividend":
-            round(average_dividend / n, 2)
-
-    }
-
-
-# ==========================================================
-# PORTFOLIO RATING
-# ==========================================================
-
-def portfolio_rating(score):
-
-    if score >= 95:
-        return "★★★★★ Elite"
-
-    if score >= 90:
-        return "★★★★☆ Excellent"
-
-    if score >= 80:
-        return "★★★★ Good"
-
-    if score >= 70:
-        return "★★★ Moderate"
-
-    return "★★ High Risk"
-
-
-# ==========================================================
-# BUILD COMPLETE MODEL
-# ==========================================================
-
-def create_portfolio(model, monthly):
-
-    portfolio = build_portfolio(model)
-
-    allocation = equal_weight(portfolio)
-
-    investment_plan = allocate_capital(
-        monthly,
-        allocation
-    )
-
-    summary = portfolio_summary(portfolio)
-
-    summary["rating"] = portfolio_rating(
-        summary["health_score"]
-    )
-
-    return {
-
-        "portfolio": portfolio,
-
-        "allocation": allocation,
-
-        "plan": investment_plan,
-
-        "summary": summary,
-
-        "model": model,
-
-        "description":
-            MODEL_DESCRIPTION.get(model, "")
-
-    }
+    # =========================================================
+# RETURNS TABLE
 # =========================================================
-# 🧠 AI ENGINE
-# =========================================================
-def optimize_weights(sim, mode="normal"):
 
-    n = sim.shape[0]
+def build_returns_table(
+    assets,
+    weights,
+    capital,
+    dividends,
+    invested,
+    annual_return
+):
+    """
+    Asset performance table.
+    """
 
-    mean = np.mean(sim, axis=1)
-    vol = np.std(sim, axis=1) + 1e-9
-    downside = np.mean(np.minimum(sim, 0), axis=1)
+    table = []
 
-    # =========================================================
-    # RISK PARITY
-    # =========================================================
-    inv_vol = 1.0 / vol
-    rp_weights = inv_vol / np.sum(inv_vol)
-
-    # =========================================================
-    # ALPHA SCORE (SAFE DYNAMIC VERSION)
-    # =========================================================
-    safe_ratio = mean / (vol + 1e-9)
-    score = safe_ratio - (1.1 * np.abs(downside))
-
-    # NO FIXED INDEXING LIKE score[7]
-    alpha = np.tanh(score * 2.0)
-    alpha_weights = np.exp(alpha - np.max(alpha))
-    alpha_weights = alpha_weights / np.sum(alpha_weights)
-
-    # =========================================================
-    # HYBRID
-    # =========================================================
-    w = 0.55 * rp_weights + 0.45 * alpha_weights
-
-    # =========================================================
-    # REGIME TILT (SAFE)
-    # =========================================================
-    if mode == "bull":
-        w *= 1.05
-    elif mode == "bear":
-        w *= 0.95
-
-    # =========================================================
-    # NORMALIZATION
-    # =========================================================
-    w = np.maximum(w, 1e-6)
-    w = w / np.sum(w)
-
-    # =========================================================
-    # DYNAMIC CLIP (NO FIXED SIZE ARRAYS)
-    # =========================================================
-    MIN = np.full(n, 0.03)
-    MAX = np.full(n, 0.40)
-
-    w = np.clip(w, MIN, MAX)
-    w = w / np.sum(w)
-
-    return w
-    # =========================================================
-# 🎯 APPLY MODEL BIAS TO WEIGHTS
-# =========================================================
-def apply_model_bias(weights, model):
-
-    w = np.array(weights, dtype=float)
-
-    if len(w) < 8:
-        return w / np.sum(w)
-
-    # =====================================================
-    # DIVIDEND MODEL
-    # =====================================================
-    if model == "dividend":
-
-        target = np.array([
-            0.20,  # EQTY
-            0.18,  # KCB
-            0.15,  # COOP
-            0.10,  # SCOM
-            0.15,  # EABL
-            0.12,  # KEGN
-            0.08,  # NCBA
-            0.02   # KQ
-        ])
-
-    # =====================================================
-    # GROWTH MODEL
-    # =====================================================
-    elif model == "growth":
-
-        target = np.array([
-            0.08,
-            0.08,
-            0.08,
-            0.25,
-            0.08,
-            0.08,
-            0.10,
-            0.25
-        ])
-
-    # =====================================================
-    # BANKING MODEL
-    # =====================================================
-    elif model == "banking":
-
-        target = np.array([
-            0.25,
-            0.22,
-            0.20,
-            0.05,
-            0.05,
-            0.05,
-            0.15,
-            0.03
-        ])
-
-    # =====================================================
-    # VALUE MODEL
-    # =====================================================
-    elif model == "value":
-
-        target = np.array([
-            0.08,
-            0.08,
-            0.08,
-            0.05,
-            0.12,
-            0.20,
-            0.12,
-            0.27
-        ])
-
-    # =====================================================
-    # INCOME MODEL
-    # =====================================================
-    elif model == "income":
-
-        target = np.array([
-            0.10,
-            0.15,
-            0.15,
-            0.10,
-            0.25,
-            0.15,
-            0.08,
-            0.02
-        ])
-
-    else:
-        target = np.ones(len(w))
-
-    # blend optimizer with model identity
-    w = (0.30 * w) + (0.70 * target)
-
-    w = w / np.sum(w)
-
-    return w
-    # =========================================================
-# 🏦 INSTITUTIONAL ALLOCATOR V4
-# =========================================================
-def institutional_allocator(sim, mode):
-
-    mean = np.mean(sim, axis=1)
-    vol = np.std(sim, axis=1) + 1e-9
-
-    sharpe = mean / vol
-
-    score = sharpe.copy()
-
-    # =====================================================
-    # REGIME TILTS
-    # =====================================================
-    if mode == "bull":
-        score = score * 1.25 + mean * 15
-
-    elif mode == "bear":
-        score = score * 0.70 - vol * 4
-
-    else:
-        score = score * 1.00
-
-    # =====================================================
-    # SOFTMAX WEIGHTS
-    # =====================================================
-    score = score - np.max(score)
-
-    weights = np.exp(score)
-    weights = weights / np.sum(weights)
-
-    # =====================================================
-    # CONCENTRATION LIMITS
-    # =====================================================
-    weights = np.clip(weights, 0.05, 0.35)
-    weights = weights / np.sum(weights)
-
-    return weights
-    # -----------------------------------------------------
-
-    # PORTFOLIO WEIGHTS
-
-    # -----------------------------------------------------
-
-    weights = institutional_allocator(R, mode)
-
-    weights = apply_model_bias(weights, model)
-
-
-
-    if len(weights) > len(assets):
-
-        weights = weights[:len(assets)]
-
-        weights = weights / np.sum(weights)
-    # -----------------------------------------------------
-
-    # BREAKDOWN
-
-    # -----------------------------------------------------
-
-    monthly_alloc = monthly * weights
-
-
-
-    breakdown = []
-
-
-
-    asset_values = capital + dividends
-
-
-
-    for i in range(len(assets)):
-
-
+    for i, asset in enumerate(assets):
 
         invested_asset = invested * weights[i]
 
+        table.append({
 
+            "asset": asset[0],
 
-        code = assets[i][1]
+            "capital": round(
+                invested_asset,
+                2
+            ),
 
+            "value": round(
+                float(capital[i]),
+                2
+            ),
 
+            "gain": round(
+                float(capital[i] - invested_asset),
+                2
+            ),
 
-        analytics = company_analytics(
+            "dividends": round(
+                float(dividends[i]),
+                2
+            ),
 
-            code,
+            "total": round(
+                float(capital[i] + dividends[i]),
+                2
+            ),
 
-            capital[i]
+            "annual_return": round(
+                annual_return * 100,
+                2
+            )
+
+        })
+
+    return table
+    # ==========================================================
+# PART 7 — PORTFOLIO SUMMARY ENGINE
+# ==========================================================
+
+def build_summary(
+    invested,
+    portfolio_value,
+    dividends,
+    annual_return,
+    cagr,
+    volatility,
+    sharpe,
+    max_drawdown,
+    years,
+    inflation=0.05
+):
+    """
+    Builds the institutional summary statistics.
+    """
+
+    invested = float(invested)
+    portfolio_value = float(portfolio_value)
+
+    real_value = portfolio_value / ((1 + inflation) ** years)
+
+    summary = {
+
+        "invested":
+            round(invested, 2),
+
+        "value":
+            round(portfolio_value, 2),
+
+        "real_value":
+            round(real_value, 2),
+
+        "dividends":
+            round(float(dividends), 2),
+
+        "annual_return":
+            round(float(annual_return) * 100, 2),
+
+        "cagr":
+            round(float(cagr) * 100, 2),
+
+        "volatility":
+            round(float(volatility) * 100, 2),
+
+        "sharpe":
+            round(float(sharpe), 2),
+
+        "max_drawdown":
+            round(float(max_drawdown) * 100, 2)
+    }
+
+    return summary
+    # ==========================================================
+# PORTFOLIO HEALTH ENGINE
+# ==========================================================
+
+def portfolio_health(
+    weights,
+    assets,
+    capital,
+    dividends
+):
+    """
+    Computes the institutional health score
+    of the portfolio.
+    """
+
+    total_value = float(np.sum(capital + dividends))
+
+    if total_value <= 0:
+
+        return {
+
+            "score": 0,
+
+            "quality": 0,
+
+            "income": 0,
+
+            "diversification": 0,
+
+            "risk": 0
+
+        }
+
+    # ------------------------------------------------------
+    # QUALITY
+    # ------------------------------------------------------
+    quality = 0
+
+    for i, asset in enumerate(assets):
+
+        profile = DIVIDEND_DATABASE.get(asset[1], {})
+
+        quality += (
+
+            profile.get("quality", 0.50)
+
+            * weights[i]
 
         )
 
+    quality *= 100
 
+    # ------------------------------------------------------
+    # INCOME
+    # ------------------------------------------------------
+    income = 0
 
-        breakdown.append({
+    for i, asset in enumerate(assets):
 
+        profile = DIVIDEND_DATABASE.get(asset[1], {})
 
+        income += (
 
-        # -------------------------------
+            profile.get("base_yield", 0.04)
 
-        # Basic Portfolio Information
+            * weights[i]
 
-        # -------------------------------
+        )
 
-        "asset": assets[i][0],
+    income = min(income * 1000, 100)
 
+    # ------------------------------------------------------
+    # DIVERSIFICATION
+    # ------------------------------------------------------
+    hhi = np.sum(np.square(weights))
 
+    diversification = (1 - hhi)
 
-        "code": code,
+    diversification *= 125
 
+    diversification = np.clip(
+        diversification,
+        0,
+        100
+    )
 
+    # ------------------------------------------------------
+    # RISK
+    # ------------------------------------------------------
+    beta = 0
 
-        "allocation_pct": round(weights[i] * 100, 2),
+    for i, asset in enumerate(assets):
 
+        profile = DIVIDEND_DATABASE.get(asset[1], {})
 
+        beta += (
 
-        "capital": round(float(invested_asset), 2),
+            profile.get("beta", 1.0)
 
+            * weights[i]
 
+        )
 
-        "current_value": round(float(capital[i]), 2),
+    risk = max(
 
+        0,
 
+        100 - abs(beta - 1) * 100
 
-        "capital_gain": round(
+    )
 
-            float(capital[i] - invested_asset),
+    # ------------------------------------------------------
+    # FINAL SCORE
+    # ------------------------------------------------------
+    score = (
 
-            2
+        quality * 0.35 +
 
-        ),
+        income * 0.20 +
 
+        diversification * 0.25 +
 
+        risk * 0.20
 
-        "dividends": round(
+    )
 
-            float(dividends[i]),
+    return {
 
-            2
+        "score": round(score, 1),
 
-        ),
+        "quality": round(quality, 1),
 
+        "income": round(income, 1),
 
+        "diversification": round(diversification, 1),
 
-        "total_return": round(
+        "risk": round(risk, 1)
 
-            float(asset_values[i]),
+    }
+    # ==========================================================
+# INSTITUTIONAL RECOMMENDATION ENGINE
+# ==========================================================
 
-            2
+def recommend_asset(code):
+    """
+    Generates an institutional recommendation
+    for a single company.
+    """
 
-        ),
-# -----------------------------------------------------
-    # PLAN
+    profile = DIVIDEND_DATABASE.get(code, {})
+
+    quality = profile.get("quality", 0.50)
+
+    stability = profile.get("stability", 0.50)
+
+    growth = profile.get("growth", 0.00)
+
+    dividend = profile.get("base_yield", 0.00)
+
+    beta = profile.get("beta", 1.00)
+
+    score = (
+
+        quality * 35 +
+
+        stability * 25 +
+
+        growth * 20 +
+
+        dividend * 300 +
+
+        (1.20 - beta) * 20
+
+    )
+
+    score = np.clip(score, 0, 100)
+
     # -----------------------------------------------------
-    plan = []
+    # Recommendation
+    # -----------------------------------------------------
+    if score >= 85:
 
-    for i in range(len(assets)):
+        action = "Strong Buy"
 
-        plan.append({
+    elif score >= 75:
 
-            "name":
-                assets[i][0],
+        action = "Buy"
 
-            "percent":
-                round(weights[i] * 100, 2),
+    elif score >= 60:
 
-            "kes":
-                round(monthly_alloc[i], 2)
+        action = "Hold"
+
+    elif score >= 45:
+
+        action = "Reduce"
+
+    else:
+
+        action = "Sell"
+
+    return {
+
+        "score": round(float(score), 1),
+
+        "action": action
+
+    }
+   # ==========================================================
+# BUILD PORTFOLIO RECOMMENDATIONS
+# ==========================================================
+
+def portfolio_recommendations(assets):
+    """
+    Generates recommendations
+    for every asset.
+    """
+
+    recommendations = []
+
+    for asset in assets:
+
+        rec = recommend_asset(asset[1])
+
+        recommendations.append({
+
+            "asset": asset[0],
+
+            "code": asset[1],
+
+            "score": rec["score"],
+
+            "recommendation": rec["action"]
 
         })
+
+    return recommendations 
+# ==========================================================
+# MASTER PORTFOLIO ENGINE
+# ==========================================================
+
+def build_portfolio(
+    assets,
+    weights,
+    capital,
+    dividends,
+    invested,
+    annual_return,
+    cagr,
+    volatility,
+    sharpe,
+    max_drawdown,
+    years
+):
+    """
+    Builds the complete institutional portfolio.
+
+    Returns everything required by the dashboard.
+    """
+
+    # ------------------------------------------------------
+    # Summary
+    # ------------------------------------------------------
+    summary = build_summary(
+        invested=invested,
+        portfolio_value=float(np.sum(capital + dividends)),
+        dividends=float(np.sum(dividends)),
+        annual_return=annual_return,
+        cagr=cagr,
+        volatility=volatility,
+        sharpe=sharpe,
+        max_drawdown=max_drawdown,
+        years=years
+    )
+
+    # ------------------------------------------------------
+    # Asset Breakdown
+    # ------------------------------------------------------
+    breakdown = build_portfolio_breakdown(
+        assets=assets,
+        weights=weights,
+        capital=capital,
+        dividends=dividends,
+        invested=invested,
+        company_analytics=company_analytics
+    )
+
+    # ------------------------------------------------------
+    # Monthly Investment Plan
+    # ------------------------------------------------------
+    monthly_amount = invested / (years * 12)
+
+    plan = build_monthly_plan(
+        assets,
+        weights,
+        monthly_amount
+    )
+
+    # ------------------------------------------------------
+    # Returns Table
+    # ------------------------------------------------------
+    returns = build_returns_table(
+        assets,
+        weights,
+        capital,
+        dividends,
+        invested,
+        annual_return
+    )
+
+    # ------------------------------------------------------
+    # Portfolio Health
+    # ------------------------------------------------------
+    health = portfolio_health(
+        weights,
+        assets,
+        capital,
+        dividends
+    )
+
+    # ------------------------------------------------------
+    # Recommendations
+    # ------------------------------------------------------
+    recommendations = portfolio_recommendations(
+        assets
+    )
+
+    # ------------------------------------------------------
+    # Final Package
+    # ------------------------------------------------------
+    return {
+
+        "summary": summary,
+
+        "assets": breakdown,
+
+        "plan": plan,
+
+        "returns": returns,
+
+        "health": health,
+
+        "recommendations": recommendations
+
+    }
