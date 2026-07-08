@@ -75,9 +75,12 @@ def company_analytics(code, capital):
         "esg": profile.get("esg")
 
     }
-    # =========================================================
+# =========================================================
 # PORTFOLIO CONSTRUCTION ENGINE
 # =========================================================
+
+from engine.analytics import company_analytics
+
 
 def build_portfolio(
     assets,
@@ -88,7 +91,7 @@ def build_portfolio(
     annual_return
 ):
     """
-    Builds the institutional portfolio breakdown.
+    Build the institutional portfolio breakdown.
     """
 
     breakdown = []
@@ -134,45 +137,26 @@ def build_portfolio(
             # -----------------------------------
             # Income
             # -----------------------------------
-            "dividends": round(
-                float(dividends[i]),
-                2
-            ),
+            "dividends": round(float(dividends[i]), 2),
 
-            "total_return": round(
-                float(asset_values[i]),
-                2
-            ),
+            "total_return": round(float(asset_values[i]), 2),
 
             # -----------------------------------
-            # Institutional Analytics
+            # Analytics
             # -----------------------------------
             "dividend_yield": analytics["yield"],
-
             "dividend_growth": analytics["growth"],
-
             "dividend_health": analytics["health"],
-
             "quality_score": analytics["quality"],
-
             "stability_score": analytics["stability"],
-
             "estimated_income": analytics["income"],
-
             "beta": analytics["beta"],
-
             "policy": analytics["policy"],
-
             "sector": analytics["sector"],
-
             "roe": analytics["roe"],
-
             "pe": analytics["pe"],
-
             "pb": analytics["pb"],
-
             "credit": analytics["credit"],
-
             "esg": analytics["esg"],
 
             "annual_return": round(
@@ -183,7 +167,7 @@ def build_portfolio(
         })
 
     return breakdown
-    # =========================================================
+# =========================================================
 # PORTFOLIO BREAKDOWN TABLE
 # =========================================================
 
@@ -315,7 +299,7 @@ def build_portfolio_breakdown(
         })
 
     return breakdown
-    # =========================================================
+# =========================================================
 # MONTHLY INVESTMENT PLAN
 # =========================================================
 
@@ -351,7 +335,7 @@ def build_monthly_plan(
         })
 
     return plan
-    # =========================================================
+# =========================================================
 # RETURNS TABLE
 # =========================================================
 
