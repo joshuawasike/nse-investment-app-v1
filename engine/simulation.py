@@ -1,227 +1,393 @@
 """
 =========================================================
 JOBURA WEALTH®
-Simulation Engine
-Version 1.0
+NSE Institutional Wealth Management Platform
+Institutional Simulation Engine
+Version 2.0
 =========================================================
-"""
-import numpy as np
-import random
 
-REGIMES={
-    "normal":{"mu":0.10,"vol":0.18},
-    "bull":{"mu":0.22,"vol":0.24},
-    "bear":{"mu":-0.08,"vol":0.30},
+This module is responsible for:
+
+• Market simulation
+• Economic regime modelling
+• Monte Carlo path generation
+• Institutional asset allocation
+• Dividend forecasting
+• Corporate actions
+• Portfolio growth simulation
+"""
+
+# =========================================================
+# STANDARD LIBRARIES
+# =========================================================
+
+from copy import deepcopy
+
+# =========================================================
+# DATA SCIENCE
+# =========================================================
+
+import numpy as np
+
+# =========================================================
+# RESEARCH ENGINE
+# =========================================================
+
+from engine.research import (
+    ASSETS,
+    DIVIDEND_DATABASE,
+    get_market_stats,
+    get_model_assets,
+    estimate_dividend_yields
+)
+
+# =========================================================
+# CORPORATE ACTIONS
+# =========================================================
+
+from engine.corporate_actions import (
+    CORPORATE_ACTIONS,
+    apply_corporate_actions
+)
+
+# =========================================================
+# PORTFOLIO ENGINE
+# =========================================================
+
+from engine.portfolio import (
+    build_portfolio,
+    build_investment_plan,
+    build_returns_table
+)
+
+# =========================================================
+# ANALYTICS ENGINE
+# =========================================================
+
+from engine.analytics import (
+    portfolio_summary
+)
+
+# =========================================================
+# AI ENGINE
+# =========================================================
+
+from engine.ai import (
+    investment_advisor
+)
+
+# =========================================================
+# MODEL CONFIGURATION
+# =========================================================
+
+MODEL_PARAMETERS = {
+
+    "dividend": {
+        "drift": 0.0035,
+        "volatility": 0.012,
+        "momentum": 0.60
+    },
+
+    "growth": {
+        "drift": 0.0060,
+        "volatility": 0.022,
+        "momentum": 1.10
+    },
+
+    "banking": {
+        "drift": 0.0045,
+        "volatility": 0.016,
+        "momentum": 0.80
+    },
+
+    "value": {
+        "drift": 0.0040,
+        "volatility": 0.015,
+        "momentum": 0.75
+    },
+
+    "income": {
+        "drift": 0.0038,
+        "volatility": 0.013,
+        "momentum": 0.70
+    }
+
 }
 
-def simulate_market(initial_value=1000000,years=5,mode="normal",seed=None):
-    if seed is not None:
-        np.random.seed(seed)
-        random.seed(seed)
-    cfg=REGIMES.get(mode,REGIMES["normal"])
-    months=years*12
-    monthly_mu=cfg["mu"]/12
-    monthly_sigma=cfg["vol"]/np.sqrt(12)
-    values=[float(initial_value)]
-    monthly_returns=[]
-    for _ in range(months):
-        shock=np.random.standard_t(df=6)*monthly_sigma
-        r=monthly_mu+shock
-        monthly_returns.append(float(r))
-        values.append(values[-1]*(1+r))
-    return {
-        "mode":mode,
-        "years":years,
-        "initial_value":initial_value,
-        "final_value":round(values[-1],2),
-        "history":[round(v,2) for v in values],
-        "returns":monthly_returns
-    }
-
-def monte_carlo(initial_value=1000000,years=5,mode="normal",simulations=500):
-    finals=[]
-    for i in range(simulations):
-        s=simulate_market(initial_value,years,mode)
-        finals.append(s["final_value"])
-    return {
-        "simulations":simulations,
-        "mean":round(float(np.mean(finals)),2),
-        "median":round(float(np.median(finals)),2),
-        "best":round(float(np.max(finals)),2),
-        "worst":round(float(np.min(finals)),2),
-        "p5":round(float(np.percentile(finals,5)),2),
-        "p95":round(float(np.percentile(finals,95)),2),
-    }
 # =========================================================
-# 🌍 INSTITUTIONAL ECONOMIC REGIME ENGINE V2
+# SIMULATION SETTINGS
+# =========================================================
+
+TRADING_DAYS = 252
+MONTHS_PER_YEAR = 12
+SIMULATION_PERIODS = 300
+
+RISK_FREE_RATE = 0.05
+INFLATION_RATE = 0.05
+
+MIN_WEIGHT = 0.03
+MAX_WEIGHT = 0.40
+
+MIN_RETURN = -0.15
+MAX_RETURN = 0.18
+
+EXTREME_EVENT_PROBABILITY = 0.015
+# =========================================================
+# ECONOMIC REGIME ENGINE
 # =========================================================
 
 ECONOMIC_REGIMES = {
 
-    # -----------------------------------------------------
-    # NORMAL ECONOMY
-    # -----------------------------------------------------
+    # =====================================================
+    # NORMAL MARKET
+    # =====================================================
     "normal": {
 
-        # Multiplier applied to historical expected returns
-        "drift": 1.00,
+        "name": "Normal Market",
 
-        # Absolute monthly return adjustment
+        # Market Behaviour
+        "drift_multiplier": 1.00,
         "alpha": 0.0000,
+        "volatility_multiplier": 1.00,
+        "momentum_multiplier": 1.00,
 
-        # Volatility multiplier
-        "vol": 1.00,
+        # Income
+        "dividend_multiplier": 1.00,
+        "earnings_multiplier": 1.00,
 
-        # Dividend adjustment
-        "dividend": 1.00,
+        # Stress
+        "default_probability": 0.002,
+        "shock_probability": 0.015,
 
-        # Corporate earnings adjustment
-        "earnings": 1.00,
+        # Portfolio Limits
+        "max_drawdown": 0.15,
 
-        # Sector performance
+        # Sector Performance
         "sector": {
 
-            "Banking":   1.00,
-            "Telecom":   1.00,
-            "Consumer":  1.00,
+            "Banking": 1.00,
+            "Telecom": 1.00,
+            "Consumer": 1.00,
             "Utilities": 1.00,
-            "Airline":   1.00
+            "Energy": 1.00,
+            "Insurance": 1.00,
+            "Manufacturing": 1.00,
+            "Agriculture": 1.00,
+            "Investment": 1.00,
+            "REIT": 1.00,
+            "Airline": 1.00
 
         }
 
     },
 
-    # -----------------------------------------------------
+    # =====================================================
     # BULL MARKET
-    # -----------------------------------------------------
+    # =====================================================
     "bull": {
 
-        # Historical returns increase slightly
-        "drift": 1.10,
+        "name": "Bull Market",
 
-        # Extra monthly return boost
+        "drift_multiplier": 1.12,
         "alpha": 0.0020,
+        "volatility_multiplier": 0.80,
+        "momentum_multiplier": 1.20,
 
-        # Lower volatility
-        "vol": 0.80,
+        "dividend_multiplier": 1.15,
+        "earnings_multiplier": 1.15,
 
-        # Higher dividend growth
-        "dividend": 1.12,
+        "default_probability": 0.001,
+        "shock_probability": 0.010,
 
-        # Higher earnings
-        "earnings": 1.15,
+        "max_drawdown": 0.10,
 
         "sector": {
 
-            "Banking":   1.20,
-            "Telecom":   1.12,
-            "Consumer":  1.15,
+            "Banking": 1.20,
+            "Telecom": 1.12,
+            "Consumer": 1.15,
             "Utilities": 1.00,
-            "Airline":   1.50
+            "Energy": 1.12,
+            "Insurance": 1.18,
+            "Manufacturing": 1.15,
+            "Agriculture": 1.08,
+            "Investment": 1.25,
+            "REIT": 1.10,
+            "Airline": 1.50
 
         }
 
     },
 
-    # -----------------------------------------------------
+    # =====================================================
     # BEAR MARKET
-    # -----------------------------------------------------
+    # =====================================================
     "bear": {
 
-        # Slight reduction in historical returns
-        "drift": 0.90,
+        "name": "Bear Market",
 
-        # Negative monthly return adjustment
+        "drift_multiplier": 0.90,
         "alpha": -0.0020,
+        "volatility_multiplier": 1.55,
+        "momentum_multiplier": 0.70,
 
-        # Higher volatility
-        "vol": 1.55,
+        "dividend_multiplier": 0.82,
+        "earnings_multiplier": 0.85,
 
-        # Dividend cuts
-        "dividend": 0.82,
+        "default_probability": 0.015,
+        "shock_probability": 0.030,
 
-        # Earnings contraction
-        "earnings": 0.85,
+        "max_drawdown": 0.35,
 
         "sector": {
 
-            "Banking":   0.75,
-            "Telecom":   0.95,
-            "Consumer":  0.82,
+            "Banking": 0.75,
+            "Telecom": 0.95,
+            "Consumer": 0.82,
             "Utilities": 1.05,
-            "Airline":   0.30
+            "Energy": 0.80,
+            "Insurance": 0.78,
+            "Manufacturing": 0.70,
+            "Agriculture": 0.95,
+            "Investment": 0.72,
+            "REIT": 0.80,
+            "Airline": 0.30
 
         }
 
     }
 
 }
-# =========================================================
-# 🌍 INSTITUTIONAL MARKET GENERATOR V13
-# Historical NSE Monte Carlo Engine
-# =========================================================
-def generate_market(mode, N, drift, vol, momentum):
 
+# =========================================================
+# HELPER
+# =========================================================
+
+def get_regime(mode):
+    """
+    Returns the selected economic regime.
+    Defaults to Normal Market.
+    """
+    return ECONOMIC_REGIMES.get(
+        mode.lower(),
+        ECONOMIC_REGIMES["normal"]
+    )
+# =========================================================
+# INSTITUTIONAL MARKET GENERATOR
+# =========================================================
+
+def generate_market(mode, model):
+    """
+    Generates institutional Monte Carlo market returns
+    using historical NSE statistics and the selected
+    economic regime.
+
+    Parameters
+    ----------
+    mode : str
+        normal, bull or bear
+
+    model : str
+        dividend, growth, banking,
+        value or income
+
+    Returns
+    -------
+    numpy.ndarray
+        Simulated monthly returns
+        (assets × periods)
+    """
+
+    # -----------------------------------------------------
+    # MODEL PARAMETERS
+    # -----------------------------------------------------
+    params = MODEL_PARAMETERS.get(
+        model,
+        MODEL_PARAMETERS["dividend"]
+    )
+
+    drift = params["drift"]
+    volatility = params["volatility"]
+    momentum = params["momentum"]
+
+    # -----------------------------------------------------
+    # ECONOMIC REGIME
+    # -----------------------------------------------------
+    regime = get_regime(mode)
+
+    # -----------------------------------------------------
+    # HISTORICAL MARKET DATA
+    # -----------------------------------------------------
     stats = get_market_stats()
 
-    periods = 300
-
-    # -----------------------------------------------------
-    # FALLBACK
-    # -----------------------------------------------------
     if stats is None:
 
         return np.random.normal(
+
             drift,
-            vol,
-            (N, periods)
+
+            volatility,
+
+            (
+                len(ASSETS),
+                SIMULATION_PERIODS
+            )
+
         )
 
-    # -----------------------------------------------------
-    # HISTORICAL PARAMETERS
-    # -----------------------------------------------------
     mu = stats["mu"].copy()
     sigma = stats["sigma"].copy()
     cov = stats["cov"].copy()
 
     # -----------------------------------------------------
-    # MATCH NSE UNIVERSE
+    # MATCH AVAILABLE NSE COMPANIES
     # -----------------------------------------------------
     codes = [asset[1] for asset in ASSETS]
 
     available = [
-        c for c in codes
+
+        code
+
+        for code in codes
+
         if (
-            c in mu.index and
-            c in sigma.index and
-            c in cov.index
+            code in mu.index
+            and
+            code in sigma.index
+            and
+            code in cov.index
         )
+
     ]
 
     if len(available) < 2:
 
         return np.random.normal(
+
             drift,
-            vol,
-            (N, periods)
+
+            volatility,
+
+            (
+                len(ASSETS),
+                SIMULATION_PERIODS
+            )
+
         )
 
     mu = mu.loc[available]
-    sigma = sigma.loc[available]
-    cov = cov.loc[available, available]
 
-    # -----------------------------------------------------
-    # ECONOMIC REGIME
-    # -----------------------------------------------------
-    regime = ECONOMIC_REGIMES.get(
-        mode,
-        ECONOMIC_REGIMES["normal"]
-    )
+    sigma = sigma.loc[available]
+
+    cov = cov.loc[
+        available,
+        available
+    ]
 
     # -----------------------------------------------------
     # SECTOR ADJUSTMENTS
     # -----------------------------------------------------
-    sector_multiplier = []
+    sector_factor = []
 
     for code in available:
 
@@ -232,7 +398,7 @@ def generate_market(mode, N, drift, vol, momentum):
             "Banking"
         )
 
-        sector_multiplier.append(
+        sector_factor.append(
 
             regime["sector"].get(
                 sector,
@@ -241,29 +407,41 @@ def generate_market(mode, N, drift, vol, momentum):
 
         )
 
-    sector_multiplier = np.array(sector_multiplier)
+    sector_factor = np.array(sector_factor)
 
     # -----------------------------------------------------
     # EXPECTED RETURNS
     # -----------------------------------------------------
     mu = (
+
         mu
-        * sector_multiplier
-        * regime["drift"]
+
+        * regime["drift_multiplier"]
+
+        * sector_factor
+
     ) + regime["alpha"]
 
     mu = np.clip(
+
         mu,
-        -0.015,
-        0.015
+
+        -0.02,
+
+        0.02
+
     )
 
     # -----------------------------------------------------
     # VOLATILITY
     # -----------------------------------------------------
-    sigma *= np.sqrt(regime["vol"])
+    sigma *= np.sqrt(
 
-    cov *= regime["vol"]
+        regime["volatility_multiplier"]
+
+    )
+
+    cov *= regime["volatility_multiplier"]
 
     # -----------------------------------------------------
     # POSITIVE DEFINITE COVARIANCE
@@ -272,7 +450,7 @@ def generate_market(mode, N, drift, vol, momentum):
 
     try:
 
-        L = np.linalg.cholesky(cov)
+        chol = np.linalg.cholesky(cov)
 
     except np.linalg.LinAlgError:
 
@@ -280,32 +458,59 @@ def generate_market(mode, N, drift, vol, momentum):
 
         eigvals[eigvals < 1e-8] = 1e-8
 
-        cov = eigvecs @ np.diag(eigvals) @ eigvecs.T
+        cov = (
 
-        L = np.linalg.cholesky(cov)
+            eigvecs
+
+            @ np.diag(eigvals)
+
+            @ eigvecs.T
+
+        )
+
+        chol = np.linalg.cholesky(cov)
 
     # -----------------------------------------------------
-    # FAT-TAIL MONTE CARLO
+    # FAT-TAIL SHOCKS
     # -----------------------------------------------------
     shocks = np.random.standard_t(
+
         df=6,
-        size=(len(mu), periods)
+
+        size=(
+
+            len(mu),
+
+            SIMULATION_PERIODS
+
+        )
+
     )
 
-    correlated = L @ shocks
+    correlated = chol @ shocks
 
     # -----------------------------------------------------
     # MOMENTUM PROCESS
     # -----------------------------------------------------
-    phi = np.clip(momentum, 0.15, 0.95)
+    phi = np.clip(
+
+        momentum
+
+        * regime["momentum_multiplier"],
+
+        0.15,
+
+        0.98
+
+    )
 
     trend = np.zeros_like(correlated)
 
-    for t in range(1, periods):
+    for t in range(1, SIMULATION_PERIODS):
 
         trend[:, t] = (
 
-            phi * trend[:, t-1]
+            phi * trend[:, t - 1]
 
             + correlated[:, t]
 
@@ -314,367 +519,783 @@ def generate_market(mode, N, drift, vol, momentum):
     # -----------------------------------------------------
     # FINAL RETURNS
     # -----------------------------------------------------
-    R = mu.values[:, None] + trend
+    returns = mu.values[:, None] + trend
 
     # -----------------------------------------------------
     # MATCH HISTORICAL VOLATILITY
     # -----------------------------------------------------
     current_std = np.std(
-        R,
+
+        returns,
+
         axis=1,
+
         keepdims=True
+
     )
 
-    current_std[current_std == 0] = 1e-8
+    current_std[current_std == 0] = 1e-9
 
     target_std = sigma.values[:, None]
 
-    R *= target_std / current_std
+    returns *= (
+
+        target_std
+
+        / current_std
+
+    )
 
     # -----------------------------------------------------
-    # EXTREME EVENT SIMULATION
+    # EXTREME EVENTS
     # -----------------------------------------------------
-    shock_probability = 0.015
+    disaster = (
 
-    disaster = np.random.rand(
-        len(mu),
-        periods
-    ) < shock_probability
+        np.random.rand(
+
+            len(mu),
+
+            SIMULATION_PERIODS
+
+        )
+
+        < regime["shock_probability"]
+
+    )
 
     if mode == "bull":
 
-        disaster_returns = np.random.uniform(
+        shock = np.random.uniform(
+
             -0.04,
+
             -0.02,
+
             disaster.shape
+
         )
 
     elif mode == "bear":
 
-        disaster_returns = np.random.uniform(
+        shock = np.random.uniform(
+
             -0.12,
+
             -0.05,
+
             disaster.shape
+
         )
 
     else:
 
-        disaster_returns = np.random.uniform(
+        shock = np.random.uniform(
+
             -0.08,
+
             -0.03,
+
             disaster.shape
+
         )
 
-    R[disaster] += disaster_returns[disaster]
+    returns[disaster] += shock[disaster]
 
     # -----------------------------------------------------
     # SAFETY LIMITS
     # -----------------------------------------------------
-    R = np.clip(
-        R,
-        -0.15,
-        0.18
+    returns = np.clip(
+
+        returns,
+
+        MIN_RETURN,
+
+        MAX_RETURN
+
     )
 
     # -----------------------------------------------------
-    # PAD IF NECESSARY
+    # PAD IF REQUIRED
     # -----------------------------------------------------
-    if len(mu) < N:
+    if len(returns) < len(ASSETS):
 
         extra = np.random.normal(
 
             drift,
 
-            vol,
+            volatility,
 
-            (N-len(mu), periods)
+            (
+
+                len(ASSETS) - len(returns),
+
+                SIMULATION_PERIODS
+
+            )
 
         )
 
-        R = np.vstack([R, extra])
+        returns = np.vstack([
 
-    return R[:N]
-    # =========================================================
-# 🧠 PATH SIMULATION (MISSING FUNCTION FIX)
+            returns,
+
+            extra
+
+        ])
+
+    return returns[:len(ASSETS)]
 # =========================================================
-def simulate_paths(R, mode):
-
-    REGIME = {
-        "normal": {"mu": 0.0025, "vol": 1.0},
-        "bull":   {"mu": 0.0055, "vol": 1.2},
-        "bear":   {"mu": -0.0035, "vol": 1.3},
-    }
-
-    cfg = REGIME.get(mode, REGIME["normal"])
-    N = R.shape[0]
-    T = R.shape[1]
-
-    sim = []
-
-    for i in range(N):
-        base_vol = np.std(R[i]) + 1e-9
-        series = []
-
-        for t in range(T):
-            shock = np.random.standard_t(5) * base_vol * cfg["vol"]
-            step = R[i][t] + cfg["mu"] + shock
-
-            if mode == "bear":
-                step = np.clip(step, -0.05, 0.01)
-
-            series.append(step)
-
-        sim.append(series)
-
-    return np.array(sim)
+# INSTITUTIONAL ALLOCATION ENGINE
 # =========================================================
-# 📈 FULL INSTITUTIONAL SIMULATION ENGINE V11
-# =========================================================
-def simulate(monthly, years, mode, model="dividend"):
+
+def institutional_allocator(returns, mode):
+    """
+    Builds an institutional portfolio using
+    risk-adjusted expected returns.
+
+    Parameters
+    ----------
+    returns : ndarray
+        Simulated asset returns.
+
+    mode : str
+        Economic regime.
+
+    Returns
+    -------
+    ndarray
+        Portfolio weights.
+    """
+
+    mean = np.mean(returns, axis=1)
+
+    volatility = np.std(returns, axis=1) + 1e-9
+
+    sharpe = mean / volatility
+
+    score = sharpe.copy()
 
     # -----------------------------------------------------
-    # MODEL CONFIGURATION
+    # ECONOMIC REGIME TILT
     # -----------------------------------------------------
-    MODEL_PARAMS = {
-        "dividend": (0.0035, 0.012, 0.60),
-        "growth":   (0.0060, 0.022, 1.10),
-        "banking":  (0.0045, 0.016, 0.80),
-        "value":    (0.0040, 0.015, 0.75),
-        "income":   (0.0038, 0.013, 0.70),
-    }
+    if mode == "bull":
 
-    drift, vol, momentum = MODEL_PARAMS.get(
-        model,
-        MODEL_PARAMS["dividend"]
+        score += mean * 15
+
+    elif mode == "bear":
+
+        score -= volatility * 4
+
+    # -----------------------------------------------------
+    # SOFTMAX NORMALIZATION
+    # -----------------------------------------------------
+    score = score - np.max(score)
+
+    weights = np.exp(score)
+
+    weights /= np.sum(weights)
+
+    # -----------------------------------------------------
+    # CONCENTRATION LIMITS
+    # -----------------------------------------------------
+    weights = np.clip(
+
+        weights,
+
+        MIN_WEIGHT,
+
+        MAX_WEIGHT
+
     )
 
-    # -----------------------------------------------------
-    # MARKET
-    # -----------------------------------------------------
-    R_full = generate_market(
-        mode,
-        len(ASSETS),
-        drift,
-        vol,
-        momentum
+    weights /= np.sum(weights)
+
+    return weights
+
+
+# =========================================================
+# MODEL BIAS ENGINE
+# =========================================================
+
+MODEL_TARGETS = {
+
+    "dividend": np.array([
+        0.20, 0.18, 0.15, 0.10,
+        0.15, 0.12, 0.08, 0.02
+    ]),
+
+    "growth": np.array([
+        0.08, 0.08, 0.08, 0.25,
+        0.08, 0.08, 0.10, 0.25
+    ]),
+
+    "banking": np.array([
+        0.25, 0.22, 0.20, 0.05,
+        0.05, 0.05, 0.15, 0.03
+    ]),
+
+    "value": np.array([
+        0.08, 0.08, 0.08, 0.05,
+        0.12, 0.20, 0.12, 0.27
+    ]),
+
+    "income": np.array([
+        0.10, 0.15, 0.15, 0.10,
+        0.25, 0.15, 0.08, 0.02
+    ])
+
+}
+
+
+def apply_model_bias(weights, model):
+    """
+    Tilts optimized weights towards
+    the selected investment model.
+    """
+
+    weights = np.array(weights, dtype=float)
+
+    target = MODEL_TARGETS.get(model)
+
+    if target is None:
+
+        return weights / np.sum(weights)
+
+    # ---------------------------------------------
+    # Match portfolio size automatically
+    # ---------------------------------------------
+    if len(target) != len(weights):
+
+        if len(target) > len(weights):
+
+            target = target[:len(weights)]
+
+        else:
+
+            extra = np.repeat(
+
+                1.0 / len(weights),
+
+                len(weights) - len(target)
+
+            )
+
+            target = np.concatenate([
+
+                target,
+
+                extra
+
+            ])
+
+    target = target / np.sum(target)
+
+    # ---------------------------------------------
+    # Blend optimizer with strategic model
+    # ---------------------------------------------
+    weights = (
+
+        0.30 * weights
+
+        +
+
+        0.70 * target
+
     )
+
+    weights /= np.sum(weights)
+
+    return weights
+
+
+# =========================================================
+# PORTFOLIO REBALANCER
+# =========================================================
+
+def rebalance_portfolio(returns, mode, model):
+    """
+    Creates the final institutional allocation.
+    """
+
+    weights = institutional_allocator(
+
+        returns,
+
+        mode
+
+    )
+
+    weights = apply_model_bias(
+
+        weights,
+
+        model
+
+    )
+
+    weights = np.clip(
+
+        weights,
+
+        MIN_WEIGHT,
+
+        MAX_WEIGHT
+
+    )
+
+    weights /= np.sum(weights)
+
+    return weights   
+# =========================================================
+# INSTITUTIONAL PORTFOLIO SIMULATION ENGINE
+# =========================================================
+
+def simulate(
+    monthly,
+    years,
+    mode="normal",
+    model="dividend"
+):
+    """
+    Main institutional simulation engine.
+
+    Parameters
+    ----------
+    monthly : float
+        Monthly investment.
+
+    years : int
+        Investment period.
+
+    mode : str
+        normal / bull / bear
+
+    model : str
+        dividend / growth / banking /
+        value / income
+
+    Returns
+    -------
+    dict
+    """
 
     # -----------------------------------------------------
     # SELECT MODEL ASSETS
     # -----------------------------------------------------
     assets = get_model_assets(model)
 
-    names = [a[0] for a in ASSETS]
-    selected = [a[0] for a in assets]
-
-    idx = [
-        names.index(n)
-        for n in selected
-        if n in names
-    ]
-
-    if len(idx) == 0:
-        idx = list(range(len(ASSETS)))
+    if len(assets) == 0:
         assets = ASSETS
 
-    R = R_full[idx]
- # -----------------------------------------------------
-    # SIMULATION SETTINGS
+    # -----------------------------------------------------
+    # GENERATE MARKET
+    # -----------------------------------------------------
+    market = generate_market(
+        mode=mode,
+        model=model
+    )
+
+    # -----------------------------------------------------
+    # Match market to selected assets
+    # -----------------------------------------------------
+    all_codes = [a[1] for a in ASSETS]
+
+    indexes = []
+
+    for asset in assets:
+
+        try:
+
+            indexes.append(
+                all_codes.index(asset[1])
+            )
+
+        except ValueError:
+            pass
+
+    if len(indexes) == 0:
+
+        indexes = list(range(len(ASSETS)))
+
+        assets = ASSETS
+
+    returns = market[indexes]
+
+    # -----------------------------------------------------
+    # BUILD PORTFOLIO
+    # -----------------------------------------------------
+    weights = rebalance_portfolio(
+
+        returns,
+
+        mode,
+
+        model
+
+    )
+
+    # -----------------------------------------------------
+    # INVESTMENT SETTINGS
     # -----------------------------------------------------
     months = years * 12
 
     invested = monthly * months
 
-    nav = 0.0
-
-    curve = []
+    capital = np.zeros(len(weights))
 
     dividends = np.zeros(len(weights))
 
-    yield_table = estimate_dividend_yields(mode, model)
-    stats = get_market_stats()
+    curve = []
 
-    yields = np.array([
+    nav = 0.0
+# =========================================================
+# MONTHLY INVESTMENT ENGINE
+# =========================================================
 
-        yield_table.get(asset[1],0.05)
+    regime = get_regime(mode)
 
-        for asset in assets
+    regime_dividend = regime["dividend_multiplier"]
 
-    ])
-    capital = np.zeros(len(weights))
-
-    # -----------------------------------------------------
-    # REGIME DIVIDEND MULTIPLIER
-    # -----------------------------------------------------
-    regime_multiplier = {
-        "normal": 1.00,
-        "bull": 1.15,
-        "bear": 0.85
-    }.get(mode, 1.0)
+    yield_table = estimate_dividend_yields(
+        mode,
+        model
+    )
 
     # -----------------------------------------------------
     # MONTHLY LOOP
     # -----------------------------------------------------
-    for m in range(months):
+    for month in range(months):
 
-        col = m % R.shape[1]
+        column = month % returns.shape[1]
 
-        # yearly rebalance
-        if m > 0 and m % 12 == 0:
+        # -------------------------------------------------
+        # YEARLY REBALANCING
+        # -------------------------------------------------
+        if month > 0 and month % 12 == 0:
 
-            weights = institutional_allocator(R, mode)
-            weights = apply_model_bias(weights, model)
+            weights = rebalance_portfolio(
 
-            if len(weights) > len(assets):
-                weights = weights[:len(assets)]
+                returns,
 
-            weights = weights / np.sum(weights)
+                mode,
 
-        portfolio_return = np.dot(weights, R[:, col])
+                model
+
+            )
+
+        # -------------------------------------------------
+        # PORTFOLIO RETURN
+        # -------------------------------------------------
+        portfolio_return = np.dot(
+
+            weights,
+
+            returns[:, column]
+
+        )
 
         if mode == "bull":
-            portfolio_return = np.clip(portfolio_return, -0.03, 0.08)
+
+            portfolio_return = np.clip(
+                portfolio_return,
+                -0.03,
+                0.08
+            )
 
         elif mode == "bear":
-            portfolio_return = np.clip(portfolio_return, -0.05, 0.03)
+
+            portfolio_return = np.clip(
+                portfolio_return,
+                -0.05,
+                0.03
+            )
 
         else:
-            portfolio_return = np.clip(portfolio_return, -0.04, 0.05)
 
+            portfolio_return = np.clip(
+                portfolio_return,
+                -0.04,
+                0.05
+            )
+
+        # -------------------------------------------------
+        # UPDATE NAV
+        # -------------------------------------------------
         nav *= (1 + portfolio_return)
 
         nav += monthly
 
         curve.append(nav)
 
-        # Monthly contribution
-        monthly_alloc = monthly * weights
+        # -------------------------------------------------
+        # MONTHLY CONTRIBUTION
+        # -------------------------------------------------
+        allocation = monthly * weights
 
-        # Add new investment
-        capital += monthly_alloc
+        capital += allocation
 
-        # Grow each asset using its own return
-        asset_returns = R[:, col]
+        # -------------------------------------------------
+        # GROW EACH ASSET
+        # -------------------------------------------------
+        capital *= (
 
-        capital *= (1 + asset_returns)
-        current_month = (m % 12) + 1
+            1 +
 
+            returns[:, column]
 
-        # -----------------------------------------------------
-        # DIVIDEND PAYMENT ENGINE
-        # -----------------------------------------------------
-        current_month = (m % 12) + 1
+        )
 
+        # -------------------------------------------------
+        # CURRENT MONTH
+        # -------------------------------------------------
+        payment_month = (month % 12) + 1
+
+        # -------------------------------------------------
+        # DIVIDEND ENGINE
+        # -------------------------------------------------
         for i, asset in enumerate(assets):
 
             code = asset[1]
 
-            profile = DIVIDEND_DATABASE.get(code, {})
-
-            payment_months = profile.get("months", [])
-
-            growth = profile.get("growth", 0.00)
-
-            stability = profile.get("stability", 0.90)
-
-            payout = profile.get("payout", 0.40)
-
-            years_elapsed = m / 12
-
-            dividend_yield = forecast_dividend_yield(
+            profile = DIVIDEND_DATABASE.get(
                 code,
-                years_elapsed,
-                mode
+                {}
             )
 
-            current_month = (m % 12) + 1
+            payment_schedule = profile.get(
+                "months",
+                []
+            )
 
-            if current_month in payment_months:
+            years_elapsed = month / 12
 
-                payments = len(payment_months)
+            dividend_yield = forecast_dividend_yield(
+
+                code,
+
+                years_elapsed,
+
+                mode
+
+            )
+
+            payout = profile.get(
+                "payout",
+                0.40
+            )
+
+            if payment_month in payment_schedule:
+
+                payments = max(
+                    len(payment_schedule),
+                    1
+                )
 
                 dividend = (
+
                     capital[i]
+
                     * dividend_yield
+
                     * payout
-                    * regime_multiplier
+
+                    * regime_dividend
+
                     / payments
+
                 )
 
                 capital[i], bonus = apply_corporate_actions(
+
                     capital[i],
+
                     code
+
                 )
-    
-                dividends[i] += dividend + bonus
+
+                dividends[i] += (
+
+                    dividend
+
+                    + bonus
+
+                )
+# =========================================================
+# PERFORMANCE ANALYTICS
+# =========================================================
+
     # -----------------------------------------------------
-    # FINAL VALUES
+    # FINAL PORTFOLIO VALUE
     # -----------------------------------------------------
-    final_nav = curve[-1]
+    final_nav = float(curve[-1])
 
-    total_dividends = float(dividends.sum())
+    total_dividends = float(np.sum(dividends))
 
-    portfolio_value = float(final_nav + total_dividends)
+    portfolio_value = final_nav + total_dividends
 
-    curve_np = np.array(curve)
-
-    monthly_returns = np.diff(curve_np) / np.maximum(curve_np[:-1], 1)
-
-    annual_return = (portfolio_value / invested) ** (1 / years) - 1
-
-    cagr = annual_return
-
-    volatility = np.std(monthly_returns) * np.sqrt(12)
-
-    sharpe = (
-        annual_return - 0.05
-    ) / max(volatility, 1e-9)
-
-    running_max = np.maximum.accumulate(curve_np)
-
-    drawdown = (curve_np - running_max) / running_max
-
-    max_drawdown = abs(np.min(drawdown))
-
-    inflation = 0.05
-
-    real_value = portfolio_value / ((1 + inflation) ** years)
-
-     # -----------------------------------------------------
-    # AI
     # -----------------------------------------------------
-    ai = ai_portfolio_advisor(
-        weights,
-        R,
-        assets
+    # MONTHLY RETURNS
+    # -----------------------------------------------------
+    curve_array = np.array(curve)
+
+    if len(curve_array) > 1:
+
+        monthly_returns = np.diff(curve_array) / np.maximum(
+            curve_array[:-1],
+            1
+        )
+
+    else:
+
+        monthly_returns = np.array([])
+
+    # -----------------------------------------------------
+    # BUILD PORTFOLIO BREAKDOWN
+    # -----------------------------------------------------
+    portfolio = build_portfolio(
+
+        assets=assets,
+
+        weights=weights,
+
+        capital=capital,
+
+        dividends=dividends,
+
+        invested=invested,
+
+        annual_return=0.0
+
     )
-summary = {
 
-    "invested": round(float(invested), 2),
+    # -----------------------------------------------------
+    # COMPLETE ANALYTICS
+    # -----------------------------------------------------
+    summary = portfolio_summary(
 
-    "value": round(float(portfolio_value), 2),
+        portfolio=portfolio,
 
-    "real_value": round(float(real_value), 2),
+        invested=invested,
 
-    "dividends": round(total_dividends, 2),
+        value=portfolio_value,
 
-    "annual_return": round(annual_return * 100, 2),
+        dividends=total_dividends,
 
-    "cagr": round(cagr * 100, 2),
+        years=years,
 
-    "volatility": round(volatility * 100, 2),
+        returns=monthly_returns,
 
-    "sharpe": round(sharpe, 2),
+        history=curve
 
-    "max_drawdown": round(max_drawdown * 100, 2)
+    )
 
-}
+    # -----------------------------------------------------
+    # UPDATE PORTFOLIO WITH TRUE CAGR
+    # -----------------------------------------------------
+    annual_return = summary["cagr"] / 100.0
 
-return {
-    "summary": summary,
-    "portfolio": breakdown,
-    "returns": returns_table,
-    "plan": plan,
-    "curve": curve,
-    "advisor": ai
-}
+    for company in portfolio:
+
+        company["annual_return"] = round(
+
+            annual_return * 100,
+
+            2
+
+        )
+    # =====================================================
+    # AI INVESTMENT ADVISOR
+    # =====================================================
+    ai = investment_advisor(
+
+        portfolio=portfolio,
+
+        summary=summary,
+
+        mode=mode,
+
+        model=model
+
+    )
+
+    # =====================================================
+    # MONTHLY INVESTMENT PLAN
+    # =====================================================
+    monthly_plan = []
+
+    monthly_allocation = monthly * weights
+
+    for i, asset in enumerate(assets):
+
+        monthly_plan.append({
+
+            "name": asset[0],
+
+            "code": asset[1],
+
+            "allocation_pct": round(
+                weights[i] * 100,
+                2
+            ),
+
+            "monthly_amount": round(
+                float(monthly_allocation[i]),
+                2
+            )
+
+        })
+
+    # =====================================================
+    # ASSET RETURNS TABLE
+    # =====================================================
+    returns_table = []
+
+    for i, asset in enumerate(portfolio):
+
+        returns_table.append({
+
+            "asset": asset["asset"],
+
+            "code": asset["code"],
+
+            "allocation": asset["allocation_pct"],
+
+            "capital": asset["capital"],
+
+            "current_value": asset["current_value"],
+
+            "capital_gain": asset["capital_gain"],
+
+            "dividends": asset["dividends"],
+
+            "total_return": asset["total_return"],
+
+            "annual_return": asset["annual_return"]
+
+        })
+
+    # =====================================================
+    # PERFORMANCE CHART
+    # =====================================================
+    portfolio_chart = chart(curve)
+
+    # =====================================================
+    # RETURN RESULTS
+    # =====================================================
+    return {
+
+        "summary": summary,
+
+        "portfolio": portfolio,
+
+        "plan": monthly_plan,
+
+        "returns": returns_table,
+
+        "curve": curve,
+
+        "chart": portfolio_chart,
+
+        "ai": ai
+
+    }
