@@ -58,8 +58,7 @@ from engine.ai import (
     investment_advisor
 )
 
-from engine.retirement import (
-    retirement_projection
+from engine.retirement import retirement_projection
 )
 
 from engine.reports import (
