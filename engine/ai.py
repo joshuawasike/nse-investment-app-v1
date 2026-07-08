@@ -258,7 +258,85 @@ def confidence(asset):
 
     return round(score, 1)
 
+# ==========================================================
+# MARKET REGIME INTELLIGENCE ENGINE
+# ==========================================================
 
+def regime_adjustment(asset, mode):
+    """
+    Adjusts recommendations based on the current
+    market regime.
+    """
+
+    sector = asset.get("sector", "Unknown")
+    dividend = asset.get("dividend_yield", 0)
+    beta = asset.get("beta", 1.0)
+
+    # Default
+    adjustment = 0
+    message = "Neutral positioning."
+
+    # ------------------------------------------------------
+    # BULL MARKET
+    # ------------------------------------------------------
+    if mode == "bull":
+
+        if beta > 1.1:
+            adjustment += 8
+            message = (
+                "Bull market favours higher-beta "
+                "growth opportunities."
+            )
+
+        elif sector in [
+            "Technology",
+            "Banking",
+            "Telecommunications"
+        ]:
+            adjustment += 6
+            message = (
+                "Sector expected to outperform "
+                "during expansion."
+            )
+
+    # ------------------------------------------------------
+    # BEAR MARKET
+    # ------------------------------------------------------
+    elif mode == "bear":
+
+        if dividend >= 6:
+            adjustment += 8
+            message = (
+                "Strong dividend income improves "
+                "defensive positioning."
+            )
+
+        elif beta < 0.9:
+            adjustment += 6
+            message = (
+                "Low-beta asset provides downside "
+                "protection."
+            )
+
+        else:
+            adjustment -= 5
+            message = (
+                "Higher market volatility may "
+                "reduce expected returns."
+            )
+
+    # ------------------------------------------------------
+    # NORMAL MARKET
+    # ------------------------------------------------------
+    else:
+
+        adjustment += 3
+
+        message = (
+            "Balanced market environment."
+        )
+
+    return adjustment, message
 # ==========================================================
 # Complete AI Analysis
 # ==========================================================
@@ -391,9 +469,25 @@ def investment_advisor(
 
     for asset in portfolio:
 
-        rec = recommendation(asset)
+        # Market Regime Adjustment
+        regime_bonus, regime_message = regime_adjustment(
+            asset,
+            mode
+        )
 
-        conf = confidence(asset)
+        # AI Confidence
+        base_confidence = confidence(asset)
+
+        final_confidence = max(
+            50,
+            min(
+                99,
+                base_confidence + regime_bonus
+            )
+        )
+
+        # Recommendation
+        rec = recommendation(asset)
 
         recommendations.append({
 
@@ -405,7 +499,7 @@ def investment_advisor(
 
             "recommendation": rec,
 
-            "confidence": conf,
+            "confidence": round(final_confidence, 1),
 
             "roi": asset.get("roi", 0),
 
@@ -414,10 +508,11 @@ def investment_advisor(
             "dividend_yield": asset.get(
                 "dividend_yield",
                 0
-            )
+            ),
+
+            "regime_comment": regime_message
 
         })
-
     # ------------------------------------------------------
     # Highest Conviction Investment
     # ------------------------------------------------------
