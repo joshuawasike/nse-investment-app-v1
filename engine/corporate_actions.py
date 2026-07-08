@@ -6,15 +6,44 @@
 import numpy as np
 
 # =========================================================
-# CORPORATE ACTION DATABASE
+# 🏦 CORPORATE ACTION ENGINE
 # =========================================================
 
-CORPORATE_ACTIONS = {
+def apply_corporate_actions(capital, code):
 
-    # Paste the entire CORPORATE_ACTIONS dictionary here
+    profile = CORPORATE_ACTIONS.get(code)
 
-}
+    if profile is None:
+        return capital, 0.0
 
+    bonus = 0.0
+
+    # Bonus shares
+    if np.random.rand() < profile["bonus"]:
+
+        capital *= 1.10
+
+    # Rights issue
+    if np.random.rand() < profile["rights"]:
+
+        capital *= 1.05
+
+    # Share buyback
+    if np.random.rand() < profile["buyback"]:
+
+        capital *= 1.03
+
+    # Stock split
+    if np.random.rand() < profile["split"]:
+
+        capital *= 1.00
+
+    # Special dividend
+    if np.random.rand() < profile["special_dividend"]:
+
+        bonus = capital * 0.03
+
+    return capital, bonus
 # =========================================================
 # APPLY CORPORATE ACTIONS
 # =========================================================
