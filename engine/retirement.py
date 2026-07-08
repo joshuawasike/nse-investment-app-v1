@@ -139,7 +139,7 @@ def retirement_score(
 # Retirement Projection
 # ==========================================================
 
-def projection(
+def retirement_projection(
         monthly,
         years,
         target,
