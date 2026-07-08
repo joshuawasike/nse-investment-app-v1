@@ -420,6 +420,288 @@ def generate_message(
         "High-risk portfolio detected. Review allocations "
         "and reduce exposure to volatile securities."
     )
+ # ==========================================================
+# PORTFOLIO STRENGTHS
+# ==========================================================
+
+def portfolio_strengths(portfolio):
+
+    strengths = []
+
+    avg_dividend = statistics.mean(
+        a.get("dividend_yield", 0)
+        for a in portfolio
+    ) if portfolio else 0
+
+    avg_quality = statistics.mean(
+        a.get("quality_score", 0)
+        for a in portfolio
+    ) if portfolio else 0
+
+    avg_beta = statistics.mean(
+        a.get("beta", 1)
+        for a in portfolio
+    ) if portfolio else 1
+
+    if avg_dividend >= 5:
+        strengths.append(
+            "Strong dividend income generation"
+        )
+
+    if avg_quality >= 75:
+        strengths.append(
+            "High quality company selection"
+        )
+
+    if avg_beta < 1:
+        strengths.append(
+            "Defensive risk profile"
+        )
+
+    if not strengths:
+        strengths.append(
+            "Balanced institutional allocation"
+        )
+
+    return strengths 
+# ==========================================================
+# PORTFOLIO WEAKNESSES
+# ==========================================================
+
+def portfolio_weaknesses(portfolio):
+
+    weaknesses = []
+
+    avg_beta = statistics.mean(
+        a.get("beta", 1)
+        for a in portfolio
+    ) if portfolio else 1
+
+    avg_risk = statistics.mean(
+        a.get("risk_score", 50)
+        for a in portfolio
+    ) if portfolio else 50
+
+    if avg_beta > 1.3:
+        weaknesses.append(
+            "High market sensitivity"
+        )
+
+    if avg_risk > 70:
+        weaknesses.append(
+            "Elevated portfolio risk"
+        )
+
+    sectors = set(
+        a.get("sector", "Unknown")
+        for a in portfolio
+    )
+
+    if len(sectors) < 3:
+        weaknesses.append(
+            "Limited sector diversification"
+        )
+
+    return weaknesses
+# ==========================================================
+# REBALANCING ENGINE
+# ==========================================================
+
+def rebalance_advice(portfolio):
+
+    if not portfolio:
+
+        return {
+            "required": False,
+            "reason": "No portfolio data available.",
+            "action": "None"
+        }
+
+    largest = max(
+        portfolio,
+        key=lambda x: x.get(
+            "allocation_pct",
+            0
+        )
+    )
+
+    allocation = largest.get(
+        "allocation_pct",
+        0
+    )
+
+    if allocation > 35:
+
+        return {
+
+            "required": True,
+
+            "reason":
+            "Single position exceeds "
+            "institutional concentration limits.",
+
+            "action":
+            f"Reduce exposure to "
+            f"{largest.get('asset')}."
+        }
+
+    return {
+
+        "required": False,
+
+        "reason":
+        "Portfolio appears balanced.",
+
+        "action":
+        "No immediate rebalancing required."
+    }
+# ==========================================================
+# INSTITUTIONAL MARKET OUTLOOK
+# ==========================================================
+
+def market_outlook(mode, model, portfolio):
+    """
+    Generates institutional market commentary
+    based on market regime and investment model.
+    """
+
+    mode = str(mode).lower()
+    model = str(model).lower()
+
+    outlook = {}
+
+    # ------------------------------------------------------
+    # Market Outlook
+    # ------------------------------------------------------
+    if mode == "bull":
+
+        outlook["market"] = (
+            "Bull market conditions are expected to support "
+            "capital appreciation and earnings growth."
+        )
+
+    elif mode == "bear":
+
+        outlook["market"] = (
+            "Bear market conditions require disciplined "
+            "risk management and defensive positioning."
+        )
+
+    else:
+
+        outlook["market"] = (
+            "Market conditions remain broadly balanced with "
+            "moderate return expectations."
+        )
+    
+    # ==========================================================
+    # EXECUTIVE SUMMARY
+    # ==========================================================
+
+    def executive_summary(summary, analysis):
+        """
+        Generates an executive summary for the portfolio.
+        """
+
+        rating = analysis.get("rating", "N/A")
+
+        roi = summary.get("roi", 0)
+
+        health = analysis.get("health", 0)
+
+        return (
+            f"The portfolio achieved an ROI of {roi:.2f}% "
+            f"with an institutional rating of {rating}. "
+            f"Overall portfolio health stands at "
+            f"{health:.1f}/100, indicating "
+            f"{analysis.get('risk', 'balanced').lower()} "
+            f"investment characteristics."
+        )
+    # ------------------------------------------------------
+    # Interest Rates
+    # ------------------------------------------------------
+    if model in ["dividend", "income"]:
+
+        outlook["interest_rates"] = (
+            "Income-oriented strategies remain attractive "
+            "while interest rates stay elevated."
+        )
+
+    else:
+
+        outlook["interest_rates"] = (
+            "Growth investments may become more attractive "
+            "as financing conditions improve."
+        )
+
+    # ------------------------------------------------------
+    # Inflation
+    # ------------------------------------------------------
+    outlook["inflation"] = (
+        "Inflation should continue to influence corporate "
+        "earnings and consumer demand."
+    )
+
+    # ------------------------------------------------------
+    # Dividend Outlook
+    # ------------------------------------------------------
+    avg_dividend = 0
+
+    if portfolio:
+
+        avg_dividend = sum(
+            a.get("dividend_yield", 0)
+            for a in portfolio
+        ) / len(portfolio)
+
+    if avg_dividend >= 6:
+
+        outlook["dividends"] = (
+            "Portfolio provides strong dividend income with "
+            "good sustainability."
+        )
+
+    elif avg_dividend >= 4:
+
+        outlook["dividends"] = (
+            "Dividend income remains healthy with moderate "
+            "growth potential."
+        )
+
+    else:
+
+        outlook["dividends"] = (
+            "Capital appreciation is expected to contribute "
+            "more than dividend income."
+        )
+
+    # ------------------------------------------------------
+    # Overall Investment View
+    # ------------------------------------------------------
+    if mode == "bull":
+
+        outlook["committee"] = (
+            "Investment Committee recommends maintaining "
+            "strategic equity exposure while monitoring "
+            "valuation risks."
+        )
+
+    elif mode == "bear":
+
+        outlook["committee"] = (
+            "Investment Committee recommends emphasizing "
+            "quality companies, strong cash flows and "
+            "defensive sectors."
+        )
+
+    else:
+
+        outlook["committee"] = (
+            "Investment Committee recommends maintaining "
+            "a diversified long-term allocation."
+        )
+
+    return outlook
 # ==========================================================
 # MASTER AI INVESTMENT ADVISOR
 # ==========================================================
@@ -430,7 +712,7 @@ def investment_advisor(
     mode,
     model
 ):
-    """
+       """
     Master AI engine for institutional investment advice.
 
     Parameters
@@ -452,7 +734,14 @@ def investment_advisor(
     dict
         Complete AI analysis.
     """
-
+    # ------------------------------------------------------
+    # Market Intelligence
+    # ------------------------------------------------------
+    outlook = market_outlook(
+        mode,
+        model,
+        portfolio
+    )
     # ------------------------------------------------------
     # Overall Portfolio Analysis
     # ------------------------------------------------------
@@ -461,7 +750,15 @@ def investment_advisor(
         portfolio,
         portfolio
     )
+    # ------------------------------------------------------
+    # Market Intelligence
+    # ------------------------------------------------------
 
+    outlook = market_outlook(
+        mode,
+        model,
+        portfolio
+    )
     # ------------------------------------------------------
     # Company Recommendations
     # ------------------------------------------------------
@@ -520,7 +817,10 @@ def investment_advisor(
 
         best_pick = max(
             recommendations,
-            key=lambda x: x["confidence"]
+            key=lambda x: (
+                x["recommendation"] == "STRONG BUY",
+                x["confidence"]
+            )
         )
 
     else:
@@ -532,26 +832,48 @@ def investment_advisor(
     # ------------------------------------------------------
     return {
 
-        "health": analysis["health"],
+        "health": analysis.get("health", 0),
 
-        "rating": analysis["rating"],
+        "rating": analysis.get("rating", "N/A"),
 
-        "risk": analysis["risk"],
+        "risk": analysis.get("risk", "UNKNOWN"),
 
-        "risk_score": analysis["risk_score"],
+        "risk_score": analysis.get("risk_score", 0),
 
-        "diversification": analysis["diversification"],
+        "diversification": analysis.get("diversification", 0),
 
-        "dividend_score": analysis["dividend_score"],
+        "dividend_score": analysis.get("dividend_score", 0),
 
         "market_mode": mode.title(),
 
         "investment_model": model.title(),
 
-        "message": analysis["message"],
+        "message": analysis.get("message", ""),
 
         "best_pick": best_pick,
 
-        "recommendations": recommendations
+        "recommendations": recommendations,
+
+        "companies": len(portfolio),
+
+        "generated": "Institutional AI Engine V2",
+
+        "strengths": portfolio_strengths(portfolio),
+
+        "weaknesses": portfolio_weaknesses(portfolio),
+
+        "rebalance": rebalance_advice(portfolio)
+        "executive_summary":
+            executive_summary(
+                summary,
+                analysis
+            ),
+
+        "market_outlook":
+            outlook
 
     }
+
+       
+
+    
