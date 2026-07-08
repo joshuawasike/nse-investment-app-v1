@@ -100,45 +100,161 @@ def institutional_rating(score):
 
 
 # ==========================================================
-# Buy Hold Sell Engine
+# INSTITUTIONAL RECOMMENDATION ENGINE
 # ==========================================================
 
 def recommendation(asset):
+    """
+    Generates institutional BUY/HOLD/SELL recommendations
+    using multiple financial quality indicators.
+    """
 
-    roi = asset["roi"]
-    risk = asset["risk_score"]
+    roi = asset.get("roi", 0)
 
-    if roi > 25 and risk < 35:
+    risk = asset.get("risk_score", 50)
+
+    dividend = asset.get("dividend_yield", 0)
+
+    quality = asset.get("quality_score", 50)
+
+    health = asset.get("dividend_health", 50)
+
+    beta = asset.get("beta", 1.0)
+
+    roe = asset.get("roe", 0)
+
+    pe = asset.get("pe", 20)
+
+    esg = asset.get("esg", 50)
+
+    credit = str(asset.get("credit", "BBB"))
+
+    score = 0
+
+    # ---------------------------------------
+    # ROI
+    # ---------------------------------------
+    if roi >= 25:
+        score += 20
+    elif roi >= 15:
+        score += 15
+    elif roi >= 5:
+        score += 10
+
+    # ---------------------------------------
+    # Dividend Yield
+    # ---------------------------------------
+    if dividend >= 8:
+        score += 15
+    elif dividend >= 5:
+        score += 10
+    elif dividend >= 3:
+        score += 5
+
+    # ---------------------------------------
+    # Dividend Health
+    # ---------------------------------------
+    score += health * 0.10
+
+    # ---------------------------------------
+    # Company Quality
+    # ---------------------------------------
+    score += quality * 0.20
+
+    # ---------------------------------------
+    # ROE
+    # ---------------------------------------
+    if roe >= 20:
+        score += 15
+    elif roe >= 15:
+        score += 10
+    elif roe >= 10:
+        score += 5
+
+    # ---------------------------------------
+    # Beta (lower preferred)
+    # ---------------------------------------
+    if beta < 0.8:
+        score += 10
+    elif beta < 1.2:
+        score += 6
+
+    # ---------------------------------------
+    # Valuation
+    # ---------------------------------------
+    if pe < 10:
+        score += 10
+    elif pe < 18:
+        score += 6
+
+    # ---------------------------------------
+    # ESG
+    # ---------------------------------------
+    score += esg * 0.05
+
+    # ---------------------------------------
+    # Credit Rating
+    # ---------------------------------------
+    if credit in ["AAA", "AA+", "AA"]:
+        score += 10
+
+    elif credit in ["A+", "A"]:
+        score += 7
+
+    elif credit == "BBB":
+        score += 4
+
+    # ---------------------------------------
+    # Risk Penalty
+    # ---------------------------------------
+    score -= risk * 0.20
+
+    # ---------------------------------------
+    # Final Recommendation
+    # ---------------------------------------
+    if score >= 80:
         return "STRONG BUY"
 
-    if roi > 15:
+    if score >= 65:
         return "BUY"
 
-    if roi > 5:
+    if score >= 50:
         return "HOLD"
 
-    if roi > 0:
+    if score >= 35:
         return "REDUCE"
 
     return "SELL"
 
 
 # ==========================================================
-# Confidence Score
+# AI CONFIDENCE ENGINE
 # ==========================================================
 
 def confidence(asset):
+    """
+    AI confidence level for each recommendation.
+    """
 
-    roi = asset["roi"]
-    risk = asset["risk_score"]
+    quality = asset.get("quality_score", 50)
 
-    score = max(
-        50,
-        min(
-            99,
-            80 + roi / 2 - risk / 4
-        )
+    health = asset.get("dividend_health", 50)
+
+    risk = asset.get("risk_score", 50)
+
+    roi = asset.get("roi", 0)
+
+    beta = asset.get("beta", 1.0)
+
+    score = (
+        quality * 0.35
+        + health * 0.25
+        + roi * 0.60
+        - risk * 0.20
+        - abs(beta - 1.0) * 10
     )
+
+    score = max(50, min(score, 99))
 
     return round(score, 1)
 
@@ -226,28 +342,121 @@ def generate_message(
         "High-risk portfolio detected. Review allocations "
         "and reduce exposure to volatile securities."
     )
-# =========================================================
-# 🧠 AI PORTFOLIO ADVISOR (ADD HERE)
-# =========================================================
-def ai_portfolio_advisor(weights, R, assets):
+# ==========================================================
+# MASTER AI INVESTMENT ADVISOR
+# ==========================================================
 
-    avg_returns = np.mean(R, axis=1)
-    risk = np.std(avg_returns)
+def investment_advisor(
+    portfolio,
+    summary,
+    mode,
+    model
+):
+    """
+    Master AI engine for institutional investment advice.
 
-    top_idx = int(np.argmax(weights))
-    top_asset = assets[top_idx][0]
+    Parameters
+    ----------
+    portfolio : list
+        Portfolio breakdown produced by portfolio.py
 
-    if risk < 0.01:
-        comment = "Low risk environment. Defensive portfolio."
-    elif risk < 0.02:
-        comment = "Moderate risk. Balanced exposure."
+    summary : dict
+        Portfolio summary from analytics.py
+
+    mode : str
+        normal / bull / bear
+
+    model : str
+        dividend / growth / banking / value / income
+
+    Returns
+    -------
+    dict
+        Complete AI analysis.
+    """
+
+    # ------------------------------------------------------
+    # Overall Portfolio Analysis
+    # ------------------------------------------------------
+    analysis = analyze_portfolio(
+        summary,
+        portfolio,
+        portfolio
+    )
+
+    # ------------------------------------------------------
+    # Company Recommendations
+    # ------------------------------------------------------
+    recommendations = []
+
+    for asset in portfolio:
+
+        rec = recommendation(asset)
+
+        conf = confidence(asset)
+
+        recommendations.append({
+
+            "asset": asset["asset"],
+
+            "code": asset["code"],
+
+            "sector": asset.get("sector", "Unknown"),
+
+            "recommendation": rec,
+
+            "confidence": conf,
+
+            "roi": asset.get("roi", 0),
+
+            "risk_score": asset.get("risk_score", 50),
+
+            "dividend_yield": asset.get(
+                "dividend_yield",
+                0
+            )
+
+        })
+
+    # ------------------------------------------------------
+    # Highest Conviction Investment
+    # ------------------------------------------------------
+    if recommendations:
+
+        best_pick = max(
+            recommendations,
+            key=lambda x: x["confidence"]
+        )
+
     else:
-        comment = "High volatility. Consider reducing risk."
 
+        best_pick = None
+
+    # ------------------------------------------------------
+    # AI Output
+    # ------------------------------------------------------
     return {
-        "top_asset": top_asset,
-        "risk_level": float(risk),
-        "commentary": comment
+
+        "health": analysis["health"],
+
+        "rating": analysis["rating"],
+
+        "risk": analysis["risk"],
+
+        "risk_score": analysis["risk_score"],
+
+        "diversification": analysis["diversification"],
+
+        "dividend_score": analysis["dividend_score"],
+
+        "market_mode": mode.title(),
+
+        "investment_model": model.title(),
+
+        "message": analysis["message"],
+
+        "best_pick": best_pick,
+
+        "recommendations": recommendations
+
     }
-def ai_portfolio_advisor(weights, R, assets):
-    ...
