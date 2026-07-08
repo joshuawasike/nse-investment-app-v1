@@ -1,9 +1,25 @@
+"""
+=========================================================
+JOBURA WEALTH®
+NSE Institutional Wealth Management Platform
+
+Main Application Controller
+
+Version 2.0
+=========================================================
+"""
+
 # ==========================================================
-# JOBURA WEALTH®
-# NSE Institutional Wealth Management Platform
-# Professional Analytics Suite
-# Version 2026
+# STANDARD LIBRARIES
 # ==========================================================
+
+import os
+import json
+import random
+from datetime import datetime
+
+import numpy as np
+import pandas as pd
 
 # ==========================================================
 # FLASK
@@ -15,614 +31,147 @@ from flask import (
     request,
     redirect,
     url_for,
-    session,
     flash,
-    jsonify
+    jsonify,
+    session
 )
 
 # ==========================================================
-# STANDARD LIBRARIES
+# ENGINE IMPORTS
 # ==========================================================
 
-import os
-import io
-import json
-import glob
-import random
-import base64
+from engine.simulation import simulate
 
-from datetime import datetime
-
-# ==========================================================
-# DATA SCIENCE
-# ==========================================================
-
-import numpy as np
-import pandas as pd
-
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-
-# ==========================================================
-# ENGINE MODULES
-# ==========================================================
-
-from engine.simulation import simulate_market
-
-from engine.portfolio import build_portfolio
-
-from engine.analytics import portfolio_summary
-
-from engine.ai import investment_advisor
-
-from engine.research import (
-    company_database,
-    ASSETS,
-    DIVIDEND_DATABASE,
-    DIVIDEND_BASE,
-    load_data,
-    get_df,
-    estimate_market_statistics,
-    get_market_stats,
-    get_model_assets,
-    estimate_dividend_yields
+from engine.portfolio import (
+    build_portfolio
 )
 
-from engine.risk import portfolio_risk
-
-from engine.retirement import retirement_projection
-
-from engine.reports import create_report
-
-from engine.utils import (
-    load_json,
-    save_json,
-    today,
-    money,
-    percent,
-    platform
+from engine.analytics import (
+    portfolio_summary
 )
+
+from engine.risk import (
+    portfolio_risk_report
+)
+
+from engine.ai import (
+    investment_advisor
+)
+
+from engine.retirement import (
+    retirement_projection
+)
+
+from engine.reports import (
+    generate_report
+)
+
 # ==========================================================
-# FLASK APPLICATION
+# APPLICATION
 # ==========================================================
 
 app = Flask(__name__)
 
-app.secret_key = "JOBURA_WEALTH_2026"
-
 # ==========================================================
-# PROJECT PATHS
+# CONFIGURATION
 # ==========================================================
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+app.config["SECRET_KEY"] = (
+    "jobura-wealth-2026"
+)
 
-DATA_DIR = os.path.join(BASE_DIR, "data")
-
-TEMPLATE_DIR = os.path.join(BASE_DIR, "templates")
-
-STATIC_DIR = os.path.join(BASE_DIR, "static")
+app.config["JSON_SORT_KEYS"] = False
 
 # ==========================================================
-# JSON DATABASE FILES
+# DATA PATHS
 # ==========================================================
 
-USERS_FILE = "users.json"
-
-COMPANIES_FILE = "companies.json"
-
-DIVIDENDS_FILE = "dividends.json"
-
-MARKET_FILE = "market_data.json"
-
-MODELS_FILE = "portfolio_models.json"
-
-SECTORS_FILE = "sectors.json"
-
-AI_RULES_FILE = "ai_rules.json"
-
-RISK_FILE = "risk_profiles.json"
-
-ECONOMY_FILE = "economic_indicators.json"
-
-SUBSCRIPTIONS_FILE = "subscriptions.json"
-
-TRANSACTIONS_FILE = "transactions.json"
-
-# ==========================================================
-# LOAD DATABASES
-# ==========================================================
-
-companies = load_json(
-    os.path.join(DATA_DIR, COMPANIES_FILE)
+BASE_DIR = os.path.dirname(
+    os.path.abspath(__file__)
 )
 
-users = load_json(
-    os.path.join(DATA_DIR, USERS_FILE)
+DATA_DIR = os.path.join(
+    BASE_DIR,
+    "data"
 )
 
-dividends = load_json(
-    os.path.join(DATA_DIR, DIVIDENDS_FILE)
+CSV_DIR = os.path.join(
+    DATA_DIR,
+    "nse_csv"
 )
 
-market = load_json(
-    os.path.join(DATA_DIR, MARKET_FILE)
+REPORT_DIR = os.path.join(
+    BASE_DIR,
+    "reports"
 )
 
-portfolio_models = load_json(
-    os.path.join(DATA_DIR, MODELS_FILE)
-)
-
-sectors = load_json(
-    os.path.join(DATA_DIR, SECTORS_FILE)
-)
-
-ai_rules = load_json(
-    os.path.join(DATA_DIR, AI_RULES_FILE)
-)
-
-risk_profiles = load_json(
-    os.path.join(DATA_DIR, RISK_FILE)
-)
-
-economic = load_json(
-    os.path.join(DATA_DIR, ECONOMY_FILE)
-)
-
-subscriptions = load_json(
-    os.path.join(DATA_DIR, SUBSCRIPTIONS_FILE)
-)
-
-transactions = load_json(
-    os.path.join(DATA_DIR, TRANSACTIONS_FILE)
+EXPORT_DIR = os.path.join(
+    BASE_DIR,
+    "exports"
 )
 
 # ==========================================================
-# PLATFORM INFORMATION
+# MEMBERSHIP
 # ==========================================================
 
-APP = platform()
+INDIVIDUAL_MONTHLY = 400
+
+INDIVIDUAL_YEARLY = 4000
+
+INSTITUTION_MONTHLY = 2000
+
+INSTITUTION_YEARLY = 18000
 
 # ==========================================================
-# GLOBAL SETTINGS
+# DEFAULT SETTINGS
 # ==========================================================
 
-COMMUNITY_PLAN = "Community Edition"
+DEFAULT_MODEL = "balanced"
 
-PROFESSIONAL_PLAN = "Professional Edition"
+DEFAULT_MODE = "normal"
 
-INSTITUTIONAL_PLAN = "Institutional Edition"
+DEFAULT_YEARS = 10
 
-DEFAULT_MARKET = "Normal"
-
-DEFAULT_MODEL = "Dividend"
-
-CURRENCY = "KES"
-
-@app.route("/companies")
-def company_list():
-
-    companies = company_database()
-
-    if not companies:
-        return "No valid company names found"
-
-    return "<br>".join(companies)
-# ==========================================================
-# SECURITY CONFIGURATION
-# ==========================================================
-
-ADMIN_PASSWORD = "Jobura@542542"
-
-USERS_PATH = os.path.join(DATA_DIR, USERS_FILE)
+DEFAULT_MONTHLY = 10000
 
 # ==========================================================
-# USER MANAGEMENT
+# COMPANY DATABASE
 # ==========================================================
 
-def load_users():
-    return load_json(USERS_PATH)
+COMPANY_DATABASE = os.path.join(
+    DATA_DIR,
+    "companies.json"
+)
 
+DIVIDEND_DATABASE = os.path.join(
+    DATA_DIR,
+    "dividend_database.json"
+)
 
-def save_users(users):
-    save_json(USERS_PATH, users)
-
-
-def is_active(user):
-
-    if not isinstance(user, dict):
-        return False
-
-    status = user.get("status", "").lower()
-
-    return (
-        "monthly" in status
-        or
-        "yearly" in status
-        or
-        "professional" in status
-        or
-        "institutional" in status
-    )
+USER_DATABASE = os.path.join(
+    DATA_DIR,
+    "users.json"
+)
 
 # ==========================================================
-# PAYMENT CONFIGURATION
+# APPLICATION INFORMATION
 # ==========================================================
 
-PAYMENT_INFO = {
+APP_INFO = {
 
-    "paybill": "542542",
+    "platform":
+        "JOBURA WEALTH®",
 
-    "account": "31909",
+    "system":
+        "NSE Institutional Wealth Management Platform",
 
-    "business_name": "Jobura Solutions",
+    "version":
+        "2.0",
 
-    "currency": "KES"
+    "developer":
+        "Jobura Solutions",
+
+    "year":
+        "2026"
 
 }
-
-# ==========================================================
-# SUBSCRIPTION PRICING
-# ==========================================================
-
-PRICING = {
-
-    "Community": {
-        "monthly": 0,
-        "yearly": 0
-    },
-
-    "Professional": {
-        "monthly": 400,
-        "yearly": 4000
-    },
-
-    "Institutional": {
-        "monthly": 2000,
-        "yearly": 18000
-    }
-
-}
-from engine.research import (
-    load_data,
-    get_df,
-    estimate_market_statistics,
-    get_market_stats,
-    get_model_assets,
-    estimate_dividend_yields
-)
-
-# =========================================================
-# 🏦 CORPORATE ACTION DATABASE
-# =========================================================
-
-CORPORATE_ACTIONS = {
-
-    "EQTY":{
-
-        "split":0.01,
-        "bonus":0.03,
-        "rights":0.04,
-        "buyback":0.01,
-        "special_dividend":0.02
-
-    },
-
-    "KCB":{
-
-        "split":0.01,
-        "bonus":0.02,
-        "rights":0.03,
-        "buyback":0.02,
-        "special_dividend":0.01
-
-    },
-
-    "COOP":{
-
-        "split":0.00,
-        "bonus":0.04,
-        "rights":0.02,
-        "buyback":0.01,
-        "special_dividend":0.02
-
-    },
-
-    "SCOM":{
-
-        "split":0.00,
-        "bonus":0.01,
-        "rights":0.01,
-        "buyback":0.04,
-        "special_dividend":0.05
-
-    },
-
-    "EABL":{
-
-        "split":0.00,
-        "bonus":0.02,
-        "rights":0.01,
-        "buyback":0.02,
-        "special_dividend":0.04
-
-    },
-
-    "KEGN":{
-
-        "split":0.00,
-        "bonus":0.01,
-        "rights":0.02,
-        "buyback":0.01,
-        "special_dividend":0.01
-
-    },
-
-    "NCBA":{
-
-        "split":0.01,
-        "bonus":0.02,
-        "rights":0.03,
-        "buyback":0.02,
-        "special_dividend":0.02
-
-    },
-
-    "KQ":{
-
-        "split":0.00,
-        "bonus":0.00,
-        "rights":0.08,
-        "buyback":0.00,
-        "special_dividend":0.00
-
-    }
-
-}
-     
-# =========================================================
-# 🔐 LOGIN
-# =========================================================
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
-        if request.form.get("password") == ADMIN_PASSWORD:
-            session["admin"] = True
-            return redirect("/admin")
-        return "Wrong password"
-
-    return """
-    <form method="POST" style="padding:20px;">
-        <input name="password" type="password" placeholder="Admin Password">
-        <button type="submit">Login</button>
-    </form>
-    """
-
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect("/login")
-
-# =========================================================
-# 🌐 MAIN ROUTE
-# =========================================================
-@app.route("/", methods=["GET", "POST"])
-def index():
-
-    users = load_users()
-    is_premium = False
-    data = {}
-    goal_result = None
-    best_model_name = None
-    best_model_value = 0
-    ranking = []
-
-    try:
-
-        if request.method == "POST":
-
-            # INPUTS
-            monthly = float(request.form.get("monthly") or 0)
-            years = int(request.form.get("years") or 1)
-            target_amount = float(request.form.get("target_amount") or 0)
-
-            # GOAL ANALYSIS
-            if target_amount > 0:
-                goal_result = {
-                    "target": target_amount,
-                    "current_monthly": monthly,
-                    "years_needed": years_to_goal(monthly, target_amount),
-                    "monthly_5": monthly_for_goal(target_amount, 5),
-                    "monthly_10": monthly_for_goal(target_amount, 10),
-                    "monthly_15": monthly_for_goal(target_amount, 15)
-                }
-
-            # USER CHECK
-            code = request.form.get("transaction_code", "").strip().upper()
-            phone = request.form.get("phone", "").strip()
-
-            for u in users:
-                if u.get("code") == code and is_active(u):
-                    is_premium = True
-
-            # RUN ALL MODELS
-            models = [
-                "dividend",
-                "growth",
-                "banking",
-                "value",
-                "income"
-            ]
-
-            for m in models:
-
-                normal = simulate(monthly, years, "normal", m)
-
-                if is_premium:
-                    bull = simulate(monthly, years, "bull", m)
-                    bear = simulate(monthly, years, "bear", m)
-                else:
-                    bull = None
-                    bear = None
-
-                data[m] = {
-                    "normal": normal,
-                    "bull": bull,
-                    "bear": bear
-                }
-
-            # SAVE NEW USER
-            if code and not any(u.get("code") == code for u in users):
-
-                users.append({
-                    "code": code,
-                    "phone": phone,
-                    "status": "pending",
-                    "plan": "all_models",
-                    "expiry": ""
-                })
-
-                save_users(users)
-
-            # BEST MODEL
-            for model_name, result in data.items():
-
-                try:
-                    value = result["normal"]["summary"]["value"]
-
-                    if value > best_model_value:
-                        best_model_value = value
-                        best_model_name = model_name
-
-                except:
-                    pass
-
-            # MODEL RANKING
-            ranking = sorted(
-                data.items(),
-                key=lambda x: x[1]["normal"]["summary"]["value"],
-                reverse=True
-            )
-
-        return render_template(
-            "index.html",
-            data=data,
-            goal_result=goal_result,
-            is_premium=is_premium,
-            best_model_name=best_model_name,
-            best_model_value=best_model_value,
-            ranking=ranking
-        )
-
-    except Exception as e:
-        return f"APP ERROR: {str(e)}"
-# =========================================================
-# 🚀 ADMIN ROUTE (FIXED SAFE)
-# =========================================================
-@app.route("/admin")
-def admin():
-    if not session.get("admin"):
-        return redirect("/login")
-
-    users = load_users()
-
-    safe_users = [u for u in users if isinstance(u, dict)]
-
-    monthly_users = len([u for u in safe_users if u.get("status") == "approved_monthly"])
-    yearly_users = len([u for u in safe_users if u.get("status") == "approved_yearly"])
-
-    monthly_revenue = monthly_users * PRICING["monthly"]
-    yearly_revenue = yearly_users * PRICING["yearly"]
-
-    total_revenue = monthly_revenue + yearly_revenue
-
-    return render_template(
-        "admin.html",
-        users=safe_users,
-        total_users=len(safe_users),
-        pending_users=len([u for u in safe_users if u.get("status") == "pending"]),
-        approved_monthly=monthly_users,
-        approved_yearly=yearly_users,
-        rejected_users=len([u for u in safe_users if u.get("status") == "rejected"]),
-        monthly_revenue=monthly_revenue,
-        yearly_revenue=yearly_revenue,
-        total_revenue=total_revenue
-    )
-# =========================================================
-# ✅ APPROVE USER
-# =========================================================
-@app.route("/approve/<code>/<plan>")
-def approve(code, plan):
-
-    if not session.get("admin"):
-        return redirect("/login")
-
-    users = load_users()
-
-    for u in users:
-
-        if u.get("code") == code:
-
-            if plan == "monthly":
-                u["status"] = "approved_monthly"
-                u["plan"] = "Monthly"
-
-            elif plan == "yearly":
-                u["status"] = "approved_yearly"
-                u["plan"] = "Yearly"
-
-            u["expiry"] = "ACTIVE"
-
-    save_users(users)
-
-    return redirect("/admin")
-
-
-# =========================================================
-# ❌ REJECT USER
-# =========================================================
-@app.route("/reject/<code>")
-def reject(code):
-
-    if not session.get("admin"):
-        return redirect("/login")
-
-    users = load_users()
-
-    for u in users:
-        if u.get("code") == code:
-            u["status"] = "rejected"
-
-    save_users(users)
-
-    return redirect("/admin")
-# =========================================================
-# 🔄 CANCEL SUBSCRIPTION
-# =========================================================
-@app.route("/cancel/<code>")
-def cancel(code):
-
-    if not session.get("admin"):
-        return redirect("/login")
-
-    users = load_users()
-
-    for u in users:
-
-        if u.get("code") == code:
-            u["status"] = "pending"
-            u["plan"] = ""
-            u["expiry"] = ""
-
-    save_users(users)
-
-    return redirect("/admin")
-# =========================================================
-# 🚀 RUN (RENDER SAFE)
-# =========================================================
-if __name__ == "__main__":
-    import os
-
-    port = int(os.environ.get("PORT", 5000))
-
-    app.run(host="0.0.0.0", port=port)
