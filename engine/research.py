@@ -1,416 +1,703 @@
-"""
-JOBURA WEALTH®
-NSE Institutional Wealth Management Platform
-Company Research Engine
-(Merged Version)
-"""
+# ==========================================================
+# JOBURA WEALTH®
+# RESEARCH ENGINE
+# Institutional Market Research Module
+# Version 2026
+# ==========================================================
 
 import os
-import json
 import glob
-import pandas as pd
+
 import numpy as np
+import pandas as pd
+
+# ==========================================================
+# PROJECT PATHS
+# ==========================================================
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 DATA_DIR = os.path.join(BASE_DIR, "data")
+
 CSV_DIR = os.path.join(DATA_DIR, "nse_csv")
-COMPANY_FILE = os.path.join(DATA_DIR, "companies.json")
 
-_market_df = None
+# ==========================================================
+# MARKET DATA CACHE
+# ==========================================================
 
-def load_companies():
-    if not os.path.exists(COMPANY_FILE):
-        return []
-    with open(COMPANY_FILE,"r",encoding="utf-8") as f:
-        return json.load(f)
+_market_cache = None
+_market_statistics = None
 
-def all_companies():
-    return load_companies()
+# ==========================================================
+# NSE COMPANY MASTER LIST
+# (Company Name, Stock Code)
+# ==========================================================
 
-def get_company(code):
-    for c in load_companies():
-        if c["code"].upper()==code.upper():
-            return c
-    return None
+ASSETS = [
 
-def search_company(keyword):
-    k=keyword.lower()
-    return [c for c in load_companies() if k in c["name"].lower() or k in c["code"].lower() or k in c["sector"].lower() or k in c["industry"].lower()]
+    ("Equity Bank", "EQTY"),
 
-# ---------------- Historical Market Data ---------------- #
+    ("KCB Group", "KCB"),
 
-def load_market_data():
-    df_local=pd.DataFrame()
-    for file in glob.glob(os.path.join(CSV_DIR,"*.csv")):
+    ("Co-operative Bank", "COOP"),
+
+    ("Safaricom", "SCOM"),
+
+    ("East African Breweries", "EABL"),
+
+    ("KenGen", "KEGN"),
+
+    ("NCBA Group", "NCBA"),
+
+    ("Kenya Airways", "KQ")
+
+]
+
+# ==========================================================
+# COMPANY NAME LOOKUP
+# ==========================================================
+
+COMPANY_NAMES = {
+
+    code: name
+
+    for name, code in ASSETS
+
+}
+
+# ==========================================================
+# MODEL UNIVERSES
+# ==========================================================
+
+MODEL_UNIVERSES = {
+
+    "dividend": [
+
+        "EQTY",
+        "KCB",
+        "COOP",
+        "SCOM",
+        "EABL",
+        "KEGN",
+        "NCBA"
+
+    ],
+
+    "growth": [
+
+        "SCOM",
+        "KQ",
+        "NCBA",
+        "EQTY",
+        "KCB"
+
+    ],
+
+    "banking": [
+
+        "EQTY",
+        "KCB",
+        "COOP",
+        "NCBA"
+
+    ],
+
+    "value": [
+
+        "KEGN",
+        "EABL",
+        "KQ",
+        "NCBA"
+
+    ],
+
+    "income": [
+
+        "SCOM",
+        "EABL",
+        "KCB",
+        "EQTY",
+        "COOP"
+
+    ]
+
+}
+
+# ==========================================================
+# DIVIDEND BASELINE YIELDS
+# ==========================================================
+
+DIVIDEND_BASE = {
+
+    "EQTY": 0.075,
+
+    "KCB": 0.068,
+
+    "COOP": 0.082,
+
+    "SCOM": 0.064,
+
+    "EABL": 0.052,
+
+    "KEGN": 0.055,
+
+    "NCBA": 0.060,
+
+    "KQ": 0.000
+
+}
+
+# ==========================================================
+# INSTITUTIONAL COMPANY DATABASE
+# ==========================================================
+
+DIVIDEND_DATABASE = {
+
+    "EQTY": {
+
+        "sector": "Banking",
+
+        "growth": 0.09,
+
+        "base_yield": 0.075,
+
+        "stability": 0.95,
+
+        "quality": 0.95,
+
+        "payout": 0.45,
+
+        "months": [4, 9],
+
+        "policy": "Semi-Annual",
+
+        "roe": 0.24,
+
+        "pe": 6.9,
+
+        "pb": 1.5,
+
+        "beta": 1.05,
+
+        "credit": "A",
+
+        "esg": 82
+
+    },
+
+    "KCB": {
+
+        "sector": "Banking",
+
+        "growth": 0.08,
+
+        "base_yield": 0.068,
+
+        "stability": 0.93,
+
+        "quality": 0.93,
+
+        "payout": 0.42,
+
+        "months": [5],
+
+        "policy": "Annual",
+
+        "roe": 0.21,
+
+        "pe": 5.8,
+
+        "pb": 1.2,
+
+        "beta": 1.08,
+
+        "credit": "A",
+
+        "esg": 79
+
+    },
+
+    "COOP": {
+
+        "sector": "Banking",
+
+        "growth": 0.075,
+
+        "base_yield": 0.082,
+
+        "stability": 0.97,
+
+        "quality": 0.91,
+
+        "payout": 0.55,
+
+        "months": [5],
+
+        "policy": "Annual",
+
+        "roe": 0.18,
+
+        "pe": 5.2,
+
+        "pb": 1.1,
+
+        "beta": 0.95,
+
+        "credit": "A",
+
+        "esg": 81
+
+    },
+
+    "SCOM": {
+
+        "sector": "Telecom",
+
+        "growth": 0.07,
+
+        "base_yield": 0.064,
+
+        "stability": 0.98,
+
+        "quality": 0.96,
+
+        "payout": 0.85,
+
+        "months": [3,8],
+
+        "policy": "Semi-Annual",
+
+        "roe": 0.62,
+
+        "pe": 12.5,
+
+        "pb": 5.6,
+
+        "beta": 0.82,
+
+        "credit": "AAA",
+
+        "esg": 90
+
+    },
+
+    "EABL": {
+
+        "sector": "Consumer",
+
+        "growth": 0.065,
+
+        "base_yield": 0.052,
+
+        "stability": 0.90,
+
+        "quality": 0.93,
+
+        "payout": 0.70,
+
+        "months": [10],
+
+        "policy": "Annual",
+
+        "roe": 0.32,
+
+        "pe": 13.8,
+
+        "pb": 5.2,
+
+        "beta": 0.95,
+
+        "credit": "AA",
+
+        "esg": 86
+
+    },
+
+    "KEGN": {
+
+        "sector": "Utilities",
+
+        "growth": 0.04,
+
+        "base_yield": 0.055,
+
+        "stability": 0.96,
+
+        "quality": 0.90,
+
+        "payout": 0.55,
+
+        "months": [11],
+
+        "policy": "Annual",
+
+        "roe": 0.15,
+
+        "pe": 7.4,
+
+        "pb": 0.9,
+
+        "beta": 0.60,
+
+        "credit": "AA",
+
+        "esg": 88
+
+    },
+
+    "NCBA": {
+
+        "sector": "Banking",
+
+        "growth": 0.08,
+
+        "base_yield": 0.060,
+
+        "stability": 0.91,
+
+        "quality": 0.90,
+
+        "payout": 0.42,
+
+        "months": [5],
+
+        "policy": "Annual",
+
+        "roe": 0.19,
+
+        "pe": 5.5,
+
+        "pb": 1.1,
+
+        "beta": 1.00,
+
+        "credit": "A",
+
+        "esg": 80
+
+    },
+
+    "KQ": {
+
+        "sector": "Airline",
+
+        "growth": 0.18,
+
+        "base_yield": 0.00,
+
+        "stability": 0.40,
+
+        "quality": 0.55,
+
+        "payout": 0.00,
+
+        "months": [],
+
+        "policy": "None",
+
+        "roe": -0.08,
+
+        "pe": None,
+
+        "pb": 0.60,
+
+        "beta": 1.90,
+
+        "credit": "B",
+
+        "esg": 62
+
+    }
+
+}
+# ==========================================================
+# LOAD NSE CSV FILES
+# ==========================================================
+
+def load_data(force_reload=False):
+    """
+    Load all NSE historical CSV files into memory.
+    """
+
+    global _market_cache
+
+    if _market_cache is not None and not force_reload:
+        return _market_cache
+
+    database = {}
+
+    csv_files = glob.glob(
+        os.path.join(CSV_DIR, "*.csv")
+    )
+
+    for file in csv_files:
+
         try:
-            t=pd.read_csv(file)
-            t.columns=t.columns.astype(str).str.strip().str.upper()
-            req=["CODE","DATE","PREVIOUS"]
-            if not all(r in t.columns for r in req):
-                continue
-            df_local=pd.concat([df_local,t[req]],ignore_index=True)
-        except Exception:
-            continue
-    if not df_local.empty:
-        df_local["DATE"]=pd.to_datetime(df_local["DATE"],errors="coerce")
-        df_local["PREVIOUS"]=pd.to_numeric(df_local["PREVIOUS"],errors="coerce")
-        df_local=df_local.dropna(subset=["CODE","DATE","PREVIOUS"]).sort_values(["CODE","DATE"]).reset_index(drop=True)
-    return df_local
 
-def get_market_data():
-    global _market_df
-    if _market_df is None:
-        _market_df=load_market_data()
-    return _market_df
+            df = pd.read_csv(file)
 
-def companies_by_sector(sector):
-    return [c for c in load_companies() if c["sector"].lower()==sector.lower()]
-
-def top_dividend(limit=10):
-    return sorted(load_companies(),key=lambda x:x["dividend_yield"],reverse=True)[:limit]
-
-def top_quality(limit=10):
-    return sorted(load_companies(),key=lambda x:x["quality_score"],reverse=True)[:limit]
-
-def top_roe(limit=10):
-    return sorted(load_companies(),key=lambda x:x["roe"],reverse=True)[:limit]
-
-def largest_companies(limit=10):
-    return sorted(load_companies(),key=lambda x:x["market_cap"],reverse=True)[:limit]
-
-def value_companies(limit=10):
-    return sorted([c for c in load_companies() if c["pe_ratio"]>0],key=lambda x:x["pe_ratio"])[:limit]
-
-def best_esg():
-    return sorted(load_companies(),key=lambda x:x["health_score"],reverse=True)
-
-def statistics():
-    c=load_companies()
-    if not c: return {}
-    return {
-      "companies":len(c),
-      "market_cap":sum(i["market_cap"] for i in c),
-      "average_dividend":round(sum(i["dividend_yield"] for i in c)/len(c),2),
-      "average_roe":round(sum(i["roe"] for i in c)/len(c),2),
-      "average_pe":round(sum(i["pe_ratio"] for i in c)/len(c),2),
-      "average_health":round(sum(i["health_score"] for i in c)/len(c),2)
-    }
-
-def dashboard():
-    return {
-      "statistics":statistics(),
-      "top_dividend":top_dividend(5),
-      "top_quality":top_quality(5),
-      "top_roe":top_roe(5),
-      "largest":largest_companies(5),
-      "value":value_companies(5)
-    }
-    # =========================================================
-# 📊 DATA ENGINE
-# =========================================================
-df = None
-
-def load_data():
-
-    df_local = pd.DataFrame(columns=["Code", "Date", "Previous"])
-    files = glob.glob("data/nse_csv/*.csv")
-
-    for file in files:
-        try:
-            temp = pd.read_csv(file)
-
-            # normalize columns
-            temp.columns = temp.columns.astype(str).str.strip().str.upper()
-
-            # only keep safe columns if they exist
-            keep = [c for c in ["CODE", "DATE", "PREVIOUS"] if c in temp.columns]
-
-            if len(keep) == 0:
-                continue
-
-            temp = temp[keep]
-
-            df_local = pd.concat([df_local, temp], ignore_index=True)
-
-        except Exception:
-            continue
-
-    # FINAL CLEANING
-    if not df_local.empty:
-        df_local["DATE"] = pd.to_datetime(df_local["DATE"], errors="coerce")
-        df_local["PREVIOUS"] = pd.to_numeric(df_local["PREVIOUS"], errors="coerce")
-        df_local = df_local.dropna()
-
-    return df_local
-
-
-def get_df():
-    global df
-    if df is None:
-        df = load_data()
-    return df
-# =========================================================
-# 📊 HISTORICAL MARKET STATISTICS ENGINE
-# =========================================================
-def estimate_market_statistics():
-
-    df = get_df().copy()
-
-    if df.empty:
-        return None
-
-    df.columns = df.columns.str.upper()
-
-    df["DATE"] = pd.to_datetime(df["DATE"])
-
-    df["PREVIOUS"] = pd.to_numeric(df["PREVIOUS"], errors="coerce")
-
-    df = df.dropna(subset=["CODE", "DATE", "PREVIOUS"])
-
-    df = df.sort_values(["CODE", "DATE"])
-
-    # ------------------------------------------
-    # DAILY RETURNS
-    # ------------------------------------------
-    df["RETURN"] = (
-        df.groupby("CODE")["PREVIOUS"]
-          .pct_change()
-    )
-
-    df = df.dropna()
-
-    # ------------------------------------------
-    # RETURN MATRIX
-    # ------------------------------------------
-    returns = df.pivot_table(
-        index="DATE",
-        columns="CODE",
-        values="RETURN"
-    )
-
-    # remove nearly empty companies
-    returns = returns.dropna(axis=1, thresh=max(20, len(returns)//4))
-
-    returns = returns.fillna(0)
-
-    # ------------------------------------------
-    # EXPECTED RETURN
-    # ------------------------------------------
-    mu = returns.mean()
-
-    # ------------------------------------------
-    # VOLATILITY
-    # ------------------------------------------
-    sigma = returns.std()
-
-    # ------------------------------------------
-    # COVARIANCE
-    # ------------------------------------------
-    cov = returns.cov()
-
-    # ------------------------------------------
-    # CORRELATION
-    # ------------------------------------------
-    corr = returns.corr()
-
-    return {
-
-        "returns": returns,
-
-        "mu": mu,
-
-        "sigma": sigma,
-
-        "cov": cov,
-
-        "corr": corr
-
-    }
-# =========================================================
-# 📈 CACHE MARKET STATISTICS
-# =========================================================
-MARKET_STATS = None
-
-
-def get_market_stats():
-
-    global MARKET_STATS
-
-    if MARKET_STATS is None:
-
-        MARKET_STATS = estimate_market_statistics()
-
-    return MARKET_STATS
-# =========================================================
-# 🧠 MODEL → REAL COMPANY MAPPING
-# =========================================================
-def get_model_assets(model):
-
-    df = get_df()
-
-    if df is None or df.empty or "CODE" not in df.columns:
-        return ASSETS.copy()
-
-    df = df.copy()
-    df["CODE"] = df["CODE"].astype(str).str.upper().str.strip()
-
-    grouped = (
-        df.groupby("CODE")["PREVIOUS"]
-          .agg(["mean", "std"])
-          .reset_index()
-          .dropna()
-    )
-
-    grouped["return_score"] = grouped["mean"]
-    grouped["risk_score"] = grouped["std"] + 1e-9
-    grouped["sharpe_like"] = (
-        grouped["return_score"] /
-        grouped["risk_score"]
-    )
-
-    MODEL_UNIVERSES = {
-
-        "dividend": ["EQTY", "KCB", "COOP", "EABL"],
-
-        "growth": ["SCOM", "KQ", "NCBA", "KEGN"],
-
-        "banking": ["EQTY", "KCB", "COOP", "NCBA"],
-
-        "value": ["EABL", "KEGN", "SCOM", "KQ"],
-
-        "income": ["EABL", "COOP", "KCB", "SCOM"]
-
-    }
-
-    allowed = MODEL_UNIVERSES.get(model, [])
-
-    if allowed:
-        grouped = grouped[grouped["CODE"].isin(allowed)]
-
-    if grouped.empty:
-        return ASSETS.copy()
-
-    grouped["score"] = grouped["sharpe_like"]
-
-    grouped = grouped.sort_values(
-        "score",
-        ascending=False
-    )
-
-    # -----------------------------
-    # Company Names
-    # -----------------------------
-    COMPANY_NAMES = {
-
-        "EQTY": "Equity Bank",
-
-        "KCB": "KCB Group",
-
-        "COOP": "Co-op Bank",
-
-        "SCOM": "Safaricom",
-
-        "EABL": "EABL",
-
-        "KEGN": "KenGen",
-
-        "NCBA": "NCBA",
-
-        "KQ": "Kenya Airways"
-
-    }
-
-    assets = []
-
-    for _, row in grouped.iterrows():
-
-        code = row["CODE"]
-
-        if code in COMPANY_NAMES:
-
-            assets.append(
-                (
-                    COMPANY_NAMES[code],
-                    code
-                )
+            df.columns = (
+                df.columns
+                .astype(str)
+                .str.strip()
+                .str.upper()
             )
 
-    # Always return 8 assets
-    for asset in ASSETS:
+            code = os.path.basename(file)
 
-        if asset not in assets:
+            code = os.path.splitext(code)[0]
 
-            assets.append(asset)
+            database[code] = df
 
-        if len(assets) == len(ASSETS):
+        except Exception:
 
-            break
+            continue
 
-    return assets
-# =========================================================
-# 💰 DYNAMIC DIVIDEND RESEARCH ENGINE
-# =========================================================
-def estimate_dividend_yields(mode, model):
+    _market_cache = database
 
-    MODEL_FACTOR = {
+    return database
 
-        "dividend": 1.30,
-        "income":   1.20,
-        "banking":  1.10,
-        "value":    0.95,
-        "growth":   0.70
+
+# ==========================================================
+# GET SINGLE COMPANY DATAFRAME
+# ==========================================================
+
+def get_df(code):
+    """
+    Returns one company's historical dataframe.
+    """
+
+    database = load_data()
+
+    return database.get(code)
+
+
+# ==========================================================
+# COMPANY DATABASE
+# ==========================================================
+
+def company_database():
+    """
+    Returns all available companies.
+    """
+
+    return ASSETS
+
+
+# ==========================================================
+# MODEL ASSET SELECTION
+# ==========================================================
+
+def get_model_assets(model="dividend"):
+    """
+    Returns assets belonging to one investment model.
+    """
+
+    model = str(model).lower()
+
+    codes = MODEL_UNIVERSES.get(
+        model,
+        MODEL_UNIVERSES["dividend"]
+    )
+
+    selected = []
+
+    for company in ASSETS:
+
+        if company[1] in codes:
+
+            selected.append(company)
+
+    return selected
+
+
+# ==========================================================
+# ESTIMATE MARKET STATISTICS
+# ==========================================================
+
+def estimate_market_statistics(force_reload=False):
+    """
+    Calculates historical statistics for all NSE companies.
+    """
+
+    global _market_statistics
+
+    if _market_statistics is not None and not force_reload:
+        return _market_statistics
+
+    database = load_data(force_reload)
+
+    returns = {}
+
+    for code, df in database.items():
+
+        try:
+
+            # -------------------------------
+            # Locate closing price
+            # -------------------------------
+            close_col = None
+
+            for col in [
+
+                "CLOSE",
+
+                "ADJ CLOSE",
+
+                "CLOSING PRICE",
+
+                "PRICE"
+
+            ]:
+
+                if col in df.columns:
+
+                    close_col = col
+
+                    break
+
+            if close_col is None:
+
+                continue
+
+            prices = (
+
+                pd.to_numeric(
+
+                    df[close_col],
+
+                    errors="coerce"
+
+                )
+
+                .dropna()
+
+            )
+
+            if len(prices) < 30:
+
+                continue
+
+            r = prices.pct_change().dropna()
+
+            if len(r) > 10:
+
+                returns[code] = r
+
+        except Exception:
+
+            continue
+
+    if len(returns) < 2:
+
+        _market_statistics = None
+
+        return None
+
+    returns_df = pd.DataFrame(returns)
+
+    statistics = {
+
+        "returns": returns_df,
+
+        "mu": returns_df.mean(),
+
+        "sigma": returns_df.std(),
+
+        "cov": returns_df.cov(),
+
+        "corr": returns_df.corr()
 
     }
 
-    model_factor = MODEL_FACTOR.get(model, 1.0)
+    _market_statistics = statistics
 
-    stats = get_market_stats()
+    return statistics
+
+
+# ==========================================================
+# GET MARKET STATISTICS
+# ==========================================================
+
+def get_market_stats():
+    """
+    Cached market statistics.
+    """
+
+    if _market_statistics is None:
+
+        return estimate_market_statistics()
+
+    return _market_statistics
+# ==========================================================
+# DIVIDEND YIELD ESTIMATION
+# ==========================================================
+
+def estimate_dividend_yields(mode="normal", model="dividend"):
+    """
+    Estimates forward dividend yields after adjusting
+    for market regime.
+    """
+
+    regime_factor = {
+        "normal": 1.00,
+        "bull": 1.12,
+        "bear": 0.82
+    }.get(str(mode).lower(), 1.00)
 
     yields = {}
 
-    for code, profile in DIVIDEND_DATABASE.items():
+    assets = get_model_assets(model)
 
-        y = profile["base_yield"] * model_factor
+    for _, code in assets:
 
-        if stats is not None:
+        profile = DIVIDEND_DATABASE.get(code, {})
 
-            try:
+        base = profile.get(
+            "base_yield",
+            DIVIDEND_BASE.get(code, 0.05)
+        )
 
-                vol = stats["sigma"][code]
+        growth = profile.get("growth", 0.00)
 
-                # Stable companies deserve higher sustainable yields
-                y *= max(0.80, 1.15 - (vol * 12))
+        stability = profile.get("stability", 0.90)
 
-            except:
+        payout = profile.get("payout", 0.40)
 
-                pass
+        y = (
+            base
+            * regime_factor
+            * (1 + growth)
+            * stability
+            * (0.60 + payout)
+        )
 
-        # Company stability adjustment
-        y *= profile["stability"]
-
-        # Market regime adjustment
-        if mode == "bull":
-
-            y *= 1.10
-
-        elif mode == "bear":
-
-            y *= 0.80
-
-        # Realistic bounds
-        y = np.clip(y, 0.00, 0.15)
-
-        yields[code] = float(y)
+        yields[code] = float(
+            np.clip(y, 0.00, 0.18)
+        )
 
     return yields
-    # =========================================================
-# 📈 DIVIDEND FORECAST ENGINE
-# =========================================================
-def forecast_dividend_yield(code, years_elapsed, mode):
+
+
+# ==========================================================
+# DIVIDEND FORECAST ENGINE
+# ==========================================================
+
+def forecast_dividend_yield(
+        code,
+        years_elapsed,
+        mode="normal"
+):
+    """
+    Forecast future dividend yield.
+    """
 
     profile = DIVIDEND_DATABASE.get(code, {})
 
-    base = DIVIDEND_BASE.get(code, 0.05)
+    base = profile.get(
+        "base_yield",
+        DIVIDEND_BASE.get(code, 0.05)
+    )
 
     growth = profile.get("growth", 0.00)
 
@@ -418,46 +705,870 @@ def forecast_dividend_yield(code, years_elapsed, mode):
 
     payout = profile.get("payout", 0.40)
 
-    # Compound dividend growth
     forecast = base * ((1 + growth) ** years_elapsed)
 
-    # Market regime
     if mode == "bull":
         forecast *= 1.10
 
     elif mode == "bear":
         forecast *= 0.80
 
-    # Stable companies maintain dividends better
     forecast *= stability
 
-    # Companies with higher payout ratios generally
-    # distribute more income
     forecast *= (0.60 + payout)
 
-    return float(np.clip(forecast, 0.0, 0.18))
-    MODEL_UNIVERSES = {
-        "dividend": [0,1,2,3,4,5,6],   # safe banks + blue chips
-        "growth":   [7,5,6,1,2,3,4],   # includes KQ aggressively
-        "banking":  [0,1,2,6,3],       # only banks + safaricom
-        "value":    [5,6,7,4],         # cyclical + recovery stocks
-        "income":   [3,4,1,0,2]        # dividend-heavy names
-     }
-    def company_database():
+    return float(
+        np.clip(
+            forecast,
+            0.00,
+            0.18
+        )
+    )
 
-    files = glob.glob("NSE_data_all_stock_*.csv")
 
-    names = []
+# ==========================================================
+# COMPANY ANALYTICS
+# ==========================================================
 
-    for f in files:
+def company_analytics(
+        code,
+        capital=0.0
+):
+    """
+    Institutional company analytics.
+    """
 
-        try:
-            temp = pd.read_csv(f)
+    profile = DIVIDEND_DATABASE.get(code, {})
 
-            ...
-            names.extend(...)
+    dividend_yield = profile.get("base_yield", 0)
 
-        except Exception:
-            pass
+    growth = profile.get("growth", 0)
 
-    return sorted(set(names))
+    quality = profile.get("quality", 0)
+
+    payout = profile.get("payout", 0)
+
+    stability = profile.get("stability", 0)
+
+    beta = profile.get("beta", 1)
+
+    income = capital * dividend_yield
+
+    health = (
+
+        quality * 40 +
+
+        stability * 30 +
+
+        (1 - beta) * 20 +
+
+        (1 - payout) * 10
+
+    )
+
+    health = max(
+        0,
+        min(100, health)
+    )
+
+    return {
+
+        "yield":
+            round(dividend_yield * 100, 2),
+
+        "growth":
+            round(growth * 100, 2),
+
+        "quality":
+            round(quality * 100, 1),
+
+        "stability":
+            round(stability * 100, 1),
+
+        "health":
+            round(health, 1),
+
+        "income":
+            round(income, 2),
+
+        "beta":
+            beta,
+
+        "policy":
+            profile.get("policy"),
+
+        "sector":
+            profile.get("sector"),
+
+        "roe":
+            round(
+                profile.get("roe", 0) * 100,
+                1
+            ),
+
+        "pe":
+            profile.get("pe"),
+
+        "pb":
+            profile.get("pb"),
+
+        "credit":
+            profile.get("credit"),
+
+        "esg":
+            profile.get("esg")
+
+    }
+
+
+# ==========================================================
+# DIVIDEND HEALTH SCORE
+# ==========================================================
+
+def dividend_health_score(
+        code,
+        stats=None
+):
+    """
+    Dividend sustainability score.
+    """
+
+    profile = DIVIDEND_DATABASE.get(code, {})
+
+    stability = profile.get(
+        "stability",
+        0.90
+    )
+
+    quality = profile.get(
+        "quality",
+        0.90
+    )
+
+    if stats is None:
+
+        return float(
+
+            np.clip(
+
+                0.60 * stability +
+
+                0.40 * quality,
+
+                0.20,
+
+                0.99
+
+            )
+
+        )
+
+    try:
+
+        mu = float(stats["mu"][code])
+
+        sigma = float(stats["sigma"][code])
+
+        score = (
+
+            0.35 * stability +
+
+            0.35 * quality +
+
+            0.20 * np.clip(
+                mu * 30,
+                0,
+                1
+            ) +
+
+            0.10 * np.clip(
+                1 - sigma * 20,
+                0,
+                1
+            )
+
+        )
+
+        return float(
+
+            np.clip(
+                score,
+                0.20,
+                0.99
+            )
+
+        )
+
+    except Exception:
+
+        return float(
+
+            np.clip(
+
+                0.60 * stability +
+
+                0.40 * quality,
+
+                0.20,
+
+                0.99
+
+            )
+
+        )
+  # ==========================================================
+# INSTITUTIONAL ECONOMIC REGIME ENGINE
+# ==========================================================
+
+ECONOMIC_REGIMES = {
+
+    "normal": {
+
+        "drift": 1.00,
+
+        "alpha": 0.0000,
+
+        "vol": 1.00,
+
+        "dividend": 1.00,
+
+        "earnings": 1.00,
+
+        "sector": {
+
+            "Banking": 1.00,
+
+            "Telecom": 1.00,
+
+            "Consumer": 1.00,
+
+            "Utilities": 1.00,
+
+            "Airline": 1.00
+
+        }
+
+    },
+
+    "bull": {
+
+        "drift": 1.10,
+
+        "alpha": 0.0020,
+
+        "vol": 0.80,
+
+        "dividend": 1.12,
+
+        "earnings": 1.15,
+
+        "sector": {
+
+            "Banking": 1.20,
+
+            "Telecom": 1.12,
+
+            "Consumer": 1.15,
+
+            "Utilities": 1.00,
+
+            "Airline": 1.50
+
+        }
+
+    },
+
+    "bear": {
+
+        "drift": 0.90,
+
+        "alpha": -0.0020,
+
+        "vol": 1.55,
+
+        "dividend": 0.82,
+
+        "earnings": 0.85,
+
+        "sector": {
+
+            "Banking": 0.75,
+
+            "Telecom": 0.95,
+
+            "Consumer": 0.82,
+
+            "Utilities": 1.05,
+
+            "Airline": 0.30
+
+        }
+
+    }
+
+}
+
+
+# ==========================================================
+# GET ECONOMIC REGIME
+# ==========================================================
+
+def get_regime(mode="normal"):
+    """
+    Returns the requested economic regime.
+    """
+
+    return ECONOMIC_REGIMES.get(
+
+        str(mode).lower(),
+
+        ECONOMIC_REGIMES["normal"]
+
+    )
+
+
+# ==========================================================
+# APPLY MARKET REGIME TO RETURNS
+# ==========================================================
+
+def apply_regime(mu, sigma, mode="normal"):
+    """
+    Applies macro-economic adjustments to expected
+    returns and volatility.
+    """
+
+    regime = get_regime(mode)
+
+    mu = (
+
+        mu * regime["drift"]
+
+    ) + regime["alpha"]
+
+    sigma = sigma * np.sqrt(regime["vol"])
+
+    return mu, sigma
+
+
+# ==========================================================
+# APPLY SECTOR MULTIPLIERS
+# ==========================================================
+
+def apply_sector_adjustment(
+        codes,
+        mu,
+        mode="normal"
+):
+    """
+    Applies sector-specific adjustments.
+    """
+
+    regime = get_regime(mode)
+
+    adjusted = []
+
+    for code, value in zip(codes, mu):
+
+        profile = DIVIDEND_DATABASE.get(code, {})
+
+        sector = profile.get(
+            "sector",
+            "Banking"
+        )
+
+        multiplier = regime["sector"].get(
+
+            sector,
+
+            1.0
+
+        )
+
+        adjusted.append(
+
+            value * multiplier
+
+        )
+
+    return np.array(adjusted)
+
+
+# ==========================================================
+# BUILD EXPECTED RETURN VECTOR
+# ==========================================================
+
+def expected_returns(
+        codes,
+        mode="normal"
+):
+    """
+    Returns regime-adjusted expected returns.
+    """
+
+    stats = get_market_stats()
+
+    if stats is None:
+
+        return None
+
+    mu = stats["mu"].copy()
+
+    available = [
+
+        c for c in codes
+
+        if c in mu.index
+
+    ]
+
+    if len(available) == 0:
+
+        return None
+
+    mu = mu.loc[available]
+
+    mu = apply_sector_adjustment(
+
+        available,
+
+        mu.values,
+
+        mode
+
+    )
+
+    regime = get_regime(mode)
+
+    mu = (
+
+        mu * regime["drift"]
+
+    ) + regime["alpha"]
+
+    mu = np.clip(
+
+        mu,
+
+        -0.015,
+
+        0.015
+
+    )
+
+    return mu
+
+
+# ==========================================================
+# BUILD VOLATILITY VECTOR
+# ==========================================================
+
+def expected_volatility(
+        codes,
+        mode="normal"
+):
+    """
+    Returns adjusted historical volatility.
+    """
+
+    stats = get_market_stats()
+
+    if stats is None:
+
+        return None
+
+    sigma = stats["sigma"].copy()
+
+    available = [
+
+        c for c in codes
+
+        if c in sigma.index
+
+    ]
+
+    sigma = sigma.loc[available]
+
+    regime = get_regime(mode)
+
+    sigma *= np.sqrt(
+
+        regime["vol"]
+
+    )
+
+    return sigma.values
+
+
+# ==========================================================
+# BUILD COVARIANCE MATRIX
+# ==========================================================
+
+def expected_covariance(
+        codes,
+        mode="normal"
+):
+    """
+    Returns regime-adjusted covariance matrix.
+    """
+
+    stats = get_market_stats()
+
+    if stats is None:
+
+        return None
+
+    cov = stats["cov"].copy()
+
+    available = [
+
+        c for c in codes
+
+        if c in cov.index
+
+    ]
+
+    cov = cov.loc[
+
+        available,
+
+        available
+
+    ]
+
+    regime = get_regime(mode)
+
+    cov *= regime["vol"]
+
+    cov += np.eye(len(cov)) * 1e-8
+
+    return cov.values   
+# ==========================================================
+# INSTITUTIONAL MARKET GENERATOR V13
+# Historical NSE Monte Carlo Engine
+# ==========================================================
+
+def generate_market(
+        mode,
+        assets,
+        drift=0.004,
+        vol=0.015,
+        momentum=0.75
+):
+    """
+    Generates a correlated Monte Carlo return matrix
+    using historical NSE statistics.
+    """
+
+    periods = 300
+
+    stats = get_market_stats()
+
+    # ------------------------------------------------------
+    # FALLBACK
+    # ------------------------------------------------------
+
+    if stats is None:
+
+        return np.random.normal(
+
+            drift,
+
+            vol,
+
+            (len(assets), periods)
+
+        )
+
+    # ------------------------------------------------------
+    # HISTORICAL DATA
+    # ------------------------------------------------------
+
+    mu = stats["mu"].copy()
+
+    sigma = stats["sigma"].copy()
+
+    cov = stats["cov"].copy()
+
+    codes = [
+
+        asset[1]
+
+        for asset in assets
+
+    ]
+
+    available = [
+
+        c for c in codes
+
+        if (
+
+            c in mu.index and
+
+            c in sigma.index and
+
+            c in cov.index
+
+        )
+
+    ]
+
+    # ------------------------------------------------------
+    # SAFETY
+    # ------------------------------------------------------
+
+    if len(available) < 2:
+
+        return np.random.normal(
+
+            drift,
+
+            vol,
+
+            (len(assets), periods)
+
+        )
+
+    mu = mu.loc[available]
+
+    sigma = sigma.loc[available]
+
+    cov = cov.loc[
+
+        available,
+
+        available
+
+    ]
+
+    # ------------------------------------------------------
+    # APPLY ECONOMIC REGIME
+    # ------------------------------------------------------
+
+    regime = get_regime(mode)
+
+    sector_mu = apply_sector_adjustment(
+
+        available,
+
+        mu.values,
+
+        mode
+
+    )
+
+    mu = (
+
+        sector_mu *
+
+        regime["drift"]
+
+    ) + regime["alpha"]
+
+    mu = np.clip(
+
+        mu,
+
+        -0.015,
+
+        0.015
+
+    )
+
+    sigma = sigma.values * np.sqrt(
+
+        regime["vol"]
+
+    )
+
+    cov = cov.values * regime["vol"]
+
+    cov += np.eye(len(cov)) * 1e-8
+
+    # ------------------------------------------------------
+    # POSITIVE DEFINITE MATRIX
+    # ------------------------------------------------------
+
+    try:
+
+        L = np.linalg.cholesky(cov)
+
+    except np.linalg.LinAlgError:
+
+        eigvals, eigvecs = np.linalg.eigh(cov)
+
+        eigvals[eigvals < 1e-8] = 1e-8
+
+        cov = (
+
+            eigvecs @
+
+            np.diag(eigvals) @
+
+            eigvecs.T
+
+        )
+
+        L = np.linalg.cholesky(cov)
+
+    # ------------------------------------------------------
+    # FAT-TAIL SHOCKS
+    # ------------------------------------------------------
+
+    shocks = np.random.standard_t(
+
+        df=6,
+
+        size=(len(mu), periods)
+
+    )
+
+    correlated = L @ shocks
+
+    # ------------------------------------------------------
+    # MOMENTUM
+    # ------------------------------------------------------
+
+    phi = np.clip(
+
+        momentum,
+
+        0.15,
+
+        0.95
+
+    )
+
+    trend = np.zeros_like(correlated)
+
+    for t in range(1, periods):
+
+        trend[:, t] = (
+
+            phi * trend[:, t-1]
+
+            +
+
+            correlated[:, t]
+
+        )
+
+    # ------------------------------------------------------
+    # FINAL RETURNS
+    # ------------------------------------------------------
+
+    R = mu[:, None] + trend
+
+    current_std = np.std(
+
+        R,
+
+        axis=1,
+
+        keepdims=True
+
+    )
+
+    current_std[current_std == 0] = 1e-8
+
+    target_std = sigma[:, None]
+
+    R *= target_std / current_std
+
+    # ------------------------------------------------------
+    # EXTREME EVENTS
+    # ------------------------------------------------------
+
+    probability = 0.015
+
+    disaster = np.random.rand(
+
+        len(mu),
+
+        periods
+
+    ) < probability
+
+    if mode == "bull":
+
+        disaster_returns = np.random.uniform(
+
+            -0.04,
+
+            -0.02,
+
+            disaster.shape
+
+        )
+
+    elif mode == "bear":
+
+        disaster_returns = np.random.uniform(
+
+            -0.12,
+
+            -0.05,
+
+            disaster.shape
+
+        )
+
+    else:
+
+        disaster_returns = np.random.uniform(
+
+            -0.08,
+
+            -0.03,
+
+            disaster.shape
+
+        )
+
+    R[disaster] += disaster_returns[disaster]
+
+    # ------------------------------------------------------
+    # SAFETY LIMITS
+    # ------------------------------------------------------
+
+    R = np.clip(
+
+        R,
+
+        -0.15,
+
+        0.18
+
+    )
+
+    # ------------------------------------------------------
+    # PAD IF NECESSARY
+    # ------------------------------------------------------
+
+    if len(available) < len(assets):
+
+        extra = np.random.normal(
+
+            drift,
+
+            vol,
+
+            (
+
+                len(assets) - len(available),
+
+                periods
+
+            )
+
+        )
+
+        R = np.vstack([
+
+            R,
+
+            extra
+
+        ])
+
+    return R[:len(assets)]
