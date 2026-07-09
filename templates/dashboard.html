@@ -1284,6 +1284,272 @@ Professional Analytics Suite
     <p>{{ ai.market_outlook }}</p>
 
 </div>
+<!-- ========================================================= -->
+<!-- PART 8 — RETIREMENT & WEALTH PLANNING -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+    <h2>🏦 Retirement & Wealth Planning</h2>
+
+    <table>
+
+        <tr>
+
+            <th>Planning Metric</th>
+
+            <th>Value</th>
+
+        </tr>
+
+        <tr>
+
+            <td>Target Retirement Portfolio</td>
+
+            <td>
+
+                KES {{ "{:,.2f}".format(retirement.target) }}
+
+            </td>
+
+        </tr>
+
+        <tr>
+
+            <td>Projected Portfolio Value</td>
+
+            <td>
+
+                KES {{ "{:,.2f}".format(retirement.portfolio) }}
+
+            </td>
+
+        </tr>
+
+        <tr>
+
+            <td>Target Achievement</td>
+
+            <td>
+
+                {{ "%.2f"|format(retirement.achievement) }}%
+
+            </td>
+
+        </tr>
+
+        <tr>
+
+            <td>Retirement Status</td>
+
+            <td>
+
+                {{ retirement.status }}
+
+            </td>
+
+        </tr>
+
+        <tr>
+
+            <td>Estimated Monthly Retirement Income</td>
+
+            <td>
+
+                KES {{ "{:,.2f}".format(retirement.monthly_income) }}
+
+            </td>
+
+        </tr>
+
+        <tr>
+
+            <td>Required Monthly Saving</td>
+
+            <td>
+
+                KES {{ "{:,.2f}".format(retirement.required_monthly) }}
+
+            </td>
+
+        </tr>
+
+    </table>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- RETIREMENT READINESS -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+    <h2>🎯 Retirement Readiness Assessment</h2>
+
+    <p>
+
+        Based on your current investment strategy,
+        your portfolio is projected to achieve
+
+        <b>
+
+            {{ "%.2f"|format(retirement.achievement) }}%
+
+        </b>
+
+        of your retirement target.
+
+    </p>
+
+    <br>
+
+    <p>
+
+        Current Status:
+
+        <b>{{ retirement.status }}</b>
+
+    </p>
+
+    <br>
+
+    <p>
+
+        Estimated sustainable monthly retirement income:
+
+    </p>
+
+    <h2>
+
+        KES {{ "{:,.2f}".format(retirement.monthly_income) }}
+
+    </h2>
+
+</div>
+<!-- ========================================================= -->
+<!-- PART 9 — CHARTS & INSTITUTIONAL VISUALIZATIONS -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+    <h2>📊 Portfolio Growth Chart</h2>
+
+    <!-- Portfolio Growth -->
+    <img 
+        src="data:image/png;base64,{{ chart }}" 
+        alt="Portfolio Growth Chart" 
+        class="chart" 
+    />
+
+</div>
+
+<!-- ========================================================= -->
+<!-- PART 9B — SECTOR ALLOCATION CHART (Optional) -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+    <h2>📊 Sector Allocation</h2>
+
+    <table>
+
+        <thead>
+
+            <tr>
+                <th>Sector</th>
+                <th>Allocation (%)</th>
+            </tr>
+
+        </thead>
+
+        <tbody>
+
+        {% for sector, allocation in ai.sector_allocation.items() %}
+
+            <tr>
+
+                <td>{{ sector }}</td>
+
+                <td>{{ "%.2f"|format(allocation) }}%</td>
+
+            </tr>
+
+        {% endfor %}
+
+        </tbody>
+
+    </table>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- PART 9C — CUMULATIVE VALUE CHART (Optional) -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+    <h2>📊 Cumulative Value Over Time</h2>
+
+    <!-- You could create a secondary chart for cumulative growth -->
+    <!-- If you prefer, add another <img> here or a different visualization -->
+
+    <p>Additional chart can be placed here if needed.</p>
+
+    <!-- Example placeholder if you have another chart -->
+    <!-- <img src="data:image/png;base64,{{ another_chart }}" alt="Cumulative Chart" class="chart"> -->
+
+</div>
+<!-- ========================================================= -->
+<!-- PART 10 — RESEARCH & MARKET INTELLIGENCE -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+    <h2>📊 Research & Market Intelligence</h2>
+
+    <!-- Market Overview -->
+    <h3>Market Overview</h3>
+    <p>{{ market_stats.overview }}</p>
+
+    <!-- Asset Performance Highlights -->
+    <h3>Asset Performance</h3>
+
+    <table>
+
+        <thead>
+            <tr>
+                <th>Asset</th>
+                <th>Category</th>
+                <th>Current Price</th>
+                <th>1-Year Return (%)</th>
+                <th>Dividend Yield (%)</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for asset in market_stats.assets %}
+                <tr>
+                    <td>{{ asset.name }}</td>
+                    <td>{{ asset.category }}</td>
+                    <td>KES {{ "{:,.2f}".format(asset.price) }}</td>
+                    <td>{{ "%.2f"|format(asset.one_year_return) }}%</td>
+                    <td>{{ "%.2f"|format(asset.dividend_yield) }}%</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+
+    </table>
+
+    <!-- Economic Indicators -->
+    <h3>Key Economic Indicators</h3>
+    <ul>
+        <li><b>Inflation Rate:</b> {{ market_stats.inflation_rate }}%</li>
+        <li><b>GDP Growth:</b> {{ market_stats.gdp_growth }}%</li>
+        <li><b>Interest Rates:</b> {{ market_stats.interest_rate }}%</li>
+    </ul>
+
+</div>
+    
 </div>
 
 <footer>
