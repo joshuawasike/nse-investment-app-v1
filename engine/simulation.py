@@ -69,6 +69,14 @@ from engine.analytics import (
 )
 
 # =========================================================
+# RISK ENGINE
+# =========================================================
+
+from engine.risk import (
+    portfolio_risk_report
+)
+
+# =========================================================
 # AI ENGINE
 # =========================================================
 
@@ -76,6 +84,21 @@ from engine.ai import (
     investment_advisor
 )
 
+# =========================================================
+# RETIREMENT ENGINE
+# =========================================================
+
+from engine.retirement import (
+    projection
+)
+
+# =========================================================
+# REPORTING ENGINE
+# =========================================================
+
+from engine.reports import (
+    chart
+)
 # =========================================================
 # MODEL CONFIGURATION
 # =========================================================
@@ -1188,6 +1211,17 @@ def simulate(
         history=curve
 
     )
+    # =====================================================
+    # RISK ANALYTICS
+    # =====================================================
+
+    risk = portfolio_risk_report(
+
+        returns=monthly_returns.tolist(),
+
+        values=curve
+
+    )
 
     # -----------------------------------------------------
     # UPDATE PORTFOLIO WITH TRUE CAGR
@@ -1215,6 +1249,19 @@ def simulate(
         mode=mode,
 
         model=model
+
+    )
+    # =====================================================
+    # RETIREMENT PROJECTION
+    # =====================================================
+
+    retirement = projection(
+
+        monthly=monthly,
+
+        years=years,
+
+        target=invested * 2
 
     )
 
@@ -1282,6 +1329,7 @@ def simulate(
     # =====================================================
     # RETURN RESULTS
     # =====================================================
+
     return {
 
         "summary": summary,
@@ -1296,8 +1344,10 @@ def simulate(
 
         "chart": portfolio_chart,
 
-        "ai": ai,
         "risk": risk,
-        "retirement": retirement,
+
+        "ai": ai,
+
+        "retirement": retirement
 
     }
