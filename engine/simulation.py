@@ -1268,58 +1268,26 @@ def simulate(
     # =====================================================
     # MONTHLY INVESTMENT PLAN
     # =====================================================
-    monthly_plan = []
 
-    monthly_allocation = monthly * weights
+    monthly_plan = build_investment_plan(
 
-    for i, asset in enumerate(assets):
+        assets=assets,
 
-        monthly_plan.append({
+        weights=weights,
 
-            "name": asset[0],
+        monthly=monthly
 
-            "code": asset[1],
-
-            "allocation_pct": round(
-                weights[i] * 100,
-                2
-            ),
-
-            "monthly_amount": round(
-                float(monthly_allocation[i]),
-                2
-            )
-
-        })
+    )
 
     # =====================================================
     # ASSET RETURNS TABLE
     # =====================================================
-    returns_table = []
 
-    for i, asset in enumerate(portfolio):
+    returns_table = build_returns_table(
 
-        returns_table.append({
+        portfolio=portfolio
 
-            "asset": asset["asset"],
-
-            "code": asset["code"],
-
-            "allocation": asset["allocation_pct"],
-
-            "capital": asset["capital"],
-
-            "current_value": asset["current_value"],
-
-            "capital_gain": asset["capital_gain"],
-
-            "dividends": asset["dividends"],
-
-            "total_return": asset["total_return"],
-
-            "annual_return": asset["annual_return"]
-
-        })
+    )
 
     # =====================================================
     # PERFORMANCE CHART
