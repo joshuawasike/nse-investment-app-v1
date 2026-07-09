@@ -1296,6 +1296,8 @@ def simulate(
 
         "chart": portfolio_chart,
 
-        "ai": ai
+        "ai": ai,
+        "risk": risk,
+        "retirement": retirement,
 
     }
