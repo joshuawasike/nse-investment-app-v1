@@ -114,3 +114,177 @@ def portfolio_summary(portfolio,invested,value,dividends,years,returns=None,hist
         "sector_allocation":sector_allocation(portfolio),
         "institutional_rating":institutional_rating(health)
     }
+# ==========================================================
+# COMPANY ANALYTICS ENGINE
+# ==========================================================
+
+def company_analytics(code, capital):
+    """
+    Generates institutional analytics for an individual company.
+    """
+
+    profiles = {
+
+        "SCOM": {
+            "yield": 6.8,
+            "growth": 8.5,
+            "health": 92,
+            "quality": 94,
+            "stability": 95,
+            "beta": 0.85,
+            "policy": "Stable",
+            "sector": "Telecommunications",
+            "roe": 31.5,
+            "pe": 14.2,
+            "pb": 3.8,
+            "credit": "AA",
+            "esg": 89
+        },
+
+        "EQTY": {
+            "yield": 7.4,
+            "growth": 11.2,
+            "health": 90,
+            "quality": 91,
+            "stability": 90,
+            "beta": 0.96,
+            "policy": "Progressive",
+            "sector": "Banking",
+            "roe": 24.8,
+            "pe": 7.6,
+            "pb": 1.4,
+            "credit": "AA",
+            "esg": 82
+        },
+
+        "KCB": {
+            "yield": 8.1,
+            "growth": 9.5,
+            "health": 88,
+            "quality": 89,
+            "stability": 88,
+            "beta": 1.02,
+            "policy": "Stable",
+            "sector": "Banking",
+            "roe": 21.9,
+            "pe": 6.8,
+            "pb": 1.2,
+            "credit": "AA-",
+            "esg": 81
+        },
+
+        "COOP": {
+            "yield": 9.3,
+            "growth": 8.8,
+            "health": 89,
+            "quality": 90,
+            "stability": 91,
+            "beta": 0.92,
+            "policy": "Stable",
+            "sector": "Banking",
+            "roe": 23.4,
+            "pe": 5.9,
+            "pb": 1.1,
+            "credit": "A+",
+            "esg": 79
+        },
+
+        "NCBA": {
+            "yield": 7.0,
+            "growth": 10.5,
+            "health": 87,
+            "quality": 88,
+            "stability": 87,
+            "beta": 1.01,
+            "policy": "Progressive",
+            "sector": "Banking",
+            "roe": 19.8,
+            "pe": 6.4,
+            "pb": 1.0,
+            "credit": "A+",
+            "esg": 78
+        },
+
+        "EABL": {
+            "yield": 5.6,
+            "growth": 9.8,
+            "health": 93,
+            "quality": 95,
+            "stability": 94,
+            "beta": 0.74,
+            "policy": "Stable",
+            "sector": "Consumer Goods",
+            "roe": 28.2,
+            "pe": 18.5,
+            "pb": 4.2,
+            "credit": "AAA",
+            "esg": 91
+        },
+
+        "KEGN": {
+            "yield": 6.2,
+            "growth": 5.9,
+            "health": 84,
+            "quality": 83,
+            "stability": 88,
+            "beta": 0.68,
+            "policy": "Stable",
+            "sector": "Energy",
+            "roe": 16.8,
+            "pe": 8.4,
+            "pb": 0.9,
+            "credit": "A",
+            "esg": 80
+        },
+
+        "KQ": {
+            "yield": 0.0,
+            "growth": 18.0,
+            "health": 60,
+            "quality": 65,
+            "stability": 55,
+            "beta": 1.55,
+            "policy": "No Dividend",
+            "sector": "Transport",
+            "roe": -4.8,
+            "pe": 0.0,
+            "pb": 0.4,
+            "credit": "B",
+            "esg": 61
+        }
+
+    }
+
+    data = profiles.get(code, {})
+
+    return {
+
+        "yield": data.get("yield", 5.0),
+
+        "growth": data.get("growth", 5.0),
+
+        "health": data.get("health", 75),
+
+        "quality": data.get("quality", 75),
+
+        "stability": data.get("stability", 75),
+
+        "income": round(capital * data.get("yield", 5.0) / 100, 2),
+
+        "beta": data.get("beta", 1.0),
+
+        "policy": data.get("policy", "Stable"),
+
+        "sector": data.get("sector", "Unknown"),
+
+        "roe": data.get("roe", 0),
+
+        "pe": data.get("pe", 0),
+
+        "pb": data.get("pb", 0),
+
+        "credit": data.get("credit", "NR"),
+
+        "esg": data.get("esg", 70)
+
+    }
