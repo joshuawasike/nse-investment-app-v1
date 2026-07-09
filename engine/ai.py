@@ -821,47 +821,47 @@ def investment_advisor(
         best_pick = None
 
     # ------------------------------------------------------
-# AI Output
-# ------------------------------------------------------
-return {
+    # AI Output
+    # ------------------------------------------------------
+    return {
 
-    "health": analysis.get("health", 0),
+        "health": analysis.get("health", 0),
 
-    "rating": analysis.get("rating", "N/A"),
+        "rating": analysis.get("rating", "N/A"),
 
-    "risk": analysis.get("risk", "UNKNOWN"),
+        "risk": analysis.get("risk", "UNKNOWN"),
 
-    "risk_score": analysis.get("risk_score", 0),
+        "risk_score": analysis.get("risk_score", 0),
 
-    "diversification": analysis.get("diversification", 0),
+        "diversification": analysis.get("diversification", 0),
 
-    "dividend_score": analysis.get("dividend_score", 0),
+        "dividend_score": analysis.get("dividend_score", 0),
 
-    "market_mode": mode.title(),
+        "market_mode": mode.title(),
 
-    "investment_model": model.title(),
+        "investment_model": model.title(),
 
-    "message": analysis.get("message", ""),
+        "message": analysis.get("message", ""),
 
-    "best_pick": best_pick,
+        "best_pick": best_pick,
 
-    "recommendations": recommendations,
+        "recommendations": recommendations,
 
-    "companies": len(portfolio),
+        "companies": len(portfolio),
 
-    "generated": "Institutional AI Engine V2",
+        "generated": "Institutional AI Engine V2",
 
-    "strengths": portfolio_strengths(portfolio),
+        "strengths": portfolio_strengths(portfolio),
 
-    "weaknesses": portfolio_weaknesses(portfolio),
+        "weaknesses": portfolio_weaknesses(portfolio),
 
-    "rebalance": rebalance_advice(portfolio),
+        "rebalance": rebalance_advice(portfolio),
 
-    "executive_summary": executive_summary(
+        "executive_summary": executive_summary(
         summary,
         analysis
-    ),
+        ),
 
-    "market_outlook": outlook
+        "market_outlook": outlook
 
-}
+    }
