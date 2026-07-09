@@ -659,7 +659,6 @@ def run_simulation():
         # --------------------------------------------------
         # PART 4D — DISPLAY RESULTS
         # --------------------------------------------------
-
         return render_template(
 
             "dashboard.html",
@@ -690,4 +689,15 @@ def run_simulation():
 
             target=target
 
+        )
+
+    except Exception as e:
+
+        flash(
+            str(e),
+            "danger"
+        )
+
+        return redirect(
+            url_for("dashboard")
         )
