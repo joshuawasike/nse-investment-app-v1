@@ -244,57 +244,141 @@ KES 18,000/year
 
 <!-- ================= FORM ================= -->
 <div class="card">
+
 <h3>🧾 Investment Input Terminal</h3>
 
-<form method="POST" class="form-box">
+<form
+    action="{{ url_for('run_simulation') }}"
+    method="POST"
+    class="form-box">
 
-<!-- ================= MODELS ================= -->
-<h3 style="margin-bottom:10px;">🧠 Investment Models</h3>
+    <!-- ================= MODELS ================= -->
 
-<div class="model-grid">
+    <h3 style="margin-bottom:10px;">
+        🧠 Investment Models
+    </h3>
 
-    <label class="model-card model1">
-        <input type="radio" name="model" value="dividend" checked>
-        <b>Model 1</b><br>
-        Dividend Blue Chip
-    </label>
+    <div class="model-grid">
 
-    <label class="model-card model2">
-        <input type="radio" name="model" value="growth">
-        <b>Model 2</b><br>
-        Aggressive Growth
-    </label>
+        <label class="model-card model1">
+            <input
+                type="radio"
+                name="model"
+                value="dividend"
+                checked>
+            <b>Model 1</b><br>
+            Dividend Blue Chip
+        </label>
 
-    <label class="model-card model3">
-        <input type="radio" name="model" value="banking">
-        <b>Model 3</b><br>
-        Banking Dominance
-    </label>
+        <label class="model-card model2">
+            <input
+                type="radio"
+                name="model"
+                value="growth">
+            <b>Model 2</b><br>
+            Aggressive Growth
+        </label>
 
-    <label class="model-card model4">
-        <input type="radio" name="model" value="value">
-        <b>Model 4</b><br>
-        Value Investing
-    </label>
+        <label class="model-card model3">
+            <input
+                type="radio"
+                name="model"
+                value="banking">
+            <b>Model 3</b><br>
+            Banking Dominance
+        </label>
 
-    <label class="model-card model5">
-        <input type="radio" name="model" value="income">
-        <b>Model 5</b><br>
-        High Dividend Income
-    </label>
+        <label class="model-card model4">
+            <input
+                type="radio"
+                name="model"
+                value="value">
+            <b>Model 4</b><br>
+            Value Investing
+        </label>
 
-</div>
+        <label class="model-card model5">
+            <input
+                type="radio"
+                name="model"
+                value="income">
+            <b>Model 5</b><br>
+            High Dividend Income
+        </label>
 
-<!-- ================= INPUTS ================= -->
-<input type="number" name="target_amount" placeholder="Target Amount (KES)">
-<input name="monthly" placeholder="Monthly Investment (KES)" required>
-<input name="years" placeholder="Years" required>
-<input name="transaction_code" placeholder="Transaction Code" required>
-<input name="phone" placeholder="Phone" required>
+    </div>
 
-<button type="submit">🚀 Run Engine</button>
+    <br>
+
+    <!-- ================= MARKET SCENARIO ================= -->
+
+    <h3 style="margin-bottom:10px;">
+        📈 Market Scenario
+    </h3>
+
+    <select
+        name="mode"
+        required>
+
+        <option value="normal" selected>
+            Normal Market
+        </option>
+
+        <option value="bull">
+            Bull Market
+        </option>
+
+        <option value="bear">
+            Bear Market
+        </option>
+
+    </select>
+
+    <br><br>
+
+    <!-- ================= INPUTS ================= -->
+
+    <input
+        type="number"
+        name="target_amount"
+        placeholder="Target Amount (KES)"
+        required>
+
+    <input
+        type="number"
+        name="monthly"
+        placeholder="Monthly Investment (KES)"
+        required>
+
+    <input
+        type="number"
+        name="years"
+        placeholder="Investment Period (Years)"
+        required>
+
+    <input
+        type="text"
+        name="transaction_code"
+        placeholder="Transaction Code"
+        required>
+
+    <input
+        type="tel"
+        name="phone"
+        placeholder="Phone Number"
+        required>
+
+    <br><br>
+
+    <button type="submit">
+
+        🚀 Run Institutional Wealth Engine
+
+    </button>
 
 </form>
+
+</div>
 {% if goal_result %}
 <div class="card">
 <h3>🎯 Goal Advisory</h3>
