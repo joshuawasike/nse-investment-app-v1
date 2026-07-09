@@ -174,3 +174,290 @@ APP_INFO = {
         "2026"
 
 }
+# ==========================================================
+# HELPER FUNCTIONS
+# ==========================================================
+
+def load_json(filename):
+    """
+    Loads a JSON file safely.
+    """
+
+    if not os.path.exists(filename):
+        return {}
+
+    with open(filename, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def save_json(filename, data):
+    """
+    Saves data to a JSON file.
+    """
+
+    with open(filename, "w", encoding="utf-8") as f:
+        json.dump(
+            data,
+            f,
+            indent=4
+        )
+
+
+def money(value):
+    """
+    Currency formatting.
+    """
+
+    return f"KES {value:,.2f}"
+
+
+def percent(value):
+    """
+    Percentage formatting.
+    """
+
+    return f"{value:.2f}%"
+
+
+def today():
+
+    return datetime.now().strftime(
+        "%d %B %Y"
+    )
+
+
+# ==========================================================
+# MEMBERSHIP
+# ==========================================================
+
+def membership_price(plan):
+
+    plans = {
+
+        "individual_monthly":
+            INDIVIDUAL_MONTHLY,
+
+        "individual_yearly":
+            INDIVIDUAL_YEARLY,
+
+        "institution_monthly":
+            INSTITUTION_MONTHLY,
+
+        "institution_yearly":
+            INSTITUTION_YEARLY
+
+    }
+
+    return plans.get(plan, 0)
+
+
+def load_users():
+
+    return load_json(
+        USER_DATABASE
+    )
+
+
+def save_users(users):
+
+    save_json(
+        USER_DATABASE,
+        users
+    )
+
+
+# ==========================================================
+# AUTHENTICATION
+# ==========================================================
+
+def authenticate(username, password):
+    """
+    Simple authentication.
+
+    Can later be replaced with
+    a database authentication system.
+    """
+
+    users = load_users()
+
+    if username not in users:
+        return False
+
+    return users[username]["password"] == password
+
+
+def current_user():
+
+    return session.get("username")
+
+
+def logged_in():
+
+    return current_user() is not None
+
+
+def logout_user():
+
+    session.clear()
+
+
+def login_user(username):
+
+    session["username"] = username
+# ==========================================================
+# HOME
+# ==========================================================
+
+@app.route("/")
+def home():
+    """
+    Landing page.
+    """
+    return render_template(
+        "index.html",
+        app=APP_INFO
+    )
+
+
+# ==========================================================
+# LOGIN
+# ==========================================================
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+
+    if request.method == "POST":
+
+        username = request.form.get(
+            "username",
+            ""
+        ).strip()
+
+        password = request.form.get(
+            "password",
+            ""
+        )
+
+        if authenticate(username, password):
+
+            login_user(username)
+
+            flash(
+                "Login successful.",
+                "success"
+            )
+
+            return redirect(
+                url_for("dashboard")
+            )
+
+        flash(
+            "Invalid username or password.",
+            "danger"
+        )
+
+    return render_template(
+        "login.html",
+        app=APP_INFO
+    )
+
+
+# ==========================================================
+# LOGOUT
+# ==========================================================
+
+@app.route("/logout")
+def logout():
+
+    logout_user()
+
+    flash(
+        "You have been logged out.",
+        "info"
+    )
+
+    return redirect(
+        url_for("home")
+    )
+
+
+# ==========================================================
+# DASHBOARD
+# ==========================================================
+
+@app.route("/dashboard")
+def dashboard():
+
+    if not logged_in():
+
+        return redirect(
+            url_for("login")
+        )
+
+    return render_template(
+
+        "dashboard.html",
+
+        app=APP_INFO,
+
+        user=current_user()
+
+    )
+
+
+# ==========================================================
+# MEMBERSHIP
+# ==========================================================
+
+@app.route("/membership")
+def membership():
+
+    plans = {
+
+        "Individual Monthly":
+            membership_price(
+                "individual_monthly"
+            ),
+
+        "Individual Yearly":
+            membership_price(
+                "individual_yearly"
+            ),
+
+        "Institution Monthly":
+            membership_price(
+                "institution_monthly"
+            ),
+
+        "Institution Yearly":
+            membership_price(
+                "institution_yearly"
+            )
+
+    }
+
+    return render_template(
+
+        "membership.html",
+
+        plans=plans,
+
+        app=APP_INFO
+
+    )
+
+
+# ==========================================================
+# ABOUT
+# ==========================================================
+
+@app.route("/about")
+def about():
+
+    return render_template(
+
+        "about.html",
+
+        app=APP_INFO
+
+    )
