@@ -1080,6 +1080,210 @@ Professional Analytics Suite
     </table>
 
 </div>
+<!-- ========================================================= -->
+<!-- PART 7 — AI INVESTMENT ADVISOR -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+    <h2>🤖 Institutional AI Investment Advisor</h2>
+
+    <table>
+
+        <tr>
+            <th>AI Metric</th>
+            <th>Value</th>
+        </tr>
+
+        <tr>
+            <td>Portfolio Health</td>
+            <td>{{ ai.health }}</td>
+        </tr>
+
+        <tr>
+            <td>Institutional Rating</td>
+            <td>{{ ai.rating }}</td>
+        </tr>
+
+        <tr>
+            <td>Overall Risk</td>
+            <td>{{ ai.risk }}</td>
+        </tr>
+
+        <tr>
+            <td>Risk Score</td>
+            <td>{{ ai.risk_score }}</td>
+        </tr>
+
+        <tr>
+            <td>Diversification Score</td>
+            <td>{{ ai.diversification }}</td>
+        </tr>
+
+        <tr>
+            <td>Dividend Score</td>
+            <td>{{ ai.dividend_score }}</td>
+        </tr>
+
+        <tr>
+            <td>Market Mode</td>
+            <td>{{ ai.market_mode }}</td>
+        </tr>
+
+        <tr>
+            <td>Investment Model</td>
+            <td>{{ ai.investment_model }}</td>
+        </tr>
+
+        <tr>
+            <td>Total Companies</td>
+            <td>{{ ai.companies }}</td>
+        </tr>
+
+        <tr>
+            <td>AI Engine</td>
+            <td>{{ ai.generated }}</td>
+        </tr>
+
+    </table>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- EXECUTIVE AI COMMENTARY -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+    <h2>📝 Executive AI Commentary</h2>
+
+    <p>{{ ai.message }}</p>
+
+    <br>
+
+    <p>
+
+        <b>Executive Summary</b>
+
+    </p>
+
+    <p>
+
+        {{ ai.executive_summary }}
+
+    </p>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- BEST INVESTMENT OPPORTUNITY -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+    <h2>⭐ Highest Conviction Investment</h2>
+
+    {% if ai.best_pick %}
+
+    <table>
+
+        <tr>
+
+            <th>Item</th>
+
+            <th>Value</th>
+
+        </tr>
+
+        <tr>
+
+            <td>Company</td>
+
+            <td>{{ ai.best_pick.asset }}</td>
+
+        </tr>
+
+        <tr>
+
+            <td>Code</td>
+
+            <td>{{ ai.best_pick.code }}</td>
+
+        </tr>
+
+        <tr>
+
+            <td>Sector</td>
+
+            <td>{{ ai.best_pick.sector }}</td>
+
+        </tr>
+
+        <tr>
+
+            <td>Recommendation</td>
+
+            <td>{{ ai.best_pick.recommendation }}</td>
+
+        </tr>
+
+        <tr>
+
+            <td>Confidence</td>
+
+            <td>{{ ai.best_pick.confidence }}%</td>
+
+        </tr>
+
+        <tr>
+
+            <td>Dividend Yield</td>
+
+            <td>{{ ai.best_pick.dividend_yield }}%</td>
+
+        </tr>
+
+    </table>
+
+    {% else %}
+
+    <p>No recommendation available.</p>
+
+    {% endif %}
+
+</div>
+
+<!-- ========================================================= -->
+<!-- PORTFOLIO IMPROVEMENT -->
+<!-- ========================================================= -->
+
+<div class="card">
+
+    <h2>📈 Portfolio Improvement Suggestions</h2>
+
+    <p><b>Strengths</b></p>
+
+    <p>{{ ai.strengths }}</p>
+
+    <br>
+
+    <p><b>Weaknesses</b></p>
+
+    <p>{{ ai.weaknesses }}</p>
+
+    <br>
+
+    <p><b>Rebalancing Advice</b></p>
+
+    <p>{{ ai.rebalance }}</p>
+
+    <br>
+
+    <p><b>Market Outlook</b></p>
+
+    <p>{{ ai.market_outlook }}</p>
+
+</div>
 </div>
 
 <footer>
