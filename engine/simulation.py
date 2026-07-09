@@ -1255,14 +1255,10 @@ def simulate(
     # RETIREMENT PROJECTION
     # =====================================================
 
-    retirement = projection(
-
+    retirement = retirement_projection(
         monthly=monthly,
-
         years=years,
-
         target=invested * 2
-
     )
 
     # =====================================================
