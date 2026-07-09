@@ -315,7 +315,7 @@ def home():
     Landing page.
     """
     return render_template(
-        "index.html",
+        "investment_terminal.html",
         app=APP_INFO
     )
 
