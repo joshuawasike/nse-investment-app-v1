@@ -586,30 +586,107 @@ def run_simulation():
             )
 
         # --------------------------------------------------
-        # Extract simulation data
+        # Extract simulation results
         # --------------------------------------------------
 
-        curve = simulation.get("curve", [])
-
-        assets = simulation.get("assets", [])
-
-        capital = simulation.get("capital", [])
-
-        dividends = simulation.get("dividends", [])
-
-        weights = simulation.get("weights", [])
-
-        invested = simulation.get(
-            "invested",
-            monthly * years * 12
+        summary = simulation.get(
+            "summary",
+            {}
         )
 
-        annual_return = simulation.get(
-            "annual_return",
-            0
+        portfolio = simulation.get(
+            "portfolio",
+            []
+        )
+
+        plan = simulation.get(
+            "plan",
+            []
         )
 
         returns = simulation.get(
             "returns",
             []
+        )
+
+        curve = simulation.get(
+            "curve",
+            []
+        )
+
+        chart = simulation.get(
+            "chart",
+            ""
+        )
+
+        ai = simulation.get(
+            "ai",
+            {}
+        )
+        # --------------------------------------------------
+        # PART 4C — PREPARE RESULTS
+        # --------------------------------------------------
+
+        report = {
+
+            "summary": summary,
+
+            "portfolio": portfolio,
+
+            "plan": plan,
+
+            "returns": returns,
+
+            "curve": curve,
+
+            "chart": chart,
+
+            "ai": ai,
+
+            "mode": mode,
+
+            "model": model,
+
+            "monthly": monthly,
+
+            "years": years,
+
+            "target": target
+
+        }
+
+        # --------------------------------------------------
+        # PART 4D — DISPLAY RESULTS
+        # --------------------------------------------------
+
+        return render_template(
+
+            "dashboard.html",
+
+            report=report,
+
+            summary=summary,
+
+            portfolio=portfolio,
+
+            plan=plan,
+
+            returns=returns,
+
+            curve=curve,
+
+            chart=chart,
+
+            ai=ai,
+
+            mode=mode,
+
+            model=model,
+
+            monthly=monthly,
+
+            years=years,
+
+            target=target
+
         )
