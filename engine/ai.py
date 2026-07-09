@@ -594,28 +594,28 @@ def market_outlook(mode, model, portfolio):
             "moderate return expectations."
         )
     
-# ==========================================================
-# EXECUTIVE SUMMARY
-# ==========================================================
-def executive_summary(summary, analysis):
-        """
-        Generates an executive summary for the portfolio.
-        """
+    # ==========================================================
+    # EXECUTIVE SUMMARY
+    # ==========================================================
+    def executive_summary(summary, analysis):
+            """
+            Generates an executive summary for the portfolio.
+            """
 
-        rating = analysis.get("rating", "N/A")
+            rating = analysis.get("rating", "N/A")
 
-        roi = summary.get("roi", 0)
+            roi = summary.get("roi", 0)
 
-        health = analysis.get("health", 0)
+            health = analysis.get("health", 0)
 
-        return (
-            f"The portfolio achieved an ROI of {roi:.2f}% "
-            f"with an institutional rating of {rating}. "
-            f"Overall portfolio health stands at "
-            f"{health:.1f}/100, indicating "
-            f"{analysis.get('risk', 'balanced').lower()} "
-            f"investment characteristics."
-        )
+            return (
+                f"The portfolio achieved an ROI of {roi:.2f}% "
+                f"with an institutional rating of {rating}. "
+                f"Overall portfolio health stands at "
+                f"{health:.1f}/100, indicating "
+                f"{analysis.get('risk', 'balanced').lower()} "
+                f"investment characteristics."
+     )
     
     # ------------------------------------------------------
     # Interest Rates
