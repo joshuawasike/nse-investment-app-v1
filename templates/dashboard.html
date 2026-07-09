@@ -1,419 +1,1185 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
 
-{% block title %}
-JOBURA WEALTH® | Executive Dashboard
-{% endblock %}
+<head>
 
-{% block content %}
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0">
+
+<title>
+JOBURA WEALTH® | NSE Institutional Wealth Management Platform
+</title>
+
+<!-- Google Font -->
+
+<link
+href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+rel="stylesheet">
+
+<style>
+
+*{
+
+    margin:0;
+
+    padding:0;
+
+    box-sizing:border-box;
+
+    font-family:'Inter',sans-serif;
+
+}
+
+body{
+
+    background:#071321;
+
+    color:#ecf2ff;
+
+}
+
+/* ==========================================
+   HEADER
+========================================== */
+
+header{
+
+    background:#0d1b2a;
+
+    padding:22px 40px;
+
+    border-bottom:2px solid #1f3d63;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+}
+
+.logo{
+
+    font-size:30px;
+
+    font-weight:800;
+
+    color:#6ec1ff;
+
+}
+
+.subtitle{
+
+    font-size:14px;
+
+    color:#b8c8d9;
+
+}
+
+/* ==========================================
+   MAIN LAYOUT
+========================================== */
+
+.wrapper{
+
+    display:grid;
+
+    grid-template-columns:340px 1fr;
+
+    gap:25px;
+
+    padding:25px;
+
+}
+
+/* ==========================================
+   SIDEBAR
+========================================== */
+
+.sidebar{
+
+    background:#0d1b2a;
+
+    border-radius:12px;
+
+    padding:25px;
+
+    box-shadow:0 0 18px rgba(0,0,0,.35);
+
+}
+
+/* ==========================================
+   MAIN CONTENT
+========================================== */
+
+.content{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:25px;
+
+}
+
+/* ==========================================
+   PROFESSIONAL CARD
+========================================== */
+
+.card{
+
+    background:#10233b;
+
+    border-radius:12px;
+
+    padding:25px;
+
+    box-shadow:0 0 20px rgba(0,0,0,.30);
+
+}
+
+/* ==========================================
+   TITLES
+========================================== */
+
+h1{
+
+    font-size:32px;
+
+    font-weight:800;
+
+}
+
+h2{
+
+    font-size:24px;
+
+    margin-bottom:15px;
+
+}
+
+h3{
+
+    margin-bottom:15px;
+
+    color:#7fc8ff;
+
+}
+
+/* ==========================================
+   FORM
+========================================== */
+
+.form-box{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:14px;
+
+}
+
+input,
+select{
+
+    width:100%;
+
+    padding:13px;
+
+    border:none;
+
+    border-radius:8px;
+
+    background:#1b3554;
+
+    color:white;
+
+}
+
+button{
+
+    background:#1d9bf0;
+
+    color:white;
+
+    border:none;
+
+    padding:14px;
+
+    border-radius:8px;
+
+    cursor:pointer;
+
+    font-size:16px;
+
+    font-weight:700;
+
+}
+
+button:hover{
+
+    background:#1383d3;
+
+}
+
+/* ==========================================
+   TABLES
+========================================== */
+
+table{
+
+    width:100%;
+
+    border-collapse:collapse;
+
+}
+
+th{
+
+    background:#17385d;
+
+    padding:12px;
+
+    text-align:left;
+
+}
+
+td{
+
+    padding:12px;
+
+    border-bottom:1px solid #294a72;
+
+}
+
+/* ==========================================
+   SUMMARY GRID
+========================================== */
+
+.summary-grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+
+    gap:18px;
+
+}
+
+.metric{
+
+    background:#17385d;
+
+    border-radius:10px;
+
+    padding:20px;
+
+}
+
+.metric-title{
+
+    color:#b8c8d9;
+
+    font-size:14px;
+
+}
+
+.metric-value{
+
+    font-size:28px;
+
+    font-weight:700;
+
+    margin-top:10px;
+
+}
+
+/* ==========================================
+   IMAGE CHART
+========================================== */
+
+.chart{
+
+    width:100%;
+
+    border-radius:10px;
+
+}
+
+/* ==========================================
+   FOOTER
+========================================== */
+
+footer{
+
+    margin-top:40px;
+
+    padding:20px;
+
+    text-align:center;
+
+    color:#8aa2bb;
+
+    font-size:13px;
+
+}
+
+/* ==========================================
+   RESPONSIVE
+========================================== */
+
+@media(max-width:1000px){
+
+.wrapper{
+
+    grid-template-columns:1fr;
+
+}
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<header>
+
+<div>
+
+<div class="logo">
+
+JOBURA WEALTH®
+
+</div>
+
+<div class="subtitle">
+
+NSE Institutional Wealth Management Platform
+
+</div>
+
+</div>
+
+<div>
+
+Professional Analytics Suite
+
+</div>
+
+</header>
+
+<div class="wrapper">
 
 <!-- ========================================================= -->
-<!-- PAGE HEADER -->
+<!-- LEFT SIDEBAR -->
 <!-- ========================================================= -->
 
-<div class="card">
+<div class="sidebar">
 
-    <h2>📊 Executive Dashboard</h2>
+    <!-- ====================================== -->
+    <!-- INVESTMENT TERMINAL -->
+    <!-- ====================================== -->
 
-    <p>
+    <div class="card">
 
-        Welcome to <b>JOBURA WEALTH®</b>
+        <h2>🧾 Investment Terminal</h2>
 
-        <br><br>
+        <form
+            action="{{ url_for('run_simulation') }}"
+            method="POST"
+            class="form-box">
 
-        NSE Institutional Wealth Management Platform
+            <!-- Investment Model -->
+
+            <label><b>Investment Model</b></label>
+
+            <select name="model">
+
+                <option value="dividend" selected>
+                    Dividend Blue Chip
+                </option>
+
+                <option value="growth">
+                    Aggressive Growth
+                </option>
+
+                <option value="banking">
+                    Banking Dominance
+                </option>
+
+                <option value="value">
+                    Value Investing
+                </option>
+
+                <option value="income">
+                    High Dividend Income
+                </option>
+
+            </select>
+
+            <!-- Market Scenario -->
+
+            <label><b>Market Scenario</b></label>
+
+            <select name="mode">
+
+                <option value="normal" selected>
+                    Normal Market
+                </option>
+
+                <option value="bull">
+                    Bull Market
+                </option>
+
+                <option value="bear">
+                    Bear Market
+                </option>
+
+            </select>
+
+            <!-- Monthly Investment -->
+
+            <label><b>Monthly Investment (KES)</b></label>
+
+            <input
+                type="number"
+                name="monthly"
+                placeholder="10000"
+                required>
+
+            <!-- Years -->
+
+            <label><b>Investment Period (Years)</b></label>
+
+            <input
+                type="number"
+                name="years"
+                placeholder="10"
+                required>
+
+            <!-- Target -->
+
+            <label><b>Target Portfolio (KES)</b></label>
+
+            <input
+                type="number"
+                name="target_amount"
+                placeholder="10000000">
+
+            <button type="submit">
+
+                🚀 Run Institutional Engine
+
+            </button>
+
+        </form>
+
+    </div>
+
+    <br>
+
+    <!-- ====================================== -->
+    <!-- USER GUIDE -->
+    <!-- ====================================== -->
+
+    <div class="card">
+
+        <h3>📘 Quick Guide</h3>
+
+        <p>
+
+            ✔ Select an investment model.
+
+        </p>
 
         <br>
 
-        Professional Analytics Suite
+        <p>
 
-    </p>
+            ✔ Choose the expected market scenario.
+
+        </p>
+
+        <br>
+
+        <p>
+
+            ✔ Enter your monthly investment.
+
+        </p>
+
+        <br>
+
+        <p>
+
+            ✔ Choose the investment period.
+
+        </p>
+
+        <br>
+
+        <p>
+
+            ✔ Set your financial target.
+
+        </p>
+
+        <br>
+
+        <p>
+
+            ✔ Click <b>Run Institutional Engine</b>.
+
+        </p>
+
+    </div>
+
+    <br>
+
+    <!-- ====================================== -->
+    <!-- MEMBERSHIP -->
+    <!-- ====================================== -->
+
+    <div class="card">
+
+        <h3>👤 Membership</h3>
+
+        <table>
+
+            <tr>
+
+                <th>Plan</th>
+
+                <th>Access</th>
+
+            </tr>
+
+            <tr>
+
+                <td>Free</td>
+
+                <td>Normal Market</td>
+
+            </tr>
+
+            <tr>
+
+                <td>Premium</td>
+
+                <td>All Models + AI</td>
+
+            </tr>
+
+            <tr>
+
+                <td>Institutional</td>
+
+                <td>Complete Analytics Suite</td>
+
+            </tr>
+
+        </table>
+
+    </div>
+
+    <br>
+
+    <!-- ====================================== -->
+    <!-- PAYMENT -->
+    <!-- ====================================== -->
+
+    <div class="card">
+
+        <h3>💳 Subscription</h3>
+
+        <p>
+
+            <b>Business Name</b><br>
+
+            Jobura Solutions
+
+        </p>
+
+        <br>
+
+        <p>
+
+            <b>PayBill</b><br>
+
+            542542
+
+        </p>
+
+        <br>
+
+        <p>
+
+            <b>Account</b><br>
+
+            31909
+
+        </p>
+
+        <hr style="margin:20px 0;">
+
+        <table>
+
+            <tr>
+
+                <th>Package</th>
+
+                <th>Price</th>
+
+            </tr>
+
+            <tr>
+
+                <td>Individual</td>
+
+                <td>KES 400 / Month</td>
+
+            </tr>
+
+            <tr>
+
+                <td>Individual Annual</td>
+
+                <td>KES 4,000 / Year</td>
+
+            </tr>
+
+            <tr>
+
+                <td>Institutional</td>
+
+                <td>KES 2,000 / Month</td>
+
+            </tr>
+
+            <tr>
+
+                <td>Institutional Annual</td>
+
+                <td>KES 18,000 / Year</td>
+
+            </tr>
+
+        </table>
+
+    </div>
 
 </div>
-
 <!-- ========================================================= -->
-<!-- EXECUTIVE KPI CARDS -->
+<!-- MAIN CONTENT -->
+<!-- PART 3 — EXECUTIVE SUMMARY -->
 <!-- ========================================================= -->
 
-<div class="kpi-grid">
+<div class="content">
 
-    <div class="kpi-card">
+    <!-- ===================================== -->
+    <!-- PAGE HEADER -->
+    <!-- ===================================== -->
 
-        <div class="kpi-title">
-            Portfolio Health
-        </div>
+    <div class="card">
 
-        <div class="kpi-value">
-            94%
+        <h1>📊 Institutional Portfolio Dashboard</h1>
+
+        <br>
+
+        <table>
+
+            <tr>
+                <td><b>Market Scenario</b></td>
+                <td>{{ mode|title }}</td>
+
+                <td><b>Investment Model</b></td>
+                <td>{{ model|title }}</td>
+            </tr>
+
+            <tr>
+                <td><b>Monthly Investment</b></td>
+                <td>KES {{ "{:,.2f}".format(monthly) }}</td>
+
+                <td><b>Investment Period</b></td>
+                <td>{{ years }} Years</td>
+            </tr>
+
+            <tr>
+                <td><b>Target Portfolio</b></td>
+                <td>KES {{ "{:,.2f}".format(target) }}</td>
+
+                <td><b>Total Companies</b></td>
+                <td>{{ portfolio|length }}</td>
+            </tr>
+
+        </table>
+
+    </div>
+
+    <!-- ===================================== -->
+    <!-- EXECUTIVE SUMMARY -->
+    <!-- ===================================== -->
+
+    <div class="card">
+
+        <h2>Executive Summary</h2>
+
+        <div class="summary-grid">
+
+            <div class="metric">
+                <div class="metric-title">Capital Invested</div>
+                <div class="metric-value">
+                    KES {{ "{:,.2f}".format(summary.invested) }}
+                </div>
+            </div>
+
+            <div class="metric">
+                <div class="metric-title">Portfolio Value</div>
+                <div class="metric-value">
+                    KES {{ "{:,.2f}".format(summary.value) }}
+                </div>
+            </div>
+
+            <div class="metric">
+                <div class="metric-title">Capital Gain</div>
+                <div class="metric-value">
+                    KES {{ "{:,.2f}".format(summary.profit) }}
+                </div>
+            </div>
+
+            <div class="metric">
+                <div class="metric-title">Dividend Income</div>
+                <div class="metric-value">
+                    KES {{ "{:,.2f}".format(summary.dividends) }}
+                </div>
+            </div>
+
+            <div class="metric">
+                <div class="metric-title">Total Return</div>
+                <div class="metric-value">
+                    KES {{ "{:,.2f}".format(summary.total_return) }}
+                </div>
+            </div>
+
+            <div class="metric">
+                <div class="metric-title">ROI</div>
+                <div class="metric-value">
+                    {{ "%.2f"|format(summary.roi) }}%
+                </div>
+            </div>
+
+            <div class="metric">
+                <div class="metric-title">CAGR</div>
+                <div class="metric-value">
+                    {{ "%.2f"|format(summary.cagr) }}%
+                </div>
+            </div>
+
+            <div class="metric">
+                <div class="metric-title">Estimated Annual Dividend</div>
+                <div class="metric-value">
+                    KES {{ "{:,.2f}".format(summary.dividends / years) }}
+                </div>
+            </div>
+
         </div>
 
     </div>
 
-    <div class="kpi-card">
+    <!-- ===================================== -->
+    <!-- PORTFOLIO SNAPSHOT -->
+    <!-- ===================================== -->
 
-        <div class="kpi-title">
-            Market Status
-        </div>
+    <div class="card">
 
-        <div class="kpi-value"
-             id="market-status">
+        <h2>Portfolio Snapshot</h2>
 
-            Loading...
+        <table>
 
-        </div>
+            <tr>
+                <th>Metric</th>
+                <th>Value</th>
+            </tr>
+
+            <tr>
+                <td>Market Scenario</td>
+                <td>{{ mode|title }}</td>
+            </tr>
+
+            <tr>
+                <td>Investment Model</td>
+                <td>{{ model|title }}</td>
+            </tr>
+
+            <tr>
+                <td>Monthly Investment</td>
+                <td>KES {{ "{:,.2f}".format(monthly) }}</td>
+            </tr>
+
+            <tr>
+                <td>Target Portfolio</td>
+                <td>KES {{ "{:,.2f}".format(target) }}</td>
+            </tr>
+
+            <tr>
+                <td>Total Companies</td>
+                <td>{{ portfolio|length }}</td>
+            </tr>
+
+        </table>
 
     </div>
 
-    <div class="kpi-card">
-
-        <div class="kpi-title">
-            Institutional Rating
-        </div>
-
-        <div class="kpi-value">
-
-            AA+
-
-        </div>
-
-    </div>
-
-    <div class="kpi-card">
-
-        <div class="kpi-title">
-            Live Clock
-        </div>
-
-        <div class="kpi-value"
-             id="live-clock">
-
-            --
-
-        </div>
-
-    </div>
-
-</div>
-
 <!-- ========================================================= -->
-<!-- INVESTMENT TERMINAL -->
+<!-- PART 4 — PORTFOLIO ALLOCATION -->
 <!-- ========================================================= -->
 
 <div class="card">
 
-<h2>Investment Terminal</h2>
+    <h2>📈 Portfolio Allocation</h2>
 
-<form method="POST">
+    <table>
 
-<label>
+        <thead>
 
-Monthly Investment
+            <tr>
 
-</label>
+                <th>#</th>
 
-<input
-type="number"
-name="monthly"
-required>
+                <th>Company</th>
 
-<label>
+                <th>Code</th>
 
-Investment Years
+                <th>Allocation (%)</th>
 
-</label>
+                <th>Monthly Investment</th>
 
-<input
-type="number"
-name="years"
-required>
+            </tr>
 
-<button>
+        </thead>
 
-Run Institutional Simulation
+        <tbody>
 
-</button>
+        {% for asset in plan %}
 
-</form>
+            <tr>
 
+                <td>{{ loop.index }}</td>
+
+                <td>{{ asset.name }}</td>
+
+                <td>{{ asset.code }}</td>
+
+                <td>{{ "%.2f"|format(asset.allocation_pct) }}%</td>
+
+                <td>
+                    KES {{ "{:,.2f}".format(asset.monthly_amount) }}
+                </td>
+
+            </tr>
+
+        {% endfor %}
+
+        </tbody>
+
+    </table>
 </div>
-
 <!-- ========================================================= -->
-<!-- PORTFOLIO ALLOCATION -->
+<!-- PART 5 — COMPANY PERFORMANCE -->
 <!-- ========================================================= -->
-
-{% if portfolio %}
 
 <div class="card">
 
-<h2>
+    <h2>📊 Company Performance</h2>
 
-Strategic Portfolio Allocation
+    <table>
 
-</h2>
+        <thead>
 
-{% for p in portfolio %}
+            <tr>
 
-<span class="badge badge-buy">
+                <th>#</th>
 
-{{ p.name }}
+                <th>Company</th>
 
-—
+                <th>Code</th>
 
-{{ p.allocation }}%
+                <th>Capital Invested</th>
 
-</span>
+                <th>Current Value</th>
 
-{% endfor %}
+                <th>Capital Gain</th>
 
+                <th>Dividends</th>
+
+                <th>Total Return</th>
+
+                <th>Annual Return</th>
+
+            </tr>
+
+        </thead>
+
+        <tbody>
+
+        {% for company in returns %}
+
+            <tr>
+
+                <td>{{ loop.index }}</td>
+
+                <td>{{ company.asset }}</td>
+
+                <td>{{ company.code }}</td>
+
+                <td>
+
+                    KES {{ "{:,.2f}".format(company.capital) }}
+
+                </td>
+
+                <td>
+
+                    KES {{ "{:,.2f}".format(company.current_value) }}
+
+                </td>
+
+                <td>
+
+                    KES {{ "{:,.2f}".format(company.capital_gain) }}
+
+                </td>
+
+                <td>
+
+                    KES {{ "{:,.2f}".format(company.dividends) }}
+
+                </td>
+
+                <td>
+
+                    KES {{ "{:,.2f}".format(company.total_return) }}
+
+                </td>
+
+                <td>
+
+                    {{ "%.2f"|format(company.annual_return) }}%
+
+                </td>
+
+            </tr>
+
+        {% endfor %}
+
+        </tbody>
+
+    </table>
 </div>
-
-{% endif %}
-
 <!-- ========================================================= -->
-<!-- ALPHA SIGNAL ENGINE -->
+<!-- PART 6 — INSTITUTIONAL RISK ANALYTICS -->
 <!-- ========================================================= -->
-
-{% if scenarios %}
-
-{% for scenario, results in scenarios.items() %}
 
 <div class="card">
 
-<h2>
+    <h2>🛡 Institutional Risk Analytics</h2>
 
-{{ scenario|upper }}
+    <table>
 
-Market Regime
+        <tr>
 
-</h2>
+            <th>Risk Metric</th>
 
-<p>
+            <th>Value</th>
 
-📈 Growth Leader
+        </tr>
 
-<b>
+        <tr>
 
-{{ explanation[scenario].growth_best }}
+            <td>Portfolio Risk Classification</td>
 
-</b>
+            <td>{{ risk.classification }}</td>
 
-</p>
+        </tr>
 
-<p>
+        <tr>
 
-💰 Dividend Leader
+            <td>Institutional Risk Score</td>
 
-<b>
+            <td>{{ "%.2f"|format(risk.risk_score) }}</td>
 
-{{ explanation[scenario].dividend_best }}
+        </tr>
 
-</b>
+        <tr>
 
-</p>
+            <td>Institutional Rating</td>
 
-<p>
+            <td>{{ risk.rating }}</td>
 
-🏆 Overall Winner
+        </tr>
 
-<b>
+        <tr>
 
-{{ explanation[scenario].overall_best }}
+            <td>Portfolio Volatility</td>
 
-</b>
+            <td>{{ "%.2f"|format(risk.volatility) }}%</td>
 
-</p>
+        </tr>
 
-<hr>
+        <tr>
 
-<h3>
+            <td>Sharpe Ratio</td>
 
-Institutional Alpha Signals
+            <td>{{ "%.3f"|format(risk.sharpe_ratio) }}</td>
 
-</h3>
+        </tr>
 
-<table>
+        <tr>
 
-<tr>
+            <td>Sortino Ratio</td>
 
-<th>Rank</th>
+            <td>{{ "%.3f"|format(risk.sortino_ratio) }}</td>
 
-<th>Company</th>
+        </tr>
 
-<th>ROI</th>
+        <tr>
 
-<th>Risk</th>
+            <td>Maximum Drawdown</td>
 
-<th>Signal</th>
+            <td>{{ "%.2f"|format(risk.max_drawdown) }}%</td>
 
-<th>Confidence</th>
+        </tr>
 
-</tr>
+        <tr>
 
-{% for r in results %}
+            <td>Value at Risk (VaR)</td>
 
-{% set confidence=(r.score*100)|abs|round(1) %}
+            <td>{{ "%.2f"|format(risk.value_at_risk) }}%</td>
 
-{% if r.score>1 %}
+        </tr>
 
-{% set signal="BUY" %}
+        <tr>
 
-{% elif r.score>0.2 %}
+            <td>Conditional VaR (CVaR)</td>
 
-{% set signal="HOLD" %}
+            <td>{{ "%.2f"|format(risk.cvar) }}%</td>
 
-{% else %}
+        </tr>
 
-{% set signal="REDUCE" %}
+        <tr>
 
-{% endif %}
+            <td>Portfolio Beta</td>
 
-<tr>
+            <td>{{ "%.2f"|format(risk.beta) }}</td>
 
-<td>
+        </tr>
 
-#{{ r.rank }}
+        <tr>
 
-</td>
+            <td>Tracking Error</td>
 
-<td>
+            <td>{{ "%.2f"|format(risk.tracking_error) }}%</td>
 
-{{ r.name }}
+        </tr>
 
-</td>
+        <tr>
 
-<td>
+            <td>Concentration Risk</td>
 
-{{ r.roi|round(2) }}%
+            <td>{{ risk.concentration }}</td>
 
-</td>
+        </tr>
 
-<td>
-
-{{ r.risk_level }}
-
-</td>
-
-<td>
-
-<span class="badge
-
-{% if signal=='BUY' %}
-
-badge-buy
-
-{% elif signal=='HOLD' %}
-
-badge-hold
-
-{% else %}
-
-badge-reduce
-
-{% endif %}
-
-">
-
-{{ signal }}
-
-</span>
-
-</td>
-
-<td>
-
-{{ confidence }}%
-
-</td>
-
-</tr>
-
-{% endfor %}
-
-</table>
+    </table>
 
 </div>
+
+<!-- ========================================================= -->
+<!-- STRESS TEST RESULTS -->
+<!-- ========================================================= -->
 
 <div class="card">
 
-<h3>
+    <h2>⚠ Stress Testing</h2>
 
-Company Performance
+    <table>
 
-</h3>
+        <tr>
 
-<div class="kpi-grid">
+            <th>Scenario</th>
 
-{% for r in results %}
+            <th>Portfolio Value</th>
 
-<div class="kpi-card">
+            <th>Loss</th>
 
-<b>
+        </tr>
 
-{{ r.rank }}
+        <tr>
 
-.
+            <td>Normal Market</td>
 
-{{ r.name }}
+            <td>
+                KES {{ "{:,.2f}".format(risk.stress.normal) }}
+            </td>
 
-</b>
+            <td>—</td>
 
-<br><br>
+        </tr>
 
-Invested
+        <tr>
 
-<br>
+            <td>Moderate Crash (-20%)</td>
 
-KES {{ "{:,.0f}".format(r.invested) }}
+            <td>
+                KES {{ "{:,.2f}".format(risk.stress.moderate) }}
+            </td>
 
-<br><br>
+            <td>-20%</td>
 
-Portfolio
+        </tr>
 
-<br>
+        <tr>
 
-KES {{ "{:,.0f}".format(r.portfolio_value) }}
+            <td>Severe Crash (-40%)</td>
 
-<br><br>
+            <td>
+                KES {{ "{:,.2f}".format(risk.stress.severe) }}
+            </td>
 
-Dividends
+            <td>-40%</td>
 
-<br>
+        </tr>
 
-KES {{ "{:,.0f}".format(r.dividends) }}
+        <tr>
 
-<br><br>
+            <td>Extreme Crisis (-60%)</td>
 
-Profit
+            <td>
+                KES {{ "{:,.2f}".format(risk.stress.extreme) }}
+            </td>
 
-<br>
+            <td>-60%</td>
 
-KES {{ "{:,.0f}".format(r.profit) }}
+        </tr>
 
-<br><br>
-
-ROI
-
-<br>
-
-{{ r.roi|round(2) }}%
-
-<br><br>
-
-Risk
-
-<br>
-
-{{ r.risk_level }}
+    </table>
 
 </div>
-
-{% endfor %}
-
 </div>
 
-</div>
+<footer>
 
-{% endfor %}
+© 2026 JOBURA WEALTH® |
+Institutional Wealth Management Platform
 
-{% endif %}
+</footer>
 
-{% endblock %}
+</body>
+
+</html>
