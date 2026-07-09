@@ -114,3 +114,77 @@ def build_portfolio(
         })
 
     return breakdown
+# =========================================================
+# BUILD MONTHLY INVESTMENT PLAN
+# =========================================================
+
+def build_investment_plan(
+    assets,
+    weights,
+    monthly
+):
+    """
+    Creates the monthly investment allocation plan.
+    """
+
+    plan = []
+
+    allocation = monthly * weights
+
+    for i, asset in enumerate(assets):
+
+        plan.append({
+
+            "name": asset[0],
+
+            "code": asset[1],
+
+            "allocation_pct": round(
+                weights[i] * 100,
+                2
+            ),
+
+            "monthly_amount": round(
+                float(allocation[i]),
+                2
+            )
+
+        })
+
+    return plan
+# =========================================================
+# BUILD RETURNS TABLE
+# =========================================================
+
+def build_returns_table(portfolio):
+    """
+    Builds the institutional performance table.
+    """
+
+    table = []
+
+    for asset in portfolio:
+
+        table.append({
+
+            "asset": asset["asset"],
+
+            "code": asset["code"],
+
+            "allocation": asset["allocation_pct"],
+
+            "capital": asset["capital"],
+
+            "current_value": asset["current_value"],
+
+            "capital_gain": asset["capital_gain"],
+
+            "dividends": asset["dividends"],
+
+            "total_return": asset["total_return"],
+
+            "annual_return": asset["annual_return"]
+
+        })
+
+    return table
