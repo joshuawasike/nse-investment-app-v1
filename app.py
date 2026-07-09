@@ -461,3 +461,155 @@ def about():
         app=APP_INFO
 
     )
+# ==========================================================
+# SIMULATION CONTROLLER
+# PART 4A — RECEIVE USER INPUT
+# ==========================================================
+
+@app.route("/simulate", methods=["POST"])
+def run_simulation():
+
+    # ------------------------------------------------------
+    # Authentication
+    # ------------------------------------------------------
+
+    if not logged_in():
+
+        return redirect(
+            url_for("login")
+        )
+
+    try:
+
+        # --------------------------------------------------
+        # User Inputs
+        # --------------------------------------------------
+
+        monthly = float(
+            request.form.get(
+                "monthly",
+                DEFAULT_MONTHLY
+            )
+        )
+
+        years = int(
+            request.form.get(
+                "years",
+                DEFAULT_YEARS
+            )
+        )
+
+        mode = request.form.get(
+            "mode",
+            DEFAULT_MODE
+        ).lower()
+
+        model = request.form.get(
+            "model",
+            DEFAULT_MODEL
+        ).lower()
+
+        target = float(
+            request.form.get(
+                "target_amount",
+                10000000
+            )
+        )
+
+        # --------------------------------------------------
+        # Validation
+        # --------------------------------------------------
+
+        if monthly <= 0:
+            raise ValueError(
+                "Monthly investment must be greater than zero."
+            )
+
+        if years <= 0:
+            raise ValueError(
+                "Investment years must be greater than zero."
+            )
+
+        allowed_modes = [
+            "normal",
+            "bull",
+            "bear"
+        ]
+
+        if mode not in allowed_modes:
+            mode = DEFAULT_MODE
+
+        allowed_models = [
+            "balanced",
+            "growth",
+            "dividend",
+            "banking",
+            "value",
+            "income",
+            "aggressive",
+            "conservative"
+        ]
+
+        if model not in allowed_models:
+            model = DEFAULT_MODEL
+
+        # --------------------------------------------------
+        # PART 4B — RUN SIMULATION ENGINE
+        # --------------------------------------------------
+
+        simulation = simulate(
+
+            monthly=monthly,
+
+            years=years,
+
+            mode=mode,
+
+            model=model
+
+        )
+
+        # --------------------------------------------------
+        # Validate simulation output
+        # --------------------------------------------------
+
+        if simulation is None:
+
+            raise ValueError(
+                "Simulation engine returned no results."
+            )
+
+        if not isinstance(simulation, dict):
+
+            raise ValueError(
+                "Simulation engine returned an invalid result."
+            )
+
+        # --------------------------------------------------
+        # Extract simulation data
+        # --------------------------------------------------
+
+        curve = simulation.get("curve", [])
+
+        assets = simulation.get("assets", [])
+
+        capital = simulation.get("capital", [])
+
+        dividends = simulation.get("dividends", [])
+
+        weights = simulation.get("weights", [])
+
+        invested = simulation.get(
+            "invested",
+            monthly * years * 12
+        )
+
+        annual_return = simulation.get(
+            "annual_return",
+            0
+        )
+
+        returns = simulation.get(
+            "returns",
+            []
+        )
