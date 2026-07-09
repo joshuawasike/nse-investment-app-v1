@@ -6,44 +6,76 @@
 import numpy as np
 
 # =========================================================
-# 🏦 CORPORATE ACTION ENGINE
+# CORPORATE ACTION DATABASE
 # =========================================================
 
-def apply_corporate_actions(capital, code):
+CORPORATE_ACTIONS = {
 
-    profile = CORPORATE_ACTIONS.get(code)
+    "SCOM": {
+        "bonus": 0.05,
+        "rights": 0.03,
+        "buyback": 0.02,
+        "split": 0.01,
+        "special_dividend": 0.08
+    },
 
-    if profile is None:
-        return capital, 0.0
+    "EQTY": {
+        "bonus": 0.04,
+        "rights": 0.05,
+        "buyback": 0.02,
+        "split": 0.01,
+        "special_dividend": 0.05
+    },
 
-    bonus = 0.0
+    "KCB": {
+        "bonus": 0.04,
+        "rights": 0.03,
+        "buyback": 0.01,
+        "split": 0.01,
+        "special_dividend": 0.04
+    },
 
-    # Bonus shares
-    if np.random.rand() < profile["bonus"]:
+    "COOP": {
+        "bonus": 0.03,
+        "rights": 0.03,
+        "buyback": 0.01,
+        "split": 0.01,
+        "special_dividend": 0.05
+    },
 
-        capital *= 1.10
+    "NCBA": {
+        "bonus": 0.03,
+        "rights": 0.04,
+        "buyback": 0.01,
+        "split": 0.01,
+        "special_dividend": 0.05
+    },
 
-    # Rights issue
-    if np.random.rand() < profile["rights"]:
+    "EABL": {
+        "bonus": 0.02,
+        "rights": 0.02,
+        "buyback": 0.02,
+        "split": 0.01,
+        "special_dividend": 0.08
+    },
 
-        capital *= 1.05
+    "KEGN": {
+        "bonus": 0.02,
+        "rights": 0.02,
+        "buyback": 0.01,
+        "split": 0.01,
+        "special_dividend": 0.06
+    },
 
-    # Share buyback
-    if np.random.rand() < profile["buyback"]:
+    "KQ": {
+        "bonus": 0.01,
+        "rights": 0.08,
+        "buyback": 0.00,
+        "split": 0.00,
+        "special_dividend": 0.00
+    }
 
-        capital *= 1.03
-
-    # Stock split
-    if np.random.rand() < profile["split"]:
-
-        capital *= 1.00
-
-    # Special dividend
-    if np.random.rand() < profile["special_dividend"]:
-
-        bonus = capital * 0.03
-
-    return capital, bonus
+}
 # =========================================================
 # APPLY CORPORATE ACTIONS
 # =========================================================
