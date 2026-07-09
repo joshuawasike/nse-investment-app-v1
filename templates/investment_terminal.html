@@ -1,396 +1,817 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>JOBURA WEALTH® | NSE Institutional Wealth Management Platform</title>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <meta http-equiv="X-UA-Compatible"
+          content="IE=edge">
+
+    <title>
+        JOBURA WEALTH® | NSE Institutional Wealth Management Platform
+    </title>
+
+    <meta name="description"
+          content="Institutional-grade wealth management platform for the Nairobi Securities Exchange featuring AI portfolio analysis, Monte Carlo simulation, dividend forecasting, retirement planning and professional investment analytics.">
+
+    <meta name="keywords"
+          content="NSE, Kenya, Investment, Wealth Management, Portfolio, Monte Carlo, AI, Retirement, Dividend, Stocks">
+
+    <meta name="author"
+          content="JOBURA WEALTH®">
+
+    <meta name="theme-color"
+          content="#081018">
+
+    <link rel="preconnect"
+          href="https://fonts.googleapis.com">
+
+    <link rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+          rel="stylesheet">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <style>
 
-body {
-    font-family: Arial;
-    background: #0b0f19;
-    color: #e5e7eb;
-    margin: 0;
+/************************************************/
+/* ROOT VARIABLES                               */
+/************************************************/
+
+:root{
+
+--bg:#070b11;
+--bg-secondary:#0d141d;
+--panel:#131b26;
+--panel-light:#182231;
+
+--border:#273447;
+
+--primary:#18a0fb;
+--primary-dark:#0f7cc2;
+
+--success:#19c37d;
+--warning:#f59e0b;
+--danger:#ef4444;
+
+--text:#f8fafc;
+--text-light:#d9e3ee;
+--muted:#8fa3b9;
+
+--radius:18px;
+
+--shadow:
+0 10px 35px rgba(0,0,0,.35);
+
+--transition:.25s ease;
+
 }
 
-.container {
-    max-width: 1200px;
-    margin: auto;
-    padding: 20px;
+/************************************************/
+
+*{
+
+margin:0;
+padding:0;
+box-sizing:border-box;
+
 }
 
-/* TOP BAR */
-.topbar {
-    display: flex;
-    justify-content: flex-end;
-    gap: 15px;
-    margin-bottom: 10px;
+html{
+
+scroll-behavior:smooth;
+
 }
 
-.topbar a {
-    text-decoration: none;
-    font-weight: bold;
-    color: #60a5fa;
+body{
+
+font-family:"Inter",sans-serif;
+
+background:
+linear-gradient(
+180deg,
+#070b11,
+#0d141d);
+
+color:var(--text);
+
+min-height:100vh;
+
+line-height:1.6;
+
 }
 
-/* STATUS */
-.badge-free { color: gold; font-weight: bold; }
-.badge-premium { color: #22c55e; font-weight: bold; }
-.badge-danger { color: #ef4444; }
+/************************************************/
 
-/* GRID DASHBOARD */
-.grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-    margin-top: 15px;
+img{
+
+max-width:100%;
+
+display:block;
+
 }
 
-.card {
-    background: #111827;
-    padding: 15px;
-    border-radius: 12px;
-    border: 1px solid #1f2937;
+a{
+
+text-decoration:none;
+
+color:inherit;
+
 }
 
-/* INFO */
-.info-box, .guide-box, .payment-box {
-    padding: 15px;
-    border-radius: 10px;
-    margin-top: 10px;
+button{
+
+cursor:pointer;
+
+font-family:inherit;
+
 }
 
-.info-box {
-    background: #0f172a;
-    border: 1px solid #1e293b;
+input,
+select,
+textarea,
+button{
+
+font:inherit;
+
 }
 
-.guide-box {
-    background: #052e16;
-    border: 1px solid #065f46;
-    color: #bbf7d0;
+.container{
+
+width:min(1450px,95%);
+
+margin:auto;
+
 }
 
-.payment-box {
-    background: #111827;
-    border: 1px solid #374151;
+section{
+
+padding:70px 0;
+
 }
 
-/* FORM */
-.form-box input,
-.form-box select {
-    width: 100%;
-    padding: 12px;
-    margin-bottom: 10px;
-    border-radius: 6px;
-    background: #111827;
-    color: white;
-    border: 1px solid #374151;
+.grid{
+
+display:grid;
+
+gap:25px;
+
 }
 
-button {
-    width: 100%;
-    padding: 12px;
-    background: linear-gradient(90deg,#2563eb,#1d4ed8);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-weight: bold;
+.card{
+
+background:var(--panel);
+
+border:1px solid var(--border);
+
+border-radius:var(--radius);
+
+box-shadow:var(--shadow);
+
 }
 
-/* TABLE */
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-    font-family: monospace;
-    background: #0f172a;
+/************************************************/
+/* TYPOGRAPHY                                   */
+/************************************************/
+
+h1{
+
+font-size:3.2rem;
+
+font-weight:800;
+
+line-height:1.15;
+
 }
 
-th {
-    background: #111827;
-    color: #93c5fd;
-    padding: 10px;
-    text-align: left;
+h2{
+
+font-size:2rem;
+
+font-weight:700;
+
+margin-bottom:18px;
+
 }
 
-td {
-    padding: 10px;
-    border-bottom: 1px solid #1f2937;
+h3{
+
+font-size:1.25rem;
+
+font-weight:700;
+
 }
 
-/* AI BOX */
-.ai-box {
-    background: #0f172a;
-    padding: 12px;
-    border-radius: 10px;
-    margin-top: 10px;
-    border-left: 4px solid #60a5fa;
+p{
+
+color:var(--muted);
+
 }
 
-/* PAYMENT GRID */
-.pricing-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
+/************************************************/
+/* NAVIGATION                                   */
+/************************************************/
+
+header{
+
+position:sticky;
+
+top:0;
+
+z-index:5000;
+
+background:rgba(8,12,18,.95);
+
+backdrop-filter:blur(15px);
+
+border-bottom:1px solid var(--border);
+
 }
 
-.pricing-item {
-    background: #0f172a;
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid #1e293b;
+.navbar{
+
+height:78px;
+
+display:flex;
+
+align-items:center;
+
+justify-content:space-between;
+
 }
 
-img {
-    width: 100%;
-    margin-top: 10px;
-    border-radius: 10px;
-}
-.model-grid{
-    display:grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap:10px;
-    margin-bottom:15px;
+.logo{
+
+display:flex;
+
+align-items:center;
+
+gap:14px;
+
+font-size:1.35rem;
+
+font-weight:800;
+
+letter-spacing:.5px;
+
 }
 
-.model-card{
-    background:#111827;
-    border:1px solid #374151;
-    padding:12px;
-    border-radius:10px;
-    cursor:pointer;
-    transition:0.2s;
-    font-size:13px;
+.logo i{
+
+color:var(--primary);
+
+font-size:28px;
+
 }
 
-.model-card:hover{
-    transform: scale(1.03);
-    border-color:#60a5fa;
+.logo small{
+
+display:block;
+
+font-size:.72rem;
+
+font-weight:500;
+
+color:var(--muted);
+
+margin-top:2px;
+
 }
 
-.model-card input{
-    margin-bottom:8px;
+.nav-links{
+
+display:flex;
+
+gap:30px;
+
 }
 
-.model1{ border-left:4px solid #22c55e; }
-.model2{ border-left:4px solid #3b82f6; }
-.model3{ border-left:4px solid #f59e0b; }
-.model4{ border-left:4px solid #a855f7; }
-.model5{ border-left:4px solid #ef4444; }
+.nav-links a{
+
+color:var(--muted);
+
+font-size:.94rem;
+
+transition:var(--transition);
+
+}
+
+.nav-links a:hover{
+
+color:white;
+
+}
+
+.nav-actions{
+
+display:flex;
+
+align-items:center;
+
+gap:12px;
+
+}
+
+.btn-primary{
+
+background:linear-gradient(
+135deg,
+var(--primary),
+var(--primary-dark));
+
+color:white;
+
+padding:11px 20px;
+
+border:none;
+
+border-radius:12px;
+
+font-weight:600;
+
+transition:var(--transition);
+
+}
+
+.btn-primary:hover{
+
+transform:translateY(-2px);
+
+}
+
+/************************************************/
+/* GLOBAL COMPONENTS                            */
+/************************************************/
+
+.badge{
+
+display:inline-flex;
+
+align-items:center;
+
+padding:8px 15px;
+
+border-radius:999px;
+
+background:#182434;
+
+border:1px solid var(--border);
+
+font-size:.84rem;
+
+color:#d6e5f5;
+
+}
+
+input,
+select{
+
+width:100%;
+
+padding:13px 14px;
+
+background:var(--panel-light);
+
+border:1px solid var(--border);
+
+border-radius:12px;
+
+color:white;
+
+outline:none;
+
+transition:var(--transition);
+
+}
+
+input:focus,
+select:focus{
+
+border-color:var(--primary);
+
+}
+
+label{
+
+display:block;
+
+margin-bottom:8px;
+
+font-size:.9rem;
+
+font-weight:500;
+
+color:var(--text-light);
+
+}
+
+/************************************************/
+/* RESPONSIVE                                   */
+/************************************************/
+
+@media(max-width:1100px){
+
+.nav-links{
+
+display:none;
+
+}
+
+}
+
+@media(max-width:768px){
+
+h1{
+
+font-size:2.2rem;
+
+}
+
+.container{
+
+width:94%;
+
+}
+
+section{
+
+padding:55px 0;
+
+}
+
+}
+
 </style>
+
 </head>
 
 <body>
 
-<div class="container">
+<header>
 
-<!-- TOP BAR -->
-<div class="topbar">
-    <a href="/login">Admin Login</a>
-    {% if session.get('admin') %}
-        <a href="/admin">Dashboard</a>
-        <a href="/logout" class="badge-danger">Logout</a>
-    {% endif %}
+<div class="container navbar">
+
+<div class="logo">
+
+<i class="fa-solid fa-chart-line"></i>
+
+<div>
+
+JOBURA WEALTH®
+
+<small>NSE Institutional Wealth Management Platform</small>
+
 </div>
 
-<!-- HEADER -->
-<div class="info-box">
-<h2>📊 Jobura NSE Capital Terminal V3</h2>
-✔ Portfolio engine<br>
-✔ Bull / Bear / Normal simulation<br>
-✔ Dividend projection<br>
-✔ AI advisor<br>
-✔ Goal system
 </div>
 
-<div class="guide-box">
-<b>How to Use</b><br><br>
-✔ Enter monthly investment<br>
-✔ Enter years<br>
-✔ Run engine<br><br>
-➡ FREE VERSION: Normal only<br>
-🔒 PREMIUM: Full analytics + AI + Goal optimization
+<nav class="nav-links">
+
+<a href="#dashboard">Dashboard</a>
+
+<a href="#simulation">Simulation</a>
+
+<a href="#portfolio">Portfolio</a>
+
+<a href="#companies">Companies</a>
+
+<a href="#dividends">Dividends</a>
+
+<a href="#risk">Risk</a>
+
+<a href="#advisor">AI Advisor</a>
+
+<a href="#retirement">Retirement</a>
+
+<a href="#reports">Reports</a>
+
+</nav>
+
+<div class="nav-actions">
+
+<button class="btn-primary">
+
+Launch Terminal
+
+</button>
+
 </div>
 
-<!-- PAYMENT -->
-<div class="payment-box">
-<h3>💳 Payment</h3>
-<b>PayBill:</b> 542542<br>
-<b>Account:</b> 31909<br>
-<b>Name:</b> Jobura Solutions<br><br>
-
-<div class="pricing-grid">
-<div class="pricing-item">
-<b>Individual</b><br>
-KES 400/month<br>
-KES 4,000/year
-</div>
-<div class="pricing-item">
-<b>Institutional</b><br>
-KES 2,000/month<br>
-KES 18,000/year
-</div>
-</div>
 </div>
 
-<hr>
+</header>
+<!-- ==========================================================
+     HERO
+=========================================================== -->
 
-{% if not is_premium %}
-<div class="card badge-free">🔒 FREE VERSION ACTIVE (Normal Only)</div>
-{% else %}
-<div class="card badge-premium">✅ PREMIUM ACTIVE</div>
-{% endif %}
+<section id="simulation" class="hero">
 
-<!-- ================= FORM ================= -->
-<div class="card">
+    <div class="container hero-grid">
 
-<h3>🧾 Investment Input Terminal</h3>
+        <!-- LEFT SIDE -->
 
-<form
-    action="{{ url_for('run_simulation') }}"
-    method="POST"
-    class="form-box">
+        <div class="hero-content">
 
-    <!-- ================= MODELS ================= -->
+            <span class="badge">
 
-    <h3 style="margin-bottom:10px;">
-        🧠 Investment Models
-    </h3>
+                <i class="fa-solid fa-building-columns"></i>
 
-    <div class="model-grid">
+                &nbsp;
 
-        <label class="model-card model1">
-            <input
-                type="radio"
-                name="model"
-                value="dividend"
-                checked>
-            <b>Model 1</b><br>
-            Dividend Blue Chip
-        </label>
+                Institutional Grade Investment Intelligence
 
-        <label class="model-card model2">
-            <input
-                type="radio"
-                name="model"
-                value="growth">
-            <b>Model 2</b><br>
-            Aggressive Growth
-        </label>
+            </span>
 
-        <label class="model-card model3">
-            <input
-                type="radio"
-                name="model"
-                value="banking">
-            <b>Model 3</b><br>
-            Banking Dominance
-        </label>
+            <h1>
 
-        <label class="model-card model4">
-            <input
-                type="radio"
-                name="model"
-                value="value">
-            <b>Model 4</b><br>
-            Value Investing
-        </label>
+                Institutional Wealth Management Platform
+                for the Nairobi Securities Exchange
 
-        <label class="model-card model5">
-            <input
-                type="radio"
-                name="model"
-                value="income">
-            <b>Model 5</b><br>
-            High Dividend Income
-        </label>
+            </h1>
+
+            <p>
+
+                Build optimized portfolios, evaluate company fundamentals,
+                forecast dividends, analyse portfolio risk, perform Monte Carlo
+                simulations and generate AI-powered investment recommendations
+                using professional quantitative models.
+
+            </p>
+
+            <div class="hero-features">
+
+                <div class="badge">Monte Carlo Simulation</div>
+
+                <div class="badge">Portfolio Optimizer</div>
+
+                <div class="badge">AI Investment Advisor</div>
+
+                <div class="badge">Risk Analytics</div>
+
+                <div class="badge">Dividend Forecasting</div>
+
+                <div class="badge">Corporate Actions</div>
+
+                <div class="badge">Retirement Planning</div>
+
+                <div class="badge">Performance Reporting</div>
+
+            </div>
+
+        </div>
+
+        <!-- RIGHT SIDE -->
+
+        <div class="card simulation-card">
+
+            <form
+                method="POST"
+                action="{{ url_for('simulate') }}"
+                id="simulationForm">
+
+                <h2>
+
+                    Investment Simulation
+
+                </h2>
+
+                <div class="form-group">
+
+                    <label for="investment">
+
+                        Initial Investment (KES)
+
+                    </label>
+
+                    <input
+                        id="investment"
+                        type="number"
+                        name="investment"
+                        min="1000"
+                        step="1000"
+                        required
+                        autocomplete="off">
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>
+
+                        Monthly Contribution
+
+                    </label>
+
+                    <input
+                        type="number"
+                        name="monthly"
+                        min="0"
+                        step="100"
+                        value="0">
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>
+
+                        Investment Horizon
+
+                    </label>
+
+                    <select
+                        name="years">
+
+                        <option value="5">5 Years</option>
+                        <option value="10">10 Years</option>
+                        <option value="15">15 Years</option>
+                        <option value="20">20 Years</option>
+                        <option value="25">25 Years</option>
+                        <option value="30">30 Years</option>
+
+                    </select>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>
+
+                        Market Scenario
+
+                    </label>
+
+                    <select
+                        name="mode">
+
+                        <option value="normal">Normal Market</option>
+                        <option value="bull">Bull Market</option>
+                        <option value="bear">Bear Market</option>
+
+                    </select>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>
+
+                        Investment Strategy
+
+                    </label>
+
+                    <select
+                        name="model">
+
+                        <option value="balanced">
+
+                            Balanced Portfolio
+
+                        </option>
+
+                        <option value="growth">
+
+                            Capital Growth
+
+                        </option>
+
+                        <option value="dividend">
+
+                            High Dividend
+
+                        </option>
+
+                        <option value="value">
+
+                            Value Investing
+
+                        </option>
+
+                        <option value="institutional">
+
+                            Institutional Portfolio
+
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <button
+                    class="btn-primary"
+                    type="submit"
+                    style="width:100%;margin-top:18px;">
+
+                    <i class="fa-solid fa-play"></i>
+
+                    Run Professional Simulation
+
+                </button>
+
+            </form>
+
+        </div>
 
     </div>
 
-    <br>
+</section>
 
-    <!-- ================= MARKET SCENARIO ================= -->
+<!-- ==========================================================
+     LOADING OVERLAY
+=========================================================== -->
 
-    <h3 style="margin-bottom:10px;">
-        📈 Market Scenario
-    </h3>
+<div id="loadingOverlay">
 
-    <select
-        name="mode"
-        required>
+    <div class="loading-box">
 
-        <option value="normal" selected>
-            Normal Market
-        </option>
+        <i class="fa-solid fa-chart-line fa-bounce"></i>
 
-        <option value="bull">
-            Bull Market
-        </option>
+        <h3>
 
-        <option value="bear">
-            Bear Market
-        </option>
+            Running Institutional Simulation
 
-    </select>
+        </h3>
 
-    <br><br>
+        <p>
 
-    <!-- ================= INPUTS ================= -->
+            Building optimized portfolio...
 
-    <input
-        type="number"
-        name="target_amount"
-        placeholder="Target Amount (KES)"
-        required>
+        </p>
 
-    <input
-        type="number"
-        name="monthly"
-        placeholder="Monthly Investment (KES)"
-        required>
-
-    <input
-        type="number"
-        name="years"
-        placeholder="Investment Period (Years)"
-        required>
-
-    <input
-        type="text"
-        name="transaction_code"
-        placeholder="Transaction Code"
-        required>
-
-    <input
-        type="tel"
-        name="phone"
-        placeholder="Phone Number"
-        required>
-
-    <br><br>
-
-    <button type="submit">
-
-        🚀 Run Institutional Wealth Engine
-
-    </button>
-
-</form>
+    </div>
 
 </div>
-{% if goal_result %}
-<div class="card">
-<h3>🎯 Goal Advisory</h3>
 
-<p>Target: KES {{ "{:,.0f}".format(goal_result["target"]) }}</p>
+<!-- ==========================================================
+     MAIN DASHBOARD
+=========================================================== -->
 
-<p>Years needed: {{ goal_result.years_needed }}</p>
+<main
+    id="dashboard"
+    class="container">
 
-<p>Monthly for 5 years: {{ goal_result.monthly_5 }}</p>
-<p>Monthly for 10 years: {{ goal_result.monthly_10 }}</p>
-<p>Monthly for 15 years: {{ goal_result.monthly_15 }}</p>
-</div>
+{% if summary %}
+
+<!-- ==========================================================
+     PART 1B STARTS HERE
+=========================================================== -->
+
 {% endif %}
-<div class="card">
 
+</main>
+
+<!-- ==========================================================
+     FOOTER
+=========================================================== -->
+
+<footer>
+
+<div class="container">
+
+<p>
+
+© 2026 JOBURA WEALTH®
+
+</p>
+
+<p>
+
+NSE Institutional Wealth Management Platform
+
+</p>
+
+</div>
+
+</footer>
+
+<!-- ==========================================================
+     JAVASCRIPT
+=========================================================== -->
+
+<script>
+
+const form=document.getElementById("simulationForm");
+
+const overlay=document.getElementById("loadingOverlay");
+
+form.addEventListener("submit",function(){
+
+overlay.style.display="flex";
+
+});
+
+</script>
+
+</body>
+
+</html>
